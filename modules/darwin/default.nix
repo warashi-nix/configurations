@@ -25,6 +25,13 @@ in
 
   config = mkIf cfg.enable {
     users.users.${cfg.username}.home = "/Users/${cfg.username}";
+
+    security.pam.services.sudo_local = {
+      reattach = true;
+      touchIdAuth = true;
+      watchIdAuth = false;
+    };
+
     system = {
       primaryUser = cfg.username;
       stateVersion = 5;
