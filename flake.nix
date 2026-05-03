@@ -112,6 +112,7 @@
                 with pkgs;
                 [
                   # keep-sorted start
+                  just
                   nix-output-monitor
                   # keep-sorted end
                 ]
