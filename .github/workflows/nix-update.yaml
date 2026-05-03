@@ -60,6 +60,7 @@ jobs:
       - name: Commit and create pull request
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_INPUT: ${{ matrix.input }}
         run: |
           git add .
           if ! git diff --cached --quiet; then
