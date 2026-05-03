@@ -21,6 +21,7 @@ in
 
   config = mkIf cfg.enable {
     imports = [
+      ./home.nix
       ./security.nix
     ];
 
