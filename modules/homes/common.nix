@@ -24,4 +24,8 @@
   };
 
   xdg.enable = true;
+
+  imports = [
+    ../../applications
+  ];
 }
