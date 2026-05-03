@@ -7,10 +7,10 @@
 }:
 with lib;
 let
-  cfg = config.programs.nix;
+  cfg = config.warashi.nix;
 in
 {
-  options.programs.nix = {
+  options.warashi.nix = {
     enable = mkEnableOption "";
   };
 

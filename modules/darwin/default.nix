@@ -7,10 +7,10 @@
 }:
 with lib;
 let
-  cfg = config.darwin;
+  cfg = config.warashi.darwin;
 in
 {
-  options.darwin = {
+  options.warashi.darwin = {
     enable = mkOption {
       type = types.bool;
       default = false;
