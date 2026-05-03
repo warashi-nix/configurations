@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-26]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Nix
+        uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
+        with:
+          extra_nix_config: |
+            accept-flake-config = true
+            auto-optimise-store = ${{ startsWith(matrix.os, 'macos-') && 'false' || 'true' }}
+            sandbox = ${{ startsWith(matrix.os, 'macos-') && 'relaxed' || 'true' }}
+      - name: Setup cachix
+        uses: cachix/cachix-action@1eb2ef646ac0255473d23a5907ad7b04ce94065c # v17
+        with:
+          name: warashi
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          skipPush: false # PR でも push して、 main にマージされたときにキャッシュが使えるようにする
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - run: ./.github/workflows/build-all.sh
+      - name: Check disk usage
+        if: always()
+        run: df -h
