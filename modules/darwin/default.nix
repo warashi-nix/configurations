@@ -20,13 +20,11 @@ in
   };
 
   config = mkIf cfg.enable {
-    users.users.${username}.home = "/Users/${username}";
+    imports = [
+      ./security.nix
+    ];
 
-    security.pam.services.sudo_local = {
-      reattach = true;
-      touchIdAuth = true;
-      watchIdAuth = false;
-    };
+    users.users.${username}.home = "/Users/${username}";
 
     system = {
       primaryUser = username;
