@@ -124,5 +124,10 @@
             };
           };
         };
+
+      flake = {
+        nixosConfigurations = { };
+        darwinConfigurations = { };
+      };
     };
 }
