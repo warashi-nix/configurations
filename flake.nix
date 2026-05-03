@@ -116,6 +116,7 @@
                   # keep-sorted start
                   just
                   nix-output-monitor
+                  nvfetcher
                   # keep-sorted end
                 ]
                 ++ config.pre-commit.settings.enabledPackages;
