@@ -8,32 +8,31 @@
 with lib;
 let
   inherit (config.warashi) username;
+  cfg = config.warashi.homes;
 in
 {
-  imports = [
-    inputs.home-manager.darwinModules.home-manager
-  ];
+  config = mkIf cfg.enableDarwin {
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+      users.${username} = {
+        home = {
+          sessionPath = [
+            "/opt/homebrew/bin"
+          ];
+        };
 
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    users.${username} = {
-      home = {
-        sessionPath = [
-          "/opt/homebrew/bin"
-        ];
+        targets.darwin = {
+          copyApps.enable = true;
+          linkApps.enable = false;
+        };
       };
 
-      targets.darwin = {
-        copyApps.enable = true;
-        linkApps.enable = false;
+      backupFileExtension = "backup";
+
+      extraSpecialArgs = {
+        inherit inputs specialArgs;
       };
-    };
-
-    backupFileExtension = "backup";
-
-    extraSpecialArgs = {
-      inherit inputs specialArgs;
     };
   };
 }

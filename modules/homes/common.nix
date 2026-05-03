@@ -1,31 +1,45 @@
 {
   inputs,
-  pkgs,
   config,
+  lib,
+  pkgs,
   ...
 }:
+with lib;
+let
+  inherit (config.warashi) username;
+  cfg = config.warashi.homes;
+in
 {
-  programs = {
-    home-manager.enable = true;
-  };
+  config = mkIf cfg.enable {
+    home-manager.users.${username} = {
+      imports = [
+        # keep-sorted start
+        inputs.direnv-instant.homeModules.direnv-instant
+        # keep-sorted end
 
-  home = {
-    preferXdgDirectories = true;
+        ../../homes/${config.networking.hostName}
+        ../../applications
+      ];
+      programs = {
+        home-manager.enable = true;
+      };
 
-    sessionPath = [
-      "$HOME/.local/bin"
-    ];
+      home = {
+        preferXdgDirectories = true;
 
-    sessionVariables = {
-      EDITOR = "vim";
+        sessionPath = [
+          "${config.home-manager.users.${username}.home.homeDirectory}/.local/bin"
+        ];
+
+        sessionVariables = {
+          EDITOR = "vim";
+        };
+
+        stateVersion = "24.11";
+      };
+
+      xdg.enable = true;
     };
-
-    stateVersion = "24.11";
   };
-
-  xdg.enable = true;
-
-  imports = [
-    ../../applications
-  ];
 }

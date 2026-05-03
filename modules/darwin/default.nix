@@ -14,17 +14,19 @@ in
   options.warashi.darwin = {
     enable = mkOption {
       type = types.bool;
-      default = false;
+      default = pkgs.stdenv.isDarwin;
       description = "Enable Darwin support.";
     };
   };
 
   config = mkIf cfg.enable {
-    imports = [
-      ./security.nix
-    ];
-
     users.users.${username}.home = "/Users/${username}";
+
+    security.pam.services.sudo_local = {
+      reattach = true;
+      touchIdAuth = true;
+      watchIdAuth = false;
+    };
 
     system = {
       primaryUser = username;

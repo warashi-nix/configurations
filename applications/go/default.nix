@@ -1,4 +1,4 @@
-{ conifg, pkgs, ... }:
+{ config, pkgs, ... }:
 {
   programs.go = {
     enable = true;

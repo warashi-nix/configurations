@@ -55,6 +55,8 @@
 
       imports = [
         # keep-sorted start
+        ./flake-module.nix
+        ./hosts.nix
         inputs.devshell.flakeModule
         inputs.git-hooks.flakeModule
         inputs.treefmt-nix.flakeModule
@@ -125,10 +127,5 @@
             };
           };
         };
-
-      flake = {
-        nixosConfigurations = { };
-        darwinConfigurations = { };
-      };
     };
 }

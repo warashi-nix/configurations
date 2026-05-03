@@ -34,14 +34,5 @@ in
     programs = mkIf (programs ? "${cfg.shell.pname}") {
       "${cfg.shell.pname}".enable = true;
     };
-
-    warashi = {
-      nix = {
-        enable = true;
-      };
-      darwin = {
-        enable = pkgs.stdenv.isDarwin;
-      };
-    };
   };
 }

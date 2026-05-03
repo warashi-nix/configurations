@@ -27,7 +27,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    nixpgks = {
+    nixpkgs = {
       inherit (cfg) overlays;
       config = {
         allowUnfree = true;
