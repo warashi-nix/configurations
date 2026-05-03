@@ -14,7 +14,7 @@ in
   options.warashi.system = {
     enable = mkOption {
       type = types.bool;
-      default = false;
+      default = true;
       description = "Enable common system support.";
     };
     shell = mkOption {
@@ -31,7 +31,7 @@ in
 
     environment.shells = [ cfg.shell ];
 
-    programs = mkIf (programs ? "${cfg.shell.pname}") {
+    programs = mkIf (config.programs ? "${cfg.shell.pname}") {
       "${cfg.shell.pname}".enable = true;
     };
   };
