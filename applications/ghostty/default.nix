@@ -3,17 +3,17 @@
   programs.ghostty = {
     enable = true;
     package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
-    installBatSyntax = false;
-    enableFishIntegration = true;
     clearDefaultKeybinds = false;
     settings = {
-      font-size = 11;
-      font-family = "Moralerspace Radon";
+      font-size = 18;
+      font-family = "UDEV Gothic NFLG";
+      theme = "Modus Operandi";
       shell-integration = "none";
       working-directory = "home";
       window-inherit-working-directory = false;
+      tab-inherit-working-directory = false;
+      split-inherit-working-directory = true;
       macos-option-as-alt = true;
-      macos-titlebar-style = "hidden";
       keybind = [
         "shift+enter=text:\\n"
       ];
