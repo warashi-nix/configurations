@@ -7,6 +7,7 @@
 }:
 with lib;
 let
+  inherit (config.warashi) username;
   cfg = config.warashi.system;
 in
 {
@@ -16,11 +17,6 @@ in
       default = false;
       description = "Enable common system support.";
     };
-    username = mkOption {
-      type = types.str;
-      default = "warashi";
-      description = "Username for the primary user.";
-    };
     shell = mkOption {
       type = types.package;
       default = pkgs.fish;
@@ -29,7 +25,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    users.users.${cfg.username} = {
+    users.users.${username} = {
       inherit (cfg) shell;
     };
 
@@ -44,7 +40,6 @@ in
         enable = true;
       };
       darwin = {
-        inherit (cfg) username;
         enable = pkgs.stdenv.isDarwin;
       };
     };

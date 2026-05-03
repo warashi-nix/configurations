@@ -7,6 +7,7 @@
 }:
 with lib;
 let
+  inherit (config.warashi) username;
   cfg = config.warashi.darwin;
 in
 {
@@ -16,15 +17,10 @@ in
       default = false;
       description = "Enable Darwin support.";
     };
-    username = mkOption {
-      type = types.str;
-      default = "warashi";
-      description = "Username for the primary user.";
-    };
   };
 
   config = mkIf cfg.enable {
-    users.users.${cfg.username}.home = "/Users/${cfg.username}";
+    users.users.${username}.home = "/Users/${username}";
 
     security.pam.services.sudo_local = {
       reattach = true;
@@ -33,7 +29,7 @@ in
     };
 
     system = {
-      primaryUser = cfg.username;
+      primaryUser = username;
       stateVersion = 5;
     };
   };
