@@ -34,6 +34,7 @@ in
       home-manager.users.${username} = {
         imports = [
           ../homes/${config.networking.hostname}
+          ./common.nix
         ];
       };
     }
