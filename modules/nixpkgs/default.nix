@@ -11,7 +11,11 @@ let
 in
 {
   options.warashi.nixpkgs = {
-    enable = mkEnableOption "";
+    enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable nixpkgs options.";
+    };
     overlays = mkOption {
       type = types.listOf (
         lib.mkOptionType {

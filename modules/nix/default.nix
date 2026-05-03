@@ -11,7 +11,11 @@ let
 in
 {
   options.warashi.nix = {
-    enable = mkEnableOption "";
+    enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable Nix options.";
+    };
   };
 
   config = mkIf cfg.enable {
