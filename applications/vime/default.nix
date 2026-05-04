@@ -29,4 +29,13 @@ in
   home.packages = [
     vim-as-ime
   ];
+
+  services = {
+    skhd = {
+      enable = true;
+      config = ''
+        meh - i : open -na Alacritty.app --args --command ${lib.getExe vim-as-ime}
+      '';
+    };
+  };
 }
