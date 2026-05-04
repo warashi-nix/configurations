@@ -11,6 +11,7 @@
     casks = [
       # keep-sorted start
       "1password"
+      "alfred"
       "amazon-photos"
       "cloudflare-warp"
       "cryptomator"
@@ -24,7 +25,9 @@
       "google-chrome"
       "google-drive"
       "karabiner-elements"
+      "lasso-app"
       "ollama-app"
+      "orbstack"
       "orion"
       "raycast"
       "slack"
