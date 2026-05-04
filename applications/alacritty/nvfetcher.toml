@@ -1,0 +1,3 @@
+[alacritty-theme]
+src.git = "https://github.com/alacritty/alacritty-theme.git"
+fetch.github = "alacritty/alacritty-theme"

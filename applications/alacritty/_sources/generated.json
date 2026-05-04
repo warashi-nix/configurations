@@ -1,0 +1,23 @@
+{
+    "alacritty-theme": {
+        "cargoLock": null,
+        "date": "2026-05-01",
+        "extract": null,
+        "name": "alacritty-theme",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "alacritty",
+            "repo": "alacritty-theme",
+            "rev": "2749b407b597790e6f08b218c2bc2acdf66210a0",
+            "sha256": "sha256-F8ye16jhfldsyxcOqxVS0PNecVcQcAPnEahDKS4PGwE=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "2749b407b597790e6f08b218c2bc2acdf66210a0"
+    }
+}
