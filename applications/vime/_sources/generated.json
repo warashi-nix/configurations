@@ -1,0 +1,44 @@
+{
+    "denops-vim": {
+        "cargoLock": null,
+        "date": "2026-03-22",
+        "extract": null,
+        "name": "denops-vim",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "vim-denops",
+            "repo": "denops.vim",
+            "rev": "1df7a022d6e9cb3f6a3db43235e0f174ccd79e03",
+            "sha256": "sha256-lj8yjZrwE9GfNPDIpH4tCI4TTJHkYRlFFCTdqMqWtZg=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "1df7a022d6e9cb3f6a3db43235e0f174ccd79e03"
+    },
+    "skkeleton": {
+        "cargoLock": null,
+        "date": "2026-04-02",
+        "extract": null,
+        "name": "skkeleton",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "vim-skk",
+            "repo": "skkeleton",
+            "rev": "b530eac5a859ce2f8fa4d99fa5cd83b9d3199086",
+            "sha256": "sha256-OhHlG3ngNbvUSNqS/MFJpYI/cfbkxSxTPo8EiSwW/MU=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "b530eac5a859ce2f8fa4d99fa5cd83b9d3199086"
+    }
+}
