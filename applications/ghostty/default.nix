@@ -7,7 +7,7 @@
     settings = {
       font-size = 18;
       font-family = "UDEV Gothic NFLG";
-      theme = "Modus Operandi";
+      theme = "light:Modus Operandi,dark:Modus Vivendi";
       shell-integration = "none";
       working-directory = "home";
       window-inherit-working-directory = false;
