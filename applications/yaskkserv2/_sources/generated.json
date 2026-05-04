@@ -1,0 +1,23 @@
+{
+    "yaskkserv2": {
+        "cargoLock": null,
+        "date": "2026-03-20",
+        "extract": null,
+        "name": "yaskkserv2",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "wachikun",
+            "repo": "yaskkserv2",
+            "rev": "f5bc4590c798c591e9861e02ea2e12d227a047ed",
+            "sha256": "sha256-6XE/ujU+B/gTd+S4LWQRFk9JbZz1z9SR+Nr7cARqLtY=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "f5bc4590c798c591e9861e02ea2e12d227a047ed"
+    }
+}

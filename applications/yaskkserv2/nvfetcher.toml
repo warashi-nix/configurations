@@ -1,0 +1,3 @@
+[yaskkserv2]
+src.git = "https://github.com/wachikun/yaskkserv2.git"
+fetch.github = "wachikun/yaskkserv2"
