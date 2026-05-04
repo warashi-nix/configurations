@@ -16,8 +16,6 @@ set runtimepath^=@skkeleton@
 function s:skkeleton_initialize()
   call skkeleton#config(#{
   \   sources: ['skk_server'],
-  \   skkServerReqEnc: 'utf-8',
-  \   skkServerResEnc: 'utf-8',
   \ })
 endfunction
 

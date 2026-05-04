@@ -5,7 +5,7 @@ let
   yaskkserv2 = pkgs.callPackage ./yaskkserv2.nix { };
   make-dict = lib.getExe' yaskkserv2 "yaskkserv2_make_dictionary";
   dict = pkgs.runCommand "yaskkserv2_dictionary" { } ''
-    exec ${make-dict} --utf8 --dictionary-filename=$out ${l-dict}
+    exec ${make-dict} --dictionary-filename=$out '${l-dict}'
   '';
 in
 {
