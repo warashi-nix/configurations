@@ -1,4 +1,25 @@
 {
+    "skkdict": {
+        "cargoLock": null,
+        "date": "2026-04-12",
+        "extract": null,
+        "name": "skkdict",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "skk-dev",
+            "repo": "dict",
+            "rev": "0a164e6b990c5eb5b59eb7d8789f08865dc2f644",
+            "sha256": "sha256-xKMtHB54kVSwwwr+v248ewa7dwuavYVmc6KHrZwSdnM=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "0a164e6b990c5eb5b59eb7d8789f08865dc2f644"
+    },
     "yaskkserv2": {
         "cargoLock": null,
         "date": "2026-03-20",

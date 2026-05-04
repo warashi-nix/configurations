@@ -1,11 +1,26 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 let
+  sources = pkgs.callPackage ./_sources/generated.nix { };
+  l-dict = sources.skkdict.src + /SKK-JISYO.L;
   yaskkserv2 = pkgs.callPackage ./yaskkserv2.nix { };
+  make-dict = lib.getExe' yaskkserv2 "yaskkserv2_make_dictionary";
+  dict = pkgs.runCommand "yaskkserv2_dictionary" { } ''
+    exec ${make-dict} --dictionary-filename=$out ${l-dict}
+  '';
 in
 {
-  home = {
-    packages = [
-      yaskkserv2
-    ];
+  launchd = {
+    agents = {
+      yaskkserv2 = {
+        enable = true;
+        config = {
+          Program = lib.getExe' yaskkserv2 "yaskkserv2";
+          ProgramArguments = [
+            dict.outPath
+          ];
+          RunAtLoad = true;
+        };
+      };
+    };
   };
 }

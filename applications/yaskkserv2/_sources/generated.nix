@@ -6,6 +6,18 @@
   dockerTools,
 }:
 {
+  skkdict = {
+    pname = "skkdict";
+    version = "0a164e6b990c5eb5b59eb7d8789f08865dc2f644";
+    src = fetchFromGitHub {
+      owner = "skk-dev";
+      repo = "dict";
+      rev = "0a164e6b990c5eb5b59eb7d8789f08865dc2f644";
+      fetchSubmodules = false;
+      sha256 = "sha256-xKMtHB54kVSwwwr+v248ewa7dwuavYVmc6KHrZwSdnM=";
+    };
+    date = "2026-04-12";
+  };
   yaskkserv2 = {
     pname = "yaskkserv2";
     version = "f5bc4590c798c591e9861e02ea2e12d227a047ed";

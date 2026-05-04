@@ -1,3 +1,7 @@
 [yaskkserv2]
 src.git = "https://github.com/wachikun/yaskkserv2.git"
 fetch.github = "wachikun/yaskkserv2"
+
+[skkdict]
+src.git = "https://github.com/skk-dev/dict.git"
+fetch.github = "skk-dev/dict"
