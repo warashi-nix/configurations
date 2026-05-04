@@ -24,38 +24,9 @@ let
       fi
     '';
   };
-
-  tmux-default-shell = pkgs.writeShellApplication {
-    name = "tmux-default-shell";
-    runtimeInputs = [
-      pkgs.tmux
-      vim-as-ime
-    ];
-    text = ''
-      while true; do
-        vime
-        tmux detach-client
-      done
-    '';
-  };
-
-  tmux-config = pkgs.replaceVars ./tmux.conf {
-    tmux_default_shell = lib.getExe tmux-default-shell;
-  };
-
-  vime-tmux-session = pkgs.writeShellApplication {
-    name = "vime-tmux-session";
-    runtimeInputs = [
-      pkgs.tmux
-    ];
-    text = ''
-      exec tmux -L vime-session -f '${tmux-config}' new-session -A
-    '';
-  };
 in
 {
   home.packages = [
     vim-as-ime
-    vime-tmux-session
   ];
 }
