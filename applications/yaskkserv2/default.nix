@@ -17,7 +17,6 @@ in
           Program = lib.getExe' yaskkserv2 "yaskkserv2";
           ProgramArguments = [
             "--google-japanese-input=disable"
-            "--midashi-utf8"
             dict.outPath
           ];
           RunAtLoad = true;
