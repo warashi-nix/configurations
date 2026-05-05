@@ -34,7 +34,7 @@ jobs:
       - name: List nvfetcher.toml
         id: list-nvfetcher
         run: |
-          echo "dirs=$(find . -name nvfetcher.toml -exec dirname {} \; | sort | jq -nR '[inputs | select(length>0)])" >> $GITHUB_OUTPUT
+          echo "dirs=$(find . -name nvfetcher.toml -exec dirname {} \; | sort | jq -nR '[inputs | select(length>0)]')" >> $GITHUB_OUTPUT
 
   update-flake-inputs:
     runs-on: ubuntu-slim
