@@ -1,4 +1,4 @@
-name: Update Nix Flake Inputs
+name: Update Nix Flake Inputs and nvfetcher.toml
 
 on:
   workflow_dispatch: {}
