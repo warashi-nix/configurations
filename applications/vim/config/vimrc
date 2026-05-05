@@ -11,6 +11,29 @@ set runtimepath^=@merged_plugins@
 
 set clipboard=unnamedplus
 
+set autoread
+set showcmd
+set number
+set numberwidth=6
+set smartindent
+set visualbell
+set showmatch
+set laststatus=2
+syntax enable
+
+set expandtab
+set tabstop=2
+set shiftwidth=2
+
+set ignorecase
+set smartcase
+set incsearch
+set wrapscan
+set hlsearch
+
+set background=light
+colorscheme wildcharm
+
 " --------------------------------------------------
 "  Skkeleton Configuration
 " --------------------------------------------------
