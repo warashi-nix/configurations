@@ -22,6 +22,20 @@ jobs:
         id: list-flake-inputs
         run: echo "inputs=$(jq -c '.nodes[.root].inputs | keys' flake.lock)" >> $GITHUB_OUTPUT
 
+  list-nvfetcher:
+    runs-on: ubuntu-slim
+    outputs:
+      dirs: ${{ steps.list-nvfetcher.outputs.dirs }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          show-progress: false
+      - name: List nvfetcher.toml
+        id: list-nvfetcher
+        run: |
+          echo "dirs=$(find . -name nvfetcher.toml -exec dirname {} \; | sort | jq -nR '[inputs | select(length>0)])" >> $GITHUB_OUTPUT
+
   update-flake-inputs:
     runs-on: ubuntu-slim
     needs: list-flake-inputs
@@ -30,7 +44,7 @@ jobs:
         input: ${{ fromJson(needs.list-flake-inputs.outputs.inputs) }}
     steps:
       - name: Install Nix
-        uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
           extra_nix_config: |
             accept-flake-config = true
@@ -67,6 +81,58 @@ jobs:
             git commit -m "chore: update flake inputs (${TARGET_INPUT})"
             git push --force origin HEAD
             gh pr create --title "chore: update flake inputs (${TARGET_INPUT})" --body "This PR updates the flake inputs (${TARGET_INPUT}) to their latest versions." || echo "PR is already open"
+            gh pr merge --auto --squash || echo "Failed to merge PR"
+          else
+            echo "No changes to commit"
+          fi
+
+  update-nvfetcher:
+    runs-on: ubuntu-slim
+    needs: list-nvfetcher
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.list-nvfetcher.outputs.dirs) }}
+    steps:
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+        with:
+          extra_nix_config: |
+            accept-flake-config = true
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          client-id: ${{ vars.NIX_UPDATER_CLIENT_ID }}
+          private-key: ${{ secrets.NIX_UPDATER_APP_PRIVATE_KEY }}
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+          show-progress: false
+      - name: Prepare git
+        env:
+          TARGET_DIR: ${{ matrix.dir }}
+        run: |
+          branch_name="${TARGET_DIR#./}"
+          branch_name="${branch_name//\//-}"
+
+          git config user.name "warashi-nix-updater[bot]"
+          git config user.email "265781387+warashi-nix-updater[bot]@users.noreply.github.com"
+          git switch -c "update-nvfetcher-${branch_name}"
+      - name: Update nvfetcher
+        run: nix run 'nixpkgs#nvfetcher'
+        working-directory: ${{ matrix.dir }}
+      - name: Commit and create pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_DIR: ${{ matrix.dir }}
+        run: |
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update nvfetcher (${TARGET_DIR})"
+            git push --force origin HEAD
+            gh pr create --title "chore: update nvfetcher.toml (${TARGET_DIR})" --body "This PR updates the nvfetcher.toml (${TARGET_DIR}) to their latest versions." || echo "PR is already open"
             gh pr merge --auto --squash || echo "Failed to merge PR"
           else
             echo "No changes to commit"
