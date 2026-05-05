@@ -30,4 +30,16 @@
     };
     date = "2026-05-05";
   };
+  vim-nix = {
+    pname = "vim-nix";
+    version = "7235c7ce2cea530cb6b59bc3e46d4bfe917d15c8";
+    src = fetchFromGitHub {
+      owner = "LnL7";
+      repo = "vim-nix";
+      rev = "7235c7ce2cea530cb6b59bc3e46d4bfe917d15c8";
+      fetchSubmodules = false;
+      sha256 = "sha256-Hmn8EVlvMQnQF8COeb89cgl5+A83kagOjGsmvm5WNoE=";
+    };
+    date = "2025-02-01";
+  };
 }
