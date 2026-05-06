@@ -1,3 +1,5 @@
+vim9script noclear
+
 language message C
 set nocompatible
 
@@ -5,7 +7,7 @@ augroup MyAutoCmd
   autocmd!
 augroup END
 
-let g:denops#deno = '@deno@'
+g:denops#deno = '@deno@'
 
 set runtimepath^=@merged_plugins@
 
@@ -34,17 +36,18 @@ set hlsearch
 set background=light
 colorscheme wildcharm
 
-" --------------------------------------------------
-"  Skkeleton Configuration
-" --------------------------------------------------
-function s:skkeleton_initialize()
-  call skkeleton#config(#{
-  \   sources: ['skk_server'],
-  \ })
-endfunction
+# --------------------------------------------------
+#  Skkeleton Configuration
+# --------------------------------------------------
+
+def SkkeletonInitialize()
+  skkeleton#config({
+    sources: ['skk_server']
+  })
+enddef
 
 inoremap <C-j> <Plug>(skkeleton-enable)
 
 augroup MyAutoCmd
-  autocmd User skkeleton-initialize-pre call s:skkeleton_initialize()
+  autocmd User skkeleton-initialize-pre SkkeletonInitialize()
 augroup END
