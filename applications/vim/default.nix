@@ -55,7 +55,9 @@ in
 {
   config = {
     home.packages = with pkgs; [
-      vim
+      (pkgs.vim.overrideAttrs {
+        src = inputs.vim-src;
+      })
     ];
     xdg = {
       configFile = {

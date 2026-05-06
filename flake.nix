@@ -41,6 +41,10 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    vim-src = {
+      url = "github:vim/vim";
+      flake = false;
+    };
     # keep-sorted end
   };
 
