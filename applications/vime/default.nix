@@ -17,7 +17,7 @@ let
     text = ''
       clip="$(mktemp /tmp/clip.XXXXXX.md)"
       trap 'rm -f $clip' EXIT
-      vim -u '${vimrc}' "$clip"
+      vim -N -u '${vimrc}' "$clip"
       if [[ -s "$clip" ]]; then
         # Remove trailing newline and copy to clipboard
         head -c -1 "$clip" | pbcopy

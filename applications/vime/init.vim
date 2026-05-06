@@ -1,3 +1,5 @@
+vim9script
+
 language message C
 set nocompatible
 
@@ -5,32 +7,34 @@ augroup MyAutoCmd
   autocmd!
 augroup END
 
-let g:denops#deno = '@deno@'
+g:denops#deno = '@deno@'
 
 set runtimepath^=@denops@
 set runtimepath^=@skkeleton@
 
-" --------------------------------------------------
-"  Skkeleton Configuration
-" --------------------------------------------------
-function s:skkeleton_initialize()
-  call skkeleton#config(#{
-  \   sources: ['skk_server'],
-  \ })
-endfunction
+# --------------------------------------------------
+#  Skkeleton Configuration
+# --------------------------------------------------
+
+def SkkeletonInitialize()
+  skkeleton#config({
+    sources: ['skk_server']
+  })
+enddef
 
 inoremap <C-j> <Plug>(skkeleton-enable)
 
 augroup MyAutoCmd
-  autocmd User skkeleton-initialize-pre call s:skkeleton_initialize()
+  autocmd User skkeleton-initialize-pre SkkeletonInitialize()
 augroup END
 
-call skkeleton#initialize()
+skkeleton#initialize()
 
-" --------------------------------------------------
-"  Start in Insert Mode
-" --------------------------------------------------
+# --------------------------------------------------
+#  Start in Insert Mode
+# --------------------------------------------------
+
 augroup MyAutoCmd
-  autocmd InsertEnter * ++once call skkeleton#handle('enable', {})
+  autocmd InsertEnter * ++once skkeleton#handle('enable', {})
   autocmd BufWinEnter * startinsert
 augroup END
