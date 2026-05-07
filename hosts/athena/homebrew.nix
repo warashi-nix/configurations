@@ -18,6 +18,7 @@
       "discord"
       "domzilla-caffeine"
       "elecom-mouse-util"
+      "firefox"
       "font-biz-udgothic"
       "font-biz-udmincho"
       "font-biz-udpgothic"
