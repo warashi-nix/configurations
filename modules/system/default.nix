@@ -1,8 +1,9 @@
 {
   inputs,
+  options,
   config,
-  lib,
   pkgs,
+  lib,
   ...
 }:
 with lib;
@@ -18,21 +19,21 @@ in
       description = "Enable common system support.";
     };
     shell = mkOption {
-      type = types.package;
-      default = pkgs.fish;
-      description = "Default shell for the primary user.";
+      type = types.str;
+      default = "fish";
+      description = "Name of the default shell for the primary user (e.g., 'fish', 'zsh').";
     };
   };
 
   config = mkIf cfg.enable {
     users.users.${username} = {
-      inherit (cfg) shell;
+      shell = pkgs.${cfg.shell};
     };
 
-    environment.shells = [ cfg.shell ];
+    environment.shells = [ pkgs.${cfg.shell} ];
 
-    programs = mkIf (config.programs ? "${cfg.shell.pname}") {
-      "${cfg.shell.pname}".enable = true;
+    programs = mkIf (options.programs ? "${cfg.shell}") {
+      "${cfg.shell}".enable = true;
     };
   };
 }
