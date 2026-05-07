@@ -1,4 +1,5 @@
 {
+  platform,
   inputs,
   config,
   lib,
@@ -12,7 +13,9 @@ in
 {
   imports = (
     builtins.map (module: ./. + "/${module}") (
-      builtins.filter (x: x != "default.nix") (builtins.attrNames (builtins.readDir ./.))
+      builtins.filter (x: x != "default.nix" && (x == platform || (x != "nixos" && x != "darwin"))) (
+        builtins.attrNames (builtins.readDir ./.)
+      )
     )
   );
 

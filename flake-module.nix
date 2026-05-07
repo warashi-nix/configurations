@@ -71,7 +71,7 @@ in
               ++ cfg.modules;
             specialArgs = {
               inherit self inputs;
-              inherit (cfg) username;
+              inherit (cfg) username platform;
             }
             // cfg.specialArgs;
           }
