@@ -18,7 +18,6 @@ in
         inputs.direnv-instant.homeModules.direnv-instant
         # keep-sorted end
 
-        ../../homes/${config.networking.hostName}
         ../../applications
       ];
       programs = {
