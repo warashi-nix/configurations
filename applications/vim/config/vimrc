@@ -11,7 +11,7 @@ g:denops#deno = '@deno@'
 
 set runtimepath^=@merged_plugins@
 
-set clipboard=unnamedplus
+set clipboard=unnamed,unnamedplus
 
 set autoread
 set showcmd
