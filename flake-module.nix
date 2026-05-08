@@ -39,10 +39,6 @@ in
               default = [ ];
               type = types.listOf types.path;
             };
-            username = mkOption {
-              default = "warashi";
-              type = types.str;
-            };
             specialArgs = mkOption {
               default = { };
               type = types.attrs;
@@ -71,7 +67,7 @@ in
               ++ cfg.modules;
             specialArgs = {
               inherit self inputs;
-              inherit (cfg) username platform;
+              inherit (cfg) platform;
             }
             // cfg.specialArgs;
           }
