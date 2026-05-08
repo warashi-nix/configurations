@@ -9,11 +9,12 @@
 with lib;
 let
   cfg = config.warashi;
+  shouldImportModule = x: x != "default.nix" && (x == platform || (x != "nixos" && x != "darwin"));
 in
 {
   imports = (
     builtins.map (module: ./. + "/${module}") (
-      builtins.filter (x: x != "default.nix" && (x == platform || (x != "nixos" && x != "darwin"))) (
+      builtins.filter shouldImportModule (
         builtins.attrNames (builtins.readDir ./.)
       )
     )
