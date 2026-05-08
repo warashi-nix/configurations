@@ -32,9 +32,10 @@ in
 
   services = {
     skhd = {
-      enable = true;
+      enable = pkgs.stdenv.isDarwin;
       config = ''
-        meh - i : open -na Alacritty.app --args --command ${lib.getExe vim-as-ime}
+        meh - i : open -a Alacritty.app --args --command ${lib.getExe vim-as-ime}
+        hyper - i : open -na Alacritty.app --args --command ${lib.getExe vim-as-ime}
       '';
     };
   };
