@@ -32,8 +32,12 @@ in
 
     environment.shells = [ pkgs.${cfg.shell} ];
 
-    programs = mkIf (options.programs ? "${cfg.shell}") {
-      "${cfg.shell}".enable = true;
-    };
+    programs =
+      if cfg.shell == "fish" then
+        { fish.enable = true; }
+      else if cfg.shell == "zsh" then
+        { zsh.enable = true; }
+      else
+        { };
   };
 }
