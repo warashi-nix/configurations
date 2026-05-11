@@ -60,6 +60,6 @@ set-option -g allow-passthrough on
 
 # promptpane
 bind -n M-q run-shell \
-	'tmux split-window -v -l 20 \
+	'tmux split-window -v -l 10 \
 		-c "#{pane_current_path}" \
 		"vim promptpane://tmux/#{pane_id}"'
