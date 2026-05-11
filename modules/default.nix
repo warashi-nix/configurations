@@ -14,9 +14,7 @@ in
 {
   imports = (
     builtins.map (module: ./. + "/${module}") (
-      builtins.filter shouldImportModule (
-        builtins.attrNames (builtins.readDir ./.)
-      )
+      builtins.filter shouldImportModule (builtins.attrNames (builtins.readDir ./.))
     )
   );
 

@@ -1,0 +1,19 @@
+[denops-vim]
+src.git = "https://github.com/vim-denops/denops.vim.git"
+fetch.github = "vim-denops/denops.vim"
+
+[skkeleton]
+src.git = "https://github.com/vim-skk/skkeleton.git"
+fetch.github = "vim-skk/skkeleton"
+
+[vim-nix]
+src.git = "https://github.com/LnL7/vim-nix.git"
+fetch.github = "LnL7/vim-nix"
+
+[vim-lsp]
+src.git = "https://github.com/prabirshrestha/vim-lsp.git"
+fetch.github = "prabirshrestha/vim-lsp"
+
+[vim-lsp-settings]
+src.git = "https://github.com/mattn/vim-lsp-settings.git"
+fetch.github = "mattn/vim-lsp-settings"

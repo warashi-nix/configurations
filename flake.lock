@@ -166,8 +166,7 @@
         "git-hooks": "git-hooks",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
-        "treefmt-nix": "treefmt-nix",
-        "vim-src": "vim-src"
+        "treefmt-nix": "treefmt-nix"
       }
     },
     "treefmt-nix": {
@@ -187,22 +186,6 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "vim-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778520181,
-        "narHash": "sha256-q/ihLTPyUqz67ZINxqSIkgqDFh9BWGjPQaH2EZaq6GQ=",
-        "owner": "vim",
-        "repo": "vim",
-        "rev": "f45ed6465dd6d219b72c61758158dd4038a5ef95",
-        "type": "github"
-      },
-      "original": {
-        "owner": "vim",
-        "repo": "vim",
         "type": "github"
       }
     }
