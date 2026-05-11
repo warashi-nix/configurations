@@ -6,7 +6,7 @@
     clearDefaultKeybinds = false;
     settings = {
       font-size = 18;
-      font-family = "UDEV Gothic NFLG";
+      font-family = "PlemolJP Console NF";
       theme = "light:Modus Operandi,dark:Modus Vivendi";
       shell-integration = "none";
       working-directory = "home";
