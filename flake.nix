@@ -58,87 +58,98 @@
 
   outputs =
     { self, flake-parts, ... }@inputs:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "aarch64-darwin"
-      ];
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { flake-parts-lib, ... }:
+      let
+        inherit (flake-parts-lib) importApply;
+        flakeModules.default = importApply ./flake-module.nix { localFlake = self; };
+      in
+      {
+        systems = [
+          "x86_64-linux"
+          "aarch64-linux"
+          "aarch64-darwin"
+        ];
 
-      imports = [
-        # keep-sorted start
-        ./flake-module.nix
-        ./hosts.nix
-        inputs.devshell.flakeModule
-        inputs.git-hooks.flakeModule
-        inputs.treefmt-nix.flakeModule
-        # keep-sorted end
-      ];
+        imports = [
+          # keep-sorted start
+          ./hosts.nix
+          flakeModules.default
+          inputs.devshell.flakeModule
+          inputs.git-hooks.flakeModule
+          inputs.treefmt-nix.flakeModule
+          # keep-sorted end
+        ];
 
-      perSystem =
-        {
-          config,
-          pkgs,
-          ...
-        }:
-        {
-          pre-commit = {
-            check.enable = true;
-            settings = {
-              src = ./.;
-              hooks = {
-                actionlint.enable = false;
-                treefmt.enable = true;
+        flake = {
+          inherit flakeModules;
+        };
+
+        perSystem =
+          {
+            config,
+            pkgs,
+            ...
+          }:
+          {
+            pre-commit = {
+              check.enable = true;
+              settings = {
+                src = ./.;
+                hooks = {
+                  actionlint.enable = false;
+                  treefmt.enable = true;
+                };
               };
             };
-          };
 
-          treefmt = {
-            projectRootFile = "flake.nix";
-            programs = {
-              # keep-sorted start
-              keep-sorted.enable = true;
-              nixfmt.enable = true;
-              pinact.enable = true;
-              # keep-sorted end
-            };
-            settings = {
-              formatter = {
-                # keep-sorted start block=yes
-                nixfmt = {
-                  excludes = [
-                    "**/_sources/generated.nix" # nvfetcher generatee sources
-                  ];
-                };
-                tombi = {
-                  command = pkgs.lib.getExe pkgs.tombi;
-                  options = [ "format" ];
-                  includes = [ "*.toml" ];
-                };
+            treefmt = {
+              projectRootFile = "flake.nix";
+              programs = {
+                # keep-sorted start
+                keep-sorted.enable = true;
+                nixfmt.enable = true;
+                pinact.enable = true;
                 # keep-sorted end
               };
-            };
-          };
-
-          devshells.default = {
-            devshell = {
-              packages =
-                with pkgs;
-                [
-                  # keep-sorted start
-                  just
-                  nix-output-monitor
-                  nvfetcher
+              settings = {
+                formatter = {
+                  # keep-sorted start block=yes
+                  nixfmt = {
+                    excludes = [
+                      "**/_sources/generated.nix" # nvfetcher generatee sources
+                    ];
+                  };
+                  tombi = {
+                    command = pkgs.lib.getExe pkgs.tombi;
+                    options = [ "format" ];
+                    includes = [ "*.toml" ];
+                  };
                   # keep-sorted end
-                ]
-                ++ config.pre-commit.settings.enabledPackages;
-              startup = {
-                pre-commit = {
-                  text = config.pre-commit.shellHook;
+                };
+              };
+            };
+
+            devshells.default = {
+              devshell = {
+                packages =
+                  with pkgs;
+                  [
+                    # keep-sorted start
+                    just
+                    nix-output-monitor
+                    nvfetcher
+                    # keep-sorted end
+                  ]
+                  ++ config.pre-commit.settings.enabledPackages;
+                startup = {
+                  pre-commit = {
+                    text = config.pre-commit.shellHook;
+                  };
                 };
               };
             };
           };
-        };
-    };
+      }
+    );
 }

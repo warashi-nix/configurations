@@ -1,3 +1,4 @@
+{ localFlake }:
 {
   self,
   inputs,
@@ -7,14 +8,15 @@
 }:
 let
   inherit (lib) mkOption types;
+  inputs' = localFlake.inputs // inputs;
   getDefaultPlatform =
     system: if (lib.last (lib.splitString "-" system)) == "linux" then "nixos" else "darwin";
   systemConfigurations =
     platform: hostname: attrs:
     if platform == "nixos" then
-      { nixosConfigurations."${hostname}" = inputs.nixpkgs.lib.nixosSystem attrs; }
+      { nixosConfigurations."${hostname}" = inputs'.nixpkgs.lib.nixosSystem attrs; }
     else if platform == "darwin" then
-      { darwinConfigurations."${hostname}" = inputs.darwin.lib.darwinSystem attrs; }
+      { darwinConfigurations."${hostname}" = inputs'.darwin.lib.darwinSystem attrs; }
     else
       throw "unreachable";
   forEachAttrs = attrs: f: builtins.mapAttrs f attrs;
@@ -58,16 +60,16 @@ in
             inherit (cfg) system;
             modules =
               lib.filter (x: x != null) [
-                ./modules
-                (maybePath ./hosts/${name})
-                (maybePath ./homes/${name})
+                (localFlake + /modules)
+                (maybePath (self + /hosts/${name}))
+                (maybePath (self + /homes/${name}))
               ]
-              ++ (lib.optional (cfg.platform == "nixos") inputs.home-manager.nixosModules.home-manager)
-              ++ (lib.optional (cfg.platform == "darwin") inputs.home-manager.darwinModules.home-manager)
+              ++ (lib.optional (cfg.platform == "nixos") inputs'.home-manager.nixosModules.home-manager)
+              ++ (lib.optional (cfg.platform == "darwin") inputs'.home-manager.darwinModules.home-manager)
               ++ cfg.modules;
             specialArgs = {
-              inherit self inputs;
               inherit (cfg) platform;
+              inputs = inputs';
             }
             // cfg.specialArgs;
           }
