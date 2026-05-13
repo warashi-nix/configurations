@@ -51,7 +51,7 @@ def FetchCopilotCompletion()
   final params = {
     textDocument: { uri: uri },
     position: lsp_pos,
-    context: { triggerKind: 1 }
+    context: { triggerKind: 2 }
   }
 
   lsp#send_request(server_name, {
