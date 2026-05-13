@@ -13,11 +13,11 @@
             "name": null,
             "owner": "vim",
             "repo": "vim",
-            "rev": "38237411e4e202a96b0efe41567505331114bfa8",
-            "sha256": "sha256-Xq6quJn9UpBVQ9rQNFFb10a3Za3HQmgua+yP2UmCi/A=",
+            "rev": "702d32e16168be35cedd1519de981163010f193b",
+            "sha256": "sha256-LjfTSm+3PrmLCX4UON69WV5sWkTnIVwdy5FKzIo3+XE=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "38237411e4e202a96b0efe41567505331114bfa8"
+        "version": "702d32e16168be35cedd1519de981163010f193b"
     }
 }
