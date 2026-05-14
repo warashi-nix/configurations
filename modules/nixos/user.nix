@@ -1,0 +1,28 @@
+{ config, ... }:
+let
+  inherit (config.warashi) username;
+in
+{
+  users = {
+    mutableUsers = false;
+
+    users.${username} = {
+      home = "/home/${username}";
+      isNormalUser = true;
+      linger = true;
+      autoSubUidGidRange = true;
+      hashedPasswordFile =
+        if config.sops.secrets ? login-password then config.sops.secrets.login-password.path else null;
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+        "docker"
+      ];
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/w9P7ws2J3mqoYBFbqcnIPw2idc8NYsoEF/Z3p87DL"
+      ];
+    };
+  };
+
+  sops.secrets.login-password.neededForUsers = true;
+}
