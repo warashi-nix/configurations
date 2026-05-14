@@ -2,6 +2,8 @@
   pkgs,
   lib,
   rustPlatform,
+  pkg-config,
+  openssl,
 }:
 let
   sources = pkgs.callPackage ./_sources/generated.nix { };
@@ -11,5 +13,14 @@ rustPlatform.buildRustPackage rec {
   cargoLock = {
     lockFile = src + /Cargo.lock;
   };
+
+  nativeBuildInputs = [
+    pkg-config
+  ];
+
+  buildInputs = [
+    openssl
+  ];
+
   doCheck = false;
 }
