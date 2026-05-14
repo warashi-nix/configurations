@@ -19,7 +19,7 @@ def ClearGhostText()
 enddef
 
 def ShowGhostText(line: number, col: number, text: string)
-  ClearGhostText()
+  prop_remove({ type: prop_type_name, all: v:true })
 
   final first_line = split(text, '\n')[0]
   if empty(first_line)
