@@ -9,6 +9,28 @@ let
   '';
 in
 {
+  systemd = {
+    user = {
+      services = {
+        yaskkserv2 = {
+          Unit = {
+            Description = "SKK Server";
+          };
+          Service = {
+            ExecStart = [
+              (lib.getExe' yaskkserv2 "yaskkserv2")
+              "--google-japanese-input=disable"
+              dict.outPath
+            ];
+            Restart = "always";
+          };
+          Install = {
+            WantedBy = "default.target";
+          };
+        };
+      };
+    };
+  };
   launchd = {
     agents = {
       yaskkserv2 = {
