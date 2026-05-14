@@ -84,13 +84,40 @@ def HandleCopilotResponse(data: dict<any>, req_bufnr: number, req_lsp_pos: dict<
     return
   endif
 
-  final insert_text = result.items[0].insertText
+  final item = result.items[0]
+  final insert_text = item.insertText
   if empty(insert_text)
     return
   endif
 
-  current_suggestion = insert_text
-  ShowGhostText(req_line, req_col, insert_text)
+  var ghost_text = insert_text
+
+  # 補完テキストが置換範囲 (range) を指定している場合、
+  # カーソル位置までの入力済み文字列と重複する部分を削る
+  if has_key(item, 'range') && has_key(item.range, 'start')
+    final start_pos = lsp#utils#position#lsp_to_vim(req_bufnr, item.range.start)
+    final start_col = start_pos[1]
+
+    # range の開始位置がカーソルより前にある場合は重複がある
+    if req_col > start_col
+      final overlap_len = req_col - start_col
+      # バッファ上にあるすでに入力済みの文字列を取得
+      final overlap_str = strpart(getline(req_line), start_col - 1, overlap_len)
+
+      # insert_text の先頭が入力済み文字列と一致していれば、その部分を削除する
+      if strpart(insert_text, 0, len(overlap_str)) ==# overlap_str
+        ghost_text = strpart(insert_text, len(overlap_str))
+      endif
+    endif
+  endif
+
+  # 重複を削った結果、表示するものが無くなった場合は終了
+  if empty(ghost_text)
+    return
+  endif
+
+  current_suggestion = ghost_text
+  ShowGhostText(req_line, req_col, ghost_text)
 enddef
 
 # -------------------------------------------------------------------------
