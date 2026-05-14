@@ -1,7 +1,0 @@
-[denops-vim]
-src.git = "https://github.com/vim-denops/denops.vim.git"
-fetch.github = "vim-denops/denops.vim"
-
-[skkeleton]
-src.git = "https://github.com/vim-skk/skkeleton.git"
-fetch.github = "vim-skk/skkeleton"

@@ -26,12 +26,37 @@ let
       exec vim "$@"
     '';
   };
+  vim-as-ime = pkgs.writeShellApplication {
+    name = "vime";
+    runtimeInputs = [
+      vim-with-deps
+      pkgs.coreutils
+    ];
+    text = ''
+      clip="$(mktemp /tmp/clip.XXXXXX.md)"
+      trap 'rm -f $clip' EXIT
+      vim "$clip"
+      if [[ -s "$clip" ]]; then
+        # Remove trailing newline and copy to clipboard
+        head -c -1 "$clip" | pbcopy
+      fi
+    '';
+  };
 in
 {
   config = {
     home.packages = [
       vim-with-deps
     ];
+    services = {
+      skhd = {
+        enable = pkgs.stdenv.isDarwin;
+        config = ''
+          meh - i : open -a Alacritty.app --args --command ${lib.getExe vim-as-ime}
+          hyper - i : open -na Alacritty.app --args --command ${lib.getExe vim-as-ime}
+        '';
+      };
+    };
     xdg = {
       configFile = {
         "vim" = {
