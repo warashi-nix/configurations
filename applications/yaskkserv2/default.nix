@@ -17,11 +17,7 @@ in
             Description = "SKK Server";
           };
           Service = {
-            ExecStart = [
-              (lib.getExe' yaskkserv2 "yaskkserv2")
-              "--google-japanese-input=disable"
-              dict.outPath
-            ];
+            ExecStart = "${lib.getExe' yaskkserv2 "yaskkserv2"} --google-japanese-input=disable ${dict.outPath}";
             Restart = "always";
           };
           Install = {
