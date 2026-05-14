@@ -63,8 +63,6 @@ in
                 (localFlake + /modules)
                 (maybePath (self + /hosts/${name}))
               ]
-              ++ (lib.optional (cfg.platform == "nixos") inputs'.home-manager.nixosModules.home-manager)
-              ++ (lib.optional (cfg.platform == "darwin") inputs'.home-manager.darwinModules.home-manager)
               ++ cfg.modules;
             specialArgs = {
               inherit (cfg) platform;

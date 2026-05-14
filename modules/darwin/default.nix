@@ -11,6 +11,10 @@ let
   cfg = config.warashi.darwin;
 in
 {
+  imports = [
+    inputs.home-manager.darwinModules.home-manager
+  ];
+
   options.warashi.darwin = {
     enable = mkOption {
       type = types.bool;
