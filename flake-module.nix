@@ -62,7 +62,6 @@ in
               lib.filter (x: x != null) [
                 (localFlake + /modules)
                 (maybePath (self + /hosts/${name}))
-                (maybePath (self + /homes/${name}))
               ]
               ++ (lib.optional (cfg.platform == "nixos") inputs'.home-manager.nixosModules.home-manager)
               ++ (lib.optional (cfg.platform == "darwin") inputs'.home-manager.darwinModules.home-manager)
