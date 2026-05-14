@@ -25,7 +25,7 @@ in
             Restart = "always";
           };
           Install = {
-            WantedBy = "default.target";
+            WantedBy = [ "default.target" ];
           };
         };
       };
