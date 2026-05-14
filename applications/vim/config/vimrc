@@ -110,6 +110,7 @@ augroup lsp_install
   autocmd User lsp_buffer_enabled OnLspBufferEnabled()
 augroup END
 
+g:lsp_settings_enable_suggestions = false
 g:lsp_settings = {
   copilot-language-server: {
     disabled: false,
