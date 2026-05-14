@@ -13,10 +13,9 @@ in
 {
   config = mkIf cfg.enableDarwin {
     home-manager = {
-      useGlobalPkgs = true;
-      useUserPackages = true;
       users.${username} = {
         home = {
+          homeDirectory = "/Users/${username}";
           sessionPath = [
             "/opt/homebrew/bin"
           ];

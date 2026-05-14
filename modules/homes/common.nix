@@ -12,34 +12,39 @@ let
 in
 {
   config = mkIf cfg.enable {
-    home-manager.users.${username} = {
-      imports = [
-        # keep-sorted start
-        inputs.direnv-instant.homeModules.direnv-instant
-        inputs.sops-nix.homeManagerModules.sops
-        # keep-sorted end
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
 
-        ../../applications
-      ];
-      programs = {
-        home-manager.enable = true;
-      };
+      users.${username} = {
+        imports = [
+          # keep-sorted start
+          inputs.direnv-instant.homeModules.direnv-instant
+          inputs.sops-nix.homeManagerModules.sops
+          # keep-sorted end
 
-      home = {
-        preferXdgDirectories = true;
-
-        sessionPath = [
-          "${config.home-manager.users.${username}.home.homeDirectory}/.local/bin"
+          ../../applications
         ];
-
-        sessionVariables = {
-          EDITOR = "vim";
+        programs = {
+          home-manager.enable = true;
         };
 
-        stateVersion = "24.11";
-      };
+        home = {
+          preferXdgDirectories = true;
 
-      xdg.enable = true;
+          sessionPath = [
+            "${config.home-manager.users.${username}.home.homeDirectory}/.local/bin"
+          ];
+
+          sessionVariables = {
+            EDITOR = "vim";
+          };
+
+          stateVersion = "24.11";
+        };
+
+        xdg.enable = true;
+      };
     };
   };
 }
