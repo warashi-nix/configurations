@@ -136,9 +136,12 @@
                   with pkgs;
                   [
                     # keep-sorted start
+                    age
                     just
-                    nix-output-monitor
+                    nix-fast-build
                     nvfetcher
+                    sops
+                    ssh-to-age
                     # keep-sorted end
                   ]
                   ++ config.pre-commit.settings.enabledPackages;
