@@ -19,6 +19,10 @@
         treefmt-nix.follows = "treefmt-nix";
       };
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
@@ -36,6 +40,10 @@
     };
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";

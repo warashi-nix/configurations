@@ -16,6 +16,7 @@ in
       imports = [
         # keep-sorted start
         inputs.direnv-instant.homeModules.direnv-instant
+        inputs.sops-nix.homeManagerModules.sops
         # keep-sorted end
 
         ../../applications

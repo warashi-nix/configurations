@@ -12,7 +12,10 @@ let
 in
 {
   imports = [
+    # keep-sorted start
     inputs.home-manager.darwinModules.home-manager
+    inputs.sops-nix.darwinModules.sops
+    # keep-sorted end
   ];
 
   options.warashi.darwin = {
