@@ -17,7 +17,7 @@ in
             Description = "SKK Server";
           };
           Service = {
-            ExecStart = "${lib.getExe' yaskkserv2 "yaskkserv2"} --google-japanese-input=disable ${dict.outPath}";
+            ExecStart = "${lib.getExe' yaskkserv2 "yaskkserv2"} --no-daemonize --google-japanese-input=disable ${dict.outPath}";
             Restart = "always";
           };
           Install = {
@@ -34,6 +34,7 @@ in
         config = {
           Program = lib.getExe' yaskkserv2 "yaskkserv2";
           ProgramArguments = [
+            "--no-daemonize"
             "--google-japanese-input=disable"
             dict.outPath
           ];
