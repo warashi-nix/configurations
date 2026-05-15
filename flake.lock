@@ -86,6 +86,42 @@
         "type": "github"
       }
     },
+    "elisp-helpers": {
+      "inputs": {
+        "fromElisp": "fromElisp"
+      },
+      "locked": {
+        "lastModified": 1763784882,
+        "narHash": "sha256-ZaGDaT7hKNFh/RwT0YZqWL9AzFjRgpUPGGYbVVHJ4PM=",
+        "owner": "emacs-twist",
+        "repo": "elisp-helpers",
+        "rev": "6126c7bb179b13442c86e6f5ee9ff7b0c4837e53",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-twist",
+        "repo": "elisp-helpers",
+        "type": "github"
+      }
+    },
+    "emacs-twist": {
+      "inputs": {
+        "elisp-helpers": "elisp-helpers"
+      },
+      "locked": {
+        "lastModified": 1777471518,
+        "narHash": "sha256-hQUa5RIN1/nqJcdB/Zi09lDENDSeAgNtPBHPJU7GlHs=",
+        "owner": "emacs-twist",
+        "repo": "twist.nix",
+        "rev": "b44744e3b672a53c2a224f980047b4979f672ce4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-twist",
+        "repo": "twist.nix",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -101,6 +137,22 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "fromElisp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1723987997,
+        "narHash": "sha256-OhaVgTG6zjLByzl+uPTvtCld3p2uqgbCXmOl/s3LVRo=",
+        "owner": "talyz",
+        "repo": "fromElisp",
+        "rev": "f071a0e262c02c0895b575c4e322b7fd90713543",
+        "type": "github"
+      },
+      "original": {
+        "owner": "talyz",
+        "repo": "fromElisp",
         "type": "github"
       }
     },
@@ -146,6 +198,28 @@
         "type": "github"
       }
     },
+    "my-emacs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "org-babel": [
+          "org-babel"
+        ],
+        "twist": [
+          "emacs-twist"
+        ]
+      },
+      "locked": {
+        "path": "./applications/emacs/twist",
+        "type": "path"
+      },
+      "original": {
+        "path": "./applications/emacs/twist",
+        "type": "path"
+      },
+      "parent": []
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1778794387,
@@ -177,16 +251,34 @@
         "type": "github"
       }
     },
+    "org-babel": {
+      "locked": {
+        "lastModified": 1777311427,
+        "narHash": "sha256-5pUNDxoPEhW0d4aw5UnZiL3JzHbupls14GZwD2q8vLE=",
+        "owner": "emacs-twist",
+        "repo": "org-babel",
+        "rev": "bcd049a1a86779c421ab10027f1d4b78363dcc4e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-twist",
+        "repo": "org-babel",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "darwin": "darwin",
         "devshell": "devshell",
         "direnv-instant": "direnv-instant",
         "disko": "disko",
+        "emacs-twist": "emacs-twist",
         "flake-parts": "flake-parts",
         "git-hooks": "git-hooks",
         "home-manager": "home-manager",
+        "my-emacs": "my-emacs",
         "nixpkgs": "nixpkgs",
+        "org-babel": "org-babel",
         "sops-nix": "sops-nix",
         "treefmt-nix": "treefmt-nix"
       }

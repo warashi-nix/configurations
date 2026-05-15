@@ -23,6 +23,9 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    emacs-twist = {
+      url = "github:emacs-twist/twist.nix";
+    };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
@@ -38,8 +41,19 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    my-emacs = {
+      url = "path:./applications/emacs/twist";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        org-babel.follows = "org-babel";
+        twist.follows = "emacs-twist";
+      };
+    };
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    };
+    org-babel = {
+      url = "github:emacs-twist/org-babel";
     };
     sops-nix = {
       url = "github:Mic92/sops-nix";
@@ -95,11 +109,15 @@
 
         perSystem =
           {
+            inputs',
             config,
             pkgs,
             ...
           }:
           {
+            apps = inputs'.my-emacs.packages.default.makeApps {
+              lockDirName = "applications/emacs/twist/lock";
+            };
             pre-commit = {
               check.enable = true;
               settings = {

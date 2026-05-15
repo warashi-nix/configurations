@@ -1,0 +1,15 @@
+[melpa]
+src.git = "https://github.com/melpa/melpa.git"
+fetch.github = "melpa/melpa"
+
+[gnu-elpa]
+src.git = "https://github.com/elpa-mirrors/elpa.git"
+fetch.github = "elpa-mirrors/elpa"
+
+[nongnu-elpa]
+src.git = "https://github.com/elpa-mirrors/nongnu.git"
+fetch.github = "elpa-mirrors/nongnu"
+
+[epkgs]
+src.git = "https://github.com/emacsmirror/epkgs.git"
+fetch.github = "emacsmirror/epkgs"

@@ -1,0 +1,13 @@
+{
+  "nodes": {
+    "root": {
+      "inputs": {
+        "nixpkgs": [],
+        "org-babel": [],
+        "twist": []
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

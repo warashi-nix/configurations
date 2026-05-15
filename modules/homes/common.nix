@@ -20,6 +20,7 @@ in
         imports = [
           # keep-sorted start
           inputs.direnv-instant.homeModules.direnv-instant
+          inputs.emacs-twist.homeModules.emacs-twist
           inputs.sops-nix.homeManagerModules.sops
           # keep-sorted end
 

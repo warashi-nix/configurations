@@ -1,0 +1,86 @@
+{
+    "epkgs": {
+        "cargoLock": null,
+        "date": "2026-05-12",
+        "extract": null,
+        "name": "epkgs",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "emacsmirror",
+            "repo": "epkgs",
+            "rev": "5417aa18bca9eee05b9cd3b909013708a77eb751",
+            "sha256": "sha256-+1dhYBODv3xRfANHTyx8wzJV/RwfrKtBk8i/FEB1CuQ=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "5417aa18bca9eee05b9cd3b909013708a77eb751"
+    },
+    "gnu-elpa": {
+        "cargoLock": null,
+        "date": "2026-04-26",
+        "extract": null,
+        "name": "gnu-elpa",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "elpa-mirrors",
+            "repo": "elpa",
+            "rev": "677c0ba227ad9d5486f49cf1a9f7026cdc6f5d16",
+            "sha256": "sha256-NQvKApUjlJjlD6RAFrdtb9oa8GISVKp3E4PnoGdLRvY=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "677c0ba227ad9d5486f49cf1a9f7026cdc6f5d16"
+    },
+    "melpa": {
+        "cargoLock": null,
+        "date": "2026-05-15",
+        "extract": null,
+        "name": "melpa",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "melpa",
+            "repo": "melpa",
+            "rev": "687881e810dc8113d633bbd0ed8923d5e6e94cd7",
+            "sha256": "sha256-4Q5SUSuDDOVTkfSN8OpXv9+0iB6YlJcz3vPUhJFt9t4=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "687881e810dc8113d633bbd0ed8923d5e6e94cd7"
+    },
+    "nongnu-elpa": {
+        "cargoLock": null,
+        "date": "2026-04-02",
+        "extract": null,
+        "name": "nongnu-elpa",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "elpa-mirrors",
+            "repo": "nongnu",
+            "rev": "9589680ec7cf0ac153aa0a0c7f9feae602826ad6",
+            "sha256": "sha256-z6dxooNYIieHdDUVlepmjQWbxt2PzZMGRloh6hB9NNo=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "9589680ec7cf0ac153aa0a0c7f9feae602826ad6"
+    }
+}

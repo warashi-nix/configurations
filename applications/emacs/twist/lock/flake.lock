@@ -1,0 +1,27 @@
+{
+  "nodes": {
+    "root": {
+      "inputs": {
+        "setup": "setup"
+      }
+    },
+    "setup": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1761595148,
+        "narHash": "sha256-lLeKsLFf1+Bjk6ETq+0Nncw6DPOVxE49cAexdLAr/5U=",
+        "ref": "refs/heads/master",
+        "rev": "de9b86c6f29cf9888e911924ffc4ce47312320c3",
+        "revCount": 224,
+        "type": "git",
+        "url": "https://codeberg.org/pkal/setup.el"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/pkal/setup.el"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
