@@ -26,12 +26,6 @@ in
           linkApps.enable = false;
         };
       };
-
-      backupFileExtension = "backup";
-
-      extraSpecialArgs = {
-        inherit inputs specialArgs;
-      };
     };
   };
 }

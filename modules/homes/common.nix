@@ -46,6 +46,12 @@ in
 
         xdg.enable = true;
       };
+
+      backupFileExtension = "backup";
+
+      extraSpecialArgs = {
+        inherit inputs specialArgs;
+      };
     };
   };
 }
