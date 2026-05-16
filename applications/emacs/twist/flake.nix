@@ -32,6 +32,7 @@
             (tangleOrgBabelFile "init.el" ./init.org { })
           ];
           earlyInitFile = tangleOrgBabelFile "early-init.el" ./early-init.org { };
+          registries = pkgs.callPackage ./registries.nix { };
         }
       );
       packages = forAllSystems (
@@ -48,8 +49,8 @@
               initFiles
               initParser
               lockDir
+              registries
               ;
-            registries = pkgs.callPackage ./registries.nix { };
           };
         }
       );
