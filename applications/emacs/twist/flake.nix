@@ -25,12 +25,11 @@
             pkgs.writeText name (inputs.org-babel.lib.tangleOrgBabel options (builtins.readFile path));
         in
         {
+          emacsPackage = pkgs.emacs-nox;
           lockDir = ./lock;
           extraPackages = [ "setup" ];
           initParser = inputs.twist.lib.parseSetup { inherit (inputs.nixpkgs) lib; } { }; # for setup.el
-          initFiles = [
-            (tangleOrgBabelFile "init.el" ./init.org { })
-          ];
+          initFiles = [ (tangleOrgBabelFile "init.el" ./init.org { }) ];
           earlyInitFile = tangleOrgBabelFile "early-init.el" ./early-init.org { };
           registries = pkgs.callPackage ./registries.nix { };
         }
@@ -45,6 +44,7 @@
           default = inputs.twist.lib.makeEnv {
             inherit pkgs;
             inherit (profile.${system})
+              emacsPackage
               extraPackages
               initFiles
               initParser
