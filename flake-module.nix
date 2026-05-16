@@ -61,6 +61,7 @@ in
             modules =
               lib.filter (x: x != null) [
                 (localFlake + /modules)
+                (maybePath (self + /modules))
                 (maybePath (self + /hosts/${name}))
               ]
               ++ cfg.modules;
