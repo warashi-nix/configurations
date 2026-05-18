@@ -1,0 +1,128 @@
+# name: 'Modus'
+
+[light]
+# preferred_background: ffffff
+
+# Syntax Highlighting Colors
+fish_color_normal 000000 # fg-main
+fish_color_command 0031a9 # blue
+fish_color_keyword 531ab6 # magenta-cooler
+fish_color_quote 3548cf # blue-warmer
+fish_color_redirection 005e8b # cyan
+fish_color_end 721045 # magenta
+fish_color_error a60000 # red
+fish_color_param 005f5f # cyan-cooler
+fish_color_valid_path 006800 # green
+fish_color_option 005e8b # cyan
+fish_color_comment 595959 # fg-dim
+fish_color_selection --background=bdbdbd # bg-region
+fish_color_operator 6f5500 # yellow
+fish_color_escape 8f0075 # magenta-warmer
+fish_color_autosuggestion 595959 # fg-dim
+fish_color_cwd 003497 # blue-faint
+fish_color_cwd_root 7f0000 # red-faint
+fish_color_user 005e8b # cyan
+fish_color_host 005077 # cyan-faint
+fish_color_host_remote 624416 # yellow-faint
+fish_color_status d00000 # red-intense
+fish_color_cancel --reverse # Reverse colors for cancel
+fish_color_search_match --background=f3d000 # bg-yellow-intense (bg-search-current)
+fish_color_history_current 005e8b # cyan
+
+# Pager Colors
+fish_pager_color_progress 000000 --background=c4c4c4 # fg-main on bg-active
+fish_pager_color_background # Leave empty for terminal default (bg-main)
+fish_pager_color_prefix 005e8b --bold --underline # cyan
+fish_pager_color_completion 000000 # fg-main
+fish_pager_color_description 595959 # fg-dim
+fish_pager_color_selected_background --background=c0deff # bg-completion
+fish_pager_color_selected_prefix 005e8b --bold # cyan
+fish_pager_color_selected_completion 000000 # fg-main
+fish_pager_color_selected_description 595959 # fg-dim
+fish_pager_color_secondary_background --background=e0e0e0 # bg-inactive
+fish_pager_color_secondary_prefix 005e8b # cyan
+fish_pager_color_secondary_completion 000000 # fg-main
+fish_pager_color_secondary_description 595959 # fg-dim
+
+[dark]
+# preferred_background: 000000
+
+# Syntax Highlighting Colors
+fish_color_normal ffffff # fg-main
+fish_color_command 2fafff # blue
+fish_color_keyword b6a0ff # magenta-cooler
+fish_color_quote 79a8ff # blue-warmer
+fish_color_redirection 00d3d0 # cyan
+fish_color_end feacd0 # magenta
+fish_color_error ff5f59 # red
+fish_color_param 6ae4b9 # cyan-cooler
+fish_color_valid_path 44bc44 # green
+fish_color_option 00d3d0 # cyan
+fish_color_comment 989898 # fg-dim
+fish_color_selection --background=5a5a5a # bg-region
+fish_color_operator d0bc00 # yellow
+fish_color_escape f78fe7 # magenta-warmer
+fish_color_autosuggestion 989898 # fg-dim
+fish_color_cwd 82b0ec # blue-faint
+fish_color_cwd_root ff9580 # red-faint
+fish_color_user 00d3d0 # cyan
+fish_color_host 9ac8e0 # cyan-faint
+fish_color_host_remote d2b580 # yellow-faint
+fish_color_status ff5f5f # red-intense
+fish_color_cancel --reverse # Reverse colors for cancel
+fish_color_search_match --background=7a6100 # bg-yellow-intense (bg-search-current)
+fish_color_history_current 00d3d0 # cyan
+
+# Pager Colors
+fish_pager_color_progress ffffff --background=535353 # fg-main on bg-active
+fish_pager_color_background # Leave empty for terminal default (bg-main)
+fish_pager_color_prefix 00d3d0 --bold --underline # cyan
+fish_pager_color_completion ffffff # fg-main
+fish_pager_color_description 989898 # fg-dim
+fish_pager_color_selected_background --background=2f447f # bg-completion
+fish_pager_color_selected_prefix 00d3d0 --bold # cyan
+fish_pager_color_selected_completion ffffff # fg-main
+fish_pager_color_selected_description 989898 # fg-dim
+fish_pager_color_secondary_background --background=303030 # bg-inactive
+fish_pager_color_secondary_prefix 00d3d0 # cyan
+fish_pager_color_secondary_completion ffffff # fg-main
+fish_pager_color_secondary_description 989898 # fg-dim
+
+[unknown]
+fish_color_normal --reset
+fish_color_command --reset
+fish_color_keyword --reset
+fish_color_quote --reset
+fish_color_redirection --reset
+fish_color_end --reset
+fish_color_error --reset
+fish_color_param --reset
+fish_color_valid_path --reset
+fish_color_option --reset
+fish_color_comment --reset
+fish_color_selection --reset
+fish_color_operator --reset
+fish_color_escape --reset
+fish_color_autosuggestion brblack
+fish_color_cwd --reset
+fish_color_cwd_root --reset
+fish_color_user --reset
+fish_color_host --reset
+fish_color_host_remote --reset
+fish_color_status --reset
+fish_color_cancel -r
+fish_color_search_match --reset
+fish_color_history_current --reset
+fish_pager_color_progress --reset
+fish_pager_color_background --reset
+fish_pager_color_prefix --reset
+fish_pager_color_completion --reset
+fish_pager_color_description --reset
+fish_pager_color_selected_background --reset
+fish_pager_color_selected_prefix --reset
+fish_pager_color_selected_completion --reset
+fish_pager_color_selected_description --reset
+fish_pager_color_secondary_background --reset
+fish_pager_color_secondary_prefix --reset
+fish_pager_color_secondary_completion --reset
+fish_pager_color_secondary_description --reset

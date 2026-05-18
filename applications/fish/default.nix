@@ -15,6 +15,10 @@ in
       ":q" = "exit";
     };
     interactiveShellInit = ''
+      # set theme and prompt
+      fish_config theme choose Modus
+      fish_config prompt choose informative_vcs
+
       # 1Password Plugins
       if test -e "$HOME/.config/op/plugins.sh"
         source "$HOME/.config/op/plugins.sh"
@@ -54,5 +58,13 @@ in
           null
       ) (lib.attrsets.attrValues sources)
     );
+  };
+  xdg = {
+    configFile = {
+      "fish/themes" = {
+        source = ./themes;
+        recursive = true;
+      };
+    };
   };
 }
