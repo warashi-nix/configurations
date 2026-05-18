@@ -164,7 +164,7 @@
                     # keep-sorted start
                     age
                     just
-                    nix-fast-build
+                    nix-output-monitor
                     nvfetcher
                     sops
                     ssh-to-age

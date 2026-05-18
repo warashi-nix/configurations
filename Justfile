@@ -1,3 +1,4 @@
+nix := "nom"
 os := os()
 arch := arch()
 host := `uname -n`
@@ -36,13 +37,13 @@ switch-for HOST:
   just {{ if os() == "macos" { "_darwin-rebuild-switch-for" } else { "_nixos-rebuild-switch-for" } }} {{HOST}}
 
 _darwin-rebuild-for HOST:
-  nix-fast-build --no-link --skip-cached --system {{system}} --flake .#darwinConfigurations.{{HOST}}.system
+  {{nix}} build --accept-flake-config --keep-going --no-link --show-trace --system {{system}} .#darwinConfigurations.{{HOST}}.system
 
 _darwin-rebuild-switch-for HOST:
   sudo darwin-rebuild switch --flake .#{{HOST}}
 
 _nixos-rebuild-for HOST:
-  nix-fast-build --no-link --skip-cached --system {{system}} --flake .#nixosConfigurations.{{HOST}}.config.system.build.toplevel
+  {{nix}} build --accept-flake-config --keep-going --no-link --show-trace --system {{system}} .#nixosConfigurations.{{HOST}}.config.system.build.toplevel
 
 _nixos-rebuild-switch-for HOST:
   sudo nixos-rebuild switch --accept-flake-config --flake .#{{HOST}}
