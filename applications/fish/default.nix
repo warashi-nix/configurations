@@ -16,7 +16,7 @@ in
     };
     interactiveShellInit = ''
       # set theme and prompt
-      fish_config theme choose Modus
+      fish_config theme choose modus
       fish_config prompt choose informative_vcs
 
       # 1Password Plugins
