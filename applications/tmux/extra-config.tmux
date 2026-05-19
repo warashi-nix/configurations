@@ -14,7 +14,7 @@ set-option -g set-titles-string '#T'
 
 # TrueColor 表示
 # xterm-256color or xterm-ghostty
-set-option -ga terminal-features ",xterm-*:RGB"
+set-option -sa terminal-features ",xterm-*:RGB"
 
 # C-w で window 一覧を開く
 bind C-w choose-tree -Zw
@@ -47,7 +47,8 @@ bind -r C-l select-pane -R
 
 # ベルの設定
 set-option -g bell-action any
-set-option -g visual-bell off
+set-option -wg monitor-bell on
+set-option -g visual-bell both
 
 # OSC 52 clipboard
 set-option -s set-clipboard on
@@ -55,8 +56,18 @@ set-option -s set-clipboard on
 # extended keys
 set-option -s extended-keys on
 
-# allow-passthrough
+# pane options
 set-option -g allow-passthrough on
+set-option -g allow-rename on
+set-option -g allow-set-title on
+set-option -g alternate-screen on
+
+# other options
+set-option -wg aggressive-resize on
+set-option -wg automatic-rename on
+
+set-option -wg popup-border-lines rounded
+set-option -wg pane-scrollbars modal
 
 # promptpane
 bind -n M-q run-shell \
