@@ -1,22 +1,7 @@
 vim9script
 
 # ==============================================================================
-# カラー名（エイリアス）を再帰的に解決して #Hex 値を返すヘルパー関数
-# ==============================================================================
-def Resolve(palette: dict<string>, key: string): string
-  var val = key
-  while has_key(palette, val)
-    var next_val = palette[val]
-    if next_val[0] == '#'
-      return next_val
-    endif
-    val = next_val
-  endwhile
-  return val
-enddef
-
-# ==============================================================================
-# Modus Operandi (Light) 全量カラーパレット定義 (1行1色)
+# Modus Operandi (Light) 全量カラーパレット定義
 # ==============================================================================
 const operandi_colors = {
   'accent-0': 'blue',
@@ -306,7 +291,7 @@ const operandi_colors = {
 }
 
 # ==============================================================================
-# Modus Vivendi (Dark) 全量カラーパレット定義 (1行1色)
+# Modus Vivendi (Dark) 全量カラーパレット定義
 # ==============================================================================
 const vivendi_colors = {
   'accent-0': 'blue-cooler',
@@ -596,32 +581,22 @@ const vivendi_colors = {
 }
 
 # ==============================================================================
-# 意味（役割）を表すカラーパレットの定義 (Resolve関数を使用)
+# ヘルパー関数
 # ==============================================================================
-const operandi_syntax = {
-  comment: Resolve(operandi_colors, 'comment'),
-  constant: Resolve(operandi_colors, 'constant'),
-  string: Resolve(operandi_colors, 'string'),
-  identifier: Resolve(operandi_colors, 'identifier'),
-  keyword: Resolve(operandi_colors, 'keyword'),
-  preprocessor: Resolve(operandi_colors, 'preprocessor'),
-  type: Resolve(operandi_colors, 'type'),
-  variable: Resolve(operandi_colors, 'variable')
-}
-
-const vivendi_syntax = {
-  comment: Resolve(vivendi_colors, 'comment'),
-  constant: Resolve(vivendi_colors, 'constant'),
-  string: Resolve(vivendi_colors, 'string'),
-  identifier: Resolve(vivendi_colors, 'identifier'),
-  keyword: Resolve(vivendi_colors, 'keyword'),
-  preprocessor: Resolve(vivendi_colors, 'preprocessor'),
-  type: Resolve(vivendi_colors, 'type'),
-  variable: Resolve(vivendi_colors, 'variable')
-}
+def Resolve(palette: dict<string>, key: string): string
+  var val = key
+  while has_key(palette, val)
+    var next_val = palette[val]
+    if next_val[0] == '#'
+      return next_val
+    endif
+    val = next_val
+  endwhile
+  return val
+enddef
 
 # ==============================================================================
-# 初期化および background の値によるパレット切り替え
+# 初期化処理
 # ==============================================================================
 highlight clear
 if exists("syntax_on")
@@ -630,36 +605,152 @@ endif
 
 g:colors_name = "modus"
 
-const base = &background == 'dark' ? vivendi_colors : operandi_colors
-const syntax = &background == 'dark' ? vivendi_syntax : operandi_syntax
+# ==============================================================================
+# オプション設定とパレットのフラット化（動的生成）
+# ==============================================================================
+# ユーザー設定辞書 `g:modus_settings` を取得
+var settings = get(g:, 'modus_settings', {})
+
+# スタイル属性の取得（デフォルト値を親切に設定）
+var bold_keywords = get(settings, 'bold_keywords', true) ? 'bold' : 'NONE'
+var bold_types    = get(settings, 'bold_types', true) ? 'bold' : 'NONE'
+var italic_comments = get(settings, 'italic_comments', false) ? 'italic' : 'NONE'
+
+# &background に基づきベースパレットのシャローコピーを作成
+var base = extend({}, &background == 'dark' ? vivendi_colors : operandi_colors)
+
+# ユーザーによるカラーの上書き（overrides）があればマージ
+if has_key(settings, 'overrides')
+  extend(base, settings['overrides'])
+endif
+
+# パレット全体のエイリアスを再帰解決して完全フラット化
+var syntax: dict<string> = {}
+for key in keys(base)
+  syntax[key] = Resolve(base, key)
+endfor
 
 # ==============================================================================
-# ハイライト定義 (動的な箇所のみ String Interpolation を使用)
+# ターミナルカラー (g:terminal_ansi_colors) の自動生成
 # ==============================================================================
-execute $"highlight Normal guifg={Resolve(base, 'fg-main')} guibg={Resolve(base, 'bg-main')}"
-execute $"highlight NonText guifg={Resolve(base, 'fg-dim')}"
+if has('terminal')
+  var ansi_keys = [
+    'bg-term-black', 'fg-term-red', 'fg-term-green', 'fg-term-yellow',
+    'fg-term-blue', 'fg-term-magenta', 'fg-term-cyan', 'fg-term-white',
+    'bg-term-black-bright', 'fg-term-red-bright', 'fg-term-green-bright', 'fg-term-yellow-bright',
+    'fg-term-blue-bright', 'fg-term-magenta-bright', 'fg-term-cyan-bright', 'fg-term-white-bright'
+  ]
+  g:terminal_ansi_colors = map(ansi_keys, (_, k) => syntax[k])
+endif
 
-# エディタUI (エラーの原因となっていたキーもResolveを介して安全に取得可能)
-execute $"highlight LineNr guifg={Resolve(base, 'fg-line-number-inactive')} guibg={Resolve(base, 'bg-line-number-inactive')}"
-execute $"highlight CursorLineNr guifg={Resolve(base, 'fg-line-number-active')} guibg={Resolve(base, 'bg-line-number-active')}"
-execute $"highlight CursorLine guibg={Resolve(base, 'bg-hl-line')}"
-execute $"highlight Visual guifg={Resolve(base, 'fg-region')} guibg={Resolve(base, 'bg-region')}"
+# ==============================================================================
+# ハイライト定義 (一括解決済みなので syntax['key'] で安全＆高速にマッピング)
+# ==============================================================================
+
+# エディタ基本画面
+execute $"highlight Normal guifg={syntax['fg-main']} guibg={syntax['bg-main']}"
+execute $"highlight NonText guifg={syntax['fg-dim']}"
+execute $"highlight EndOfBuffer guifg={syntax['fg-dim']}"
+
+# ラインナンバー & カーソル行
+execute $"highlight LineNr guifg={syntax['fg-line-number-inactive']} guibg={syntax['bg-line-number-inactive']}"
+execute $"highlight CursorLineNr guifg={syntax['fg-line-number-active']} guibg={syntax['bg-line-number-active']}"
+execute $"highlight CursorLine guibg={syntax['bg-hl-line']}"
+execute $"highlight CursorColumn guibg={syntax['bg-hl-line']}"
+
+# ウィンドウUI・境界線
+execute $"highlight Visual guifg={syntax['fg-region']} guibg={syntax['bg-region']}"
+execute $"highlight SignColumn guibg={syntax['bg-main']}"
+execute $"highlight VertSplit guifg={syntax['border']} guibg={syntax['bg-main']}"
+execute $"highlight WinSeparator guifg={syntax['border']} guibg={syntax['bg-main']}"
+execute $"highlight ColorColumn guibg={syntax['bg-dim']}"
 
 # ポップアップメニュー
-execute $"highlight Pmenu guifg={Resolve(base, 'fg-main')} guibg={Resolve(base, 'bg-dim')}"
-execute $"highlight PmenuSel guifg={Resolve(base, 'fg-main')} guibg={Resolve(base, 'bg-active')}"
+execute $"highlight Pmenu guifg={syntax['fg-main']} guibg={syntax['bg-dim']}"
+execute $"highlight PmenuSel guifg={syntax['fg-main']} guibg={syntax['bg-active']}"
+execute $"highlight PmenuSbar guibg={syntax['bg-dim']}"
+execute $"highlight PmenuThumb guibg={syntax['fg-dim']}"
 
-# 構文ハイライト (事前に解決済みのパレットから適用)
-execute $"highlight Comment guifg={syntax['comment']}"
+# ステータスライン & タブライン
+execute $"highlight StatusLine guifg={syntax['fg-mode-line-active']} guibg={syntax['bg-mode-line-active']} gui=bold"
+execute $"highlight StatusLineNC guifg={syntax['fg-mode-line-inactive']} guibg={syntax['bg-mode-line-inactive']}"
+execute $"highlight TabLine guifg={syntax['fg-dim']} guibg={syntax['bg-tab-bar']}"
+execute $"highlight TabLineSel guifg={syntax['fg-main']} guibg={syntax['bg-tab-current']} gui=bold"
+execute $"highlight TabLineFill guibg={syntax['bg-tab-bar']}"
+
+# 検索・括弧マッチ
+execute $"highlight Search guibg={syntax['bg-search-lazy']} guifg={syntax['fg-main']}"
+execute $"highlight CurSearch guibg={syntax['bg-search-current']} guifg={syntax['fg-main']}"
+execute $"highlight IncSearch guibg={syntax['bg-search-current']} guifg={syntax['fg-main']}"
+execute $"highlight MatchParen guibg={syntax['bg-paren-match']} guifg={syntax['fg-paren-match']} gui=bold"
+
+# 差分 (Diff)
+execute $"highlight DiffAdd guifg={syntax['fg-added']} guibg={syntax['bg-added']}"
+execute $"highlight DiffChange guifg={syntax['fg-changed']} guibg={syntax['bg-changed']}"
+execute $"highlight DiffDelete guifg={syntax['fg-removed']} guibg={syntax['bg-removed']}"
+execute $"highlight DiffText guifg={syntax['fg-changed-intense']} guibg={syntax['bg-changed-refine']} gui=bold"
+
+# メッセージ・折りたたみ
+execute $"highlight Folded guifg={syntax['fg-dim']} guibg={syntax['bg-dim']}"
+execute $"highlight FoldColumn guifg={syntax['fg-dim']} guibg={syntax['bg-main']}"
+execute $"highlight ModeMsg guifg={syntax['fg-alt']} gui=bold"
+execute $"highlight MoreMsg guifg={syntax['info']}"
+execute $"highlight Question guifg={syntax['info']}"
+execute $"highlight WarningMsg guifg={syntax['warning']} gui=bold"
+execute $"highlight ErrorMsg guifg={syntax['err']} gui=bold"
+
+# 標準構文ハイライト (スタイル属性の動的制御)
+execute $"highlight Comment guifg={syntax['comment']} gui={italic_comments}"
 execute $"highlight Constant guifg={syntax['constant']}"
 execute $"highlight String guifg={syntax['string']}"
-execute $"highlight Identifier guifg={syntax['identifier']}"
-execute $"highlight Statement guifg={syntax['keyword']} gui=bold"
-execute $"highlight PreProc guifg={syntax['preprocessor']}"
-execute $"highlight Type guifg={syntax['type']} gui=bold"
-execute $"highlight Variable guifg={syntax['variable']}"
-execute $"highlight Special guifg={Resolve(base, 'fg-alt')}"
+execute $"highlight Character guifg={syntax['string']}"
+execute $"highlight Number guifg={syntax['number']}"
+execute $"highlight Boolean guifg={syntax['constant']}"
+execute $"highlight Float guifg={syntax['number']}"
 
-# エラー・警告など
-execute $"highlight Error guifg={Resolve(base, 'fg-main')} guibg={Resolve(base, 'bg-red-intense')}"
-execute $"highlight Todo guifg={Resolve(base, 'fg-main')} guibg={Resolve(base, 'bg-yellow-intense')}"
+execute $"highlight Identifier guifg={syntax['identifier']}"
+execute $"highlight Function guifg={syntax['fnname']}"
+
+execute $"highlight Statement guifg={syntax['keyword']} gui={bold_keywords}"
+execute $"highlight Conditional guifg={syntax['keyword']} gui={bold_keywords}"
+execute $"highlight Repeat guifg={syntax['keyword']} gui={bold_keywords}"
+execute $"highlight Label guifg={syntax['keyword']}"
+execute $"highlight Operator guifg={syntax['operator']}"
+execute $"highlight Keyword guifg={syntax['keyword']} gui={bold_keywords}"
+execute $"highlight Exception guifg={syntax['keyword']} gui={bold_keywords}"
+
+execute $"highlight PreProc guifg={syntax['preprocessor']}"
+execute $"highlight Include guifg={syntax['preprocessor']}"
+execute $"highlight Define guifg={syntax['preprocessor']}"
+execute $"highlight Macro guifg={syntax['preprocessor']}"
+execute $"highlight PreCondit guifg={syntax['preprocessor']}"
+
+execute $"highlight Type guifg={syntax['type']} gui={bold_types}"
+execute $"highlight StorageClass guifg={syntax['type']} gui={bold_types}"
+execute $"highlight Structure guifg={syntax['type']} gui={bold_types}"
+execute $"highlight Typedef guifg={syntax['type']} gui={bold_types}"
+
+execute $"highlight Special guifg={syntax['fg-alt']}"
+execute $"highlight SpecialChar guifg={syntax['fg-alt']}"
+execute $"highlight Tag guifg={syntax['fg-alt']}"
+execute $"highlight Delimiter guifg={syntax['delimiter']}"
+execute $"highlight SpecialComment guifg={syntax['fg-dim']} gui={italic_comments}"
+execute $"highlight Debug guifg={syntax['red']}"
+
+execute $"highlight Underlined gui=underline guifg={syntax['fg-link']}"
+execute $"highlight Ignore guifg={syntax['bg-main']}"
+execute $"highlight Error guifg={syntax['fg-main']} guibg={syntax['bg-red-intense']}"
+execute $"highlight Todo guifg={syntax['fg-main']} guibg={syntax['bg-yellow-intense']}"
+
+# ==============================================================================
+# プラグインサポート: vim-lsp
+# ==============================================================================
+execute $"highlight LspErrorText guifg={syntax['red']} gui=bold"
+execute $"highlight LspWarningText guifg={syntax['warning']} gui=bold"
+execute $"highlight LspInformationText guifg={syntax['info']}"
+execute $"highlight LspHintText guifg={syntax['cyan']}"
+
+execute $"highlight LspErrorHighlight gui=undercurl guisp={syntax['underline-err']}"
+execute $"highlight LspWarningHighlight gui=undercurl guisp={syntax['underline-warning']}"
+execute $"highlight LspInformationHighlight gui=undercurl guisp={syntax['underline-note']}"
+execute $"highlight LspHintHighlight gui=undercurl guisp={syntax['underline-note']}"
