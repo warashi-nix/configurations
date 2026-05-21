@@ -8,13 +8,13 @@
 {
   vim = {
     pname = "vim";
-    version = "129486193c16bb5c0208eff5501f9e665b7c4803";
+    version = "85eb099bf2210a3882005c0bf5d47306902c999e";
     src = fetchFromGitHub {
       owner = "vim";
       repo = "vim";
-      rev = "129486193c16bb5c0208eff5501f9e665b7c4803";
+      rev = "85eb099bf2210a3882005c0bf5d47306902c999e";
       fetchSubmodules = false;
-      sha256 = "sha256-wgT/kWAXr1/7EDp61bfQkki3SZID89N7kUZLoL3lcjA=";
+      sha256 = "sha256-zXxTM2YXLiNu8Pvxy02unKjJ6zJkoBHX75GHn/TnZsE=";
     };
     date = "2026-05-20";
   };
