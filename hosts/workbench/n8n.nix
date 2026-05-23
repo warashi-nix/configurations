@@ -1,9 +1,9 @@
 {
   services.n8n = {
     enable = true;
-    openFirewall = true;
+    openFirewall = false;
     environment = {
-      WEBHOOK_URL = "https://n8n.taileef3.ts.net/";
+      WEBHOOK_URL = "https://n8n.warashi.dev/";
     };
   };
 }
