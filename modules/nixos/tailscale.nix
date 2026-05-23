@@ -14,11 +14,6 @@ in
   config = mkIf (cfg.enable && cfg.enableTailscale) {
     services.tailscale = {
       enable = true;
-      useRoutingFeatures = "both";
-      extraUpFlags = [
-        "--ssh"
-        "--accept-routes"
-      ];
       authKeyFile = config.sops.secrets.tailscale-authkey.path;
     };
     networking = {
