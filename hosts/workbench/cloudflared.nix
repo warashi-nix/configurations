@@ -1,8 +1,6 @@
 { config, pkgs, ... }:
 {
-  sops.secrets.cloudflared-creds = {
-  };
-
+  sops.secrets.cloudflared-creds = { };
   services.cloudflared = {
     enable = true;
     tunnels = {
