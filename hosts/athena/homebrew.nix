@@ -27,11 +27,9 @@
       "google-drive"
       "karabiner-elements"
       "lasso-app"
-      "ollama-app"
       "orbstack"
       "orion"
       "raycast"
-      "slack"
       "tailscale-app"
       "visual-studio-code"
       "zoom"
@@ -44,7 +42,9 @@
       GoodLinks = 1474335294;
       LINE = 539883307;
       Pastebot = 1179623856;
+      Slack = 803453959;
       Things = 904280696;
+      Todoist = 585829637;
       # keep-sorted end
     };
     onActivation = {
