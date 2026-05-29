@@ -1,5 +1,33 @@
 vim9script
 
+# グローバル変数としてスクリプトIDを取得（補完関数の一意性確保のため）
+const sid = expand('<SID>')
+
+# ファイルパス補完関数
+def PathComplete(findstart: number, base: string): any
+    if findstart
+        final line = getline('.')
+        var start = col('.') - 1
+        while start > 0 && line[start - 1] =~ '[a-zA-Z0-9_.,~@/\\-]'
+            start -= 1
+        endwhile
+        return start
+    else
+        final pattern = base .. '*'
+        final files = glob(pattern, true, true)
+
+        final results = []
+        for f in files
+            if isdirectory(f)
+                add(results, f .. '/')
+            else
+                add(results, f)
+            endif
+        endfor
+        return results
+    endif
+enddef
+
 # 重複登録を防ぐため augroup を作成
 augroup PromptPane
   autocmd!
@@ -16,6 +44,10 @@ def SetupBuffer()
   setlocal buftype=acwrite
   setlocal noswapfile
   setlocal nomodified
+
+  # 補完をこのバッファ専用に設定
+  setlocal autocomplete
+  exec $'setlocal complete+=F{sid}PathComplete^10'
 enddef
 
 def SendToTmux(uri: string)
