@@ -64,7 +64,7 @@ def SendToTmux(uri: string)
   var lines = getline(1, '$')
   
   # Vim9scriptのダブルクォート文字列では \e が ESC (0x1B) として解釈される
-  var payload = join(lines, "\e[13;3u") .. "\e[13u"
+  var payload = "\e[200~" .. join(lines, "\r\n") .. "\e[201~\e[13u"
 
   # シェルを経由せず、直接tmuxプロセスにリスト形式で引数を渡す（結合・複雑性の極小化）
   # Vimの system() にリストを渡すとシェルエスケープを回避して直接実行される
