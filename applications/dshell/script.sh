@@ -75,7 +75,7 @@ COMMON_OPTS+=("--mount-workspace-git-root")
 COMMON_OPTS+=("--config" "$TMP_CONFIG")
 COMMON_OPTS+=("--workspace-folder" "$TARGET_DIR")
 
-UP_ARGS=("")
+UP_ARGS=()
 [ -n "$GIT_COMMON_DIR" ] && [[ $GIT_COMMON_DIR != "$GIT_ROOT" ]] && UP_ARGS+=("--mount" "type=bind,source=$GIT_COMMON_DIR,target=$GIT_COMMON_DIR")
 [ "$BUILD_NO_CACHE" -eq 1 ] && UP_ARGS+=("--build-no-cache")
 
