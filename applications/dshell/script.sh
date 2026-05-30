@@ -1,7 +1,7 @@
 BUILD_NO_CACHE=0
 if [ "${1:-}" = "--build-no-cache" ]; then
-	BUILD_NO_CACHE=1
-	shift
+  BUILD_NO_CACHE=1
+  shift
 fi
 
 # 1. パスの解決と XDG 設定ディレクトリの特定
@@ -19,39 +19,35 @@ TMP_CONFIG="$TMP_CONFIG_DIR/.devcontainer/devcontainer.json"
 mkdir -p "$(dirname "$TMP_CONFIG")"
 
 cleanup() {
-	# クリーンアップ関数
-	CONTAINER_ID=$(docker ps -q --filter "label=devcontainer.local_folder=$TARGET_DIR")
-	[ -n "$CONTAINER_ID" ] && docker stop "$CONTAINER_ID" && docker rm "$CONTAINER_ID"
-	rm -rf "$TMP_CONFIG_DIR"
+  # クリーンアップ関数
+  CONTAINER_ID=$(docker ps -q --filter "label=devcontainer.local_folder=$TARGET_DIR")
+  [ -n "$CONTAINER_ID" ] && docker stop "$CONTAINER_ID" && docker rm "$CONTAINER_ID"
+  rm -rf "$TMP_CONFIG_DIR"
 }
 trap cleanup EXIT
 
 merge() {
-	local input_files=("$@")
-	local merged_json="{}"
-	for input_file in "${input_files[@]}"; do
-		[ -f "$input_file" ] || continue
-		input_json=$(jq '.' "$input_file" 2>/dev/null)
-		merged_json=$(echo "$merged_json" | jq --argjson new "$input_json" '. * $new')
-	done
-	echo "$merged_json"
+  local f files=()
+  for f in "$@"; do [[ -f "$f" ]] && files+=("$f"); done
+
+  jq -n 'reduce inputs as $item ({}; . * $item)' "${files[@]}"
 }
 
 MERGE_TARGETS=()
 # 2. devcontainer.json の探索
 if [ -f "$TARGET_DIR/.devcontainer/devcontainer.json" ]; then
-	MERGE_TARGETS+=("$TARGET_DIR/.devcontainer/devcontainer.json")
+  MERGE_TARGETS+=("$TARGET_DIR/.devcontainer/devcontainer.json")
 elif [ -f "$TARGET_DIR/.devcontainer.json" ]; then
-	MERGE_TARGETS+=("$TARGET_DIR/.devcontainer.json")
+  MERGE_TARGETS+=("$TARGET_DIR/.devcontainer.json")
 elif [ -f "$FALLBACK_CONFIG" ]; then
-	MERGE_TARGETS+=("$FALLBACK_CONFIG")
+  MERGE_TARGETS+=("$FALLBACK_CONFIG")
 else
-	echo "❌ エラー: devcontainer.json も $FALLBACK_CONFIG も見つかりません。"
-	exit 1
+  echo >&2 "❌ エラー: devcontainer.json も $FALLBACK_CONFIG も見つかりません。"
+  exit 1
 fi
 
 if [ -f "$OVERRIDE_CONFIG" ]; then
-	MERGE_TARGETS+=("$OVERRIDE_CONFIG")
+  MERGE_TARGETS+=("$OVERRIDE_CONFIG")
 fi
 
 # devcontainer.json のマージと一時ファイルへの出力
@@ -60,8 +56,12 @@ merge "${MERGE_TARGETS[@]}" > "$TMP_CONFIG"
 # devcontainer-lock.json のロックファイルのマージと一時ファイルへの出力
 LOCK_MERGE_TARGETS=()
 for file in "${MERGE_TARGETS[@]}"; do
-	LOCK_MERGE_TARGETS+=("$(dirname "$file")/devcontainer-lock.json")
+  LOCK_FILE="$(dirname "$file")/devcontainer-lock.json"
+  if [ -f "$LOCK_FILE" ]; then
+    LOCK_MERGE_TARGETS+=("$(dirname "$file")/devcontainer-lock.json")
+  fi
 done
+echo >&2 "lock merge targets: ${LOCK_MERGE_TARGETS[@]}"
 merge "${LOCK_MERGE_TARGETS[@]}" > "$(dirname "$TMP_CONFIG")/devcontainer-lock.json"
 
 # 2. Git 情報などの取得
@@ -90,7 +90,7 @@ devcontainer exec "${COMMON_OPTS[@]}" git config --global --add safe.directory '
 # 5. 引数で指定されていない場合、デフォルトコマンドを設定
 COMMANDS=("$@")
 if [ ${#COMMANDS[@]} -eq 0 ]; then
-	COMMANDS=("/bin/zsh" "--login")
+  COMMANDS=("/bin/zsh" "--login")
 fi
 
 # 6. コマンドの実行
