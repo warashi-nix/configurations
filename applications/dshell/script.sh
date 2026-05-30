@@ -28,7 +28,7 @@ trap cleanup EXIT
 
 merge() {
   local f files=()
-  for f in "$@"; do [[ -f "$f" ]] && files+=("$f"); done
+  for f in "$@"; do [[ -f $f ]] && files+=("$f"); done
 
   jq -n 'reduce inputs as $item ({}; . * $item)' "${files[@]}"
 }
@@ -51,7 +51,7 @@ if [ -f "$OVERRIDE_CONFIG" ]; then
 fi
 
 # devcontainer.json のマージと一時ファイルへの出力
-merge "${MERGE_TARGETS[@]}" > "$TMP_CONFIG"
+merge "${MERGE_TARGETS[@]}" >"$TMP_CONFIG"
 
 # devcontainer-lock.json のロックファイルのマージと一時ファイルへの出力
 LOCK_MERGE_TARGETS=()
@@ -62,7 +62,7 @@ for file in "${MERGE_TARGETS[@]}"; do
   fi
 done
 echo >&2 "lock merge targets: ${LOCK_MERGE_TARGETS[@]}"
-merge "${LOCK_MERGE_TARGETS[@]}" > "$(dirname "$TMP_CONFIG")/devcontainer-lock.json"
+merge "${LOCK_MERGE_TARGETS[@]}" >"$(dirname "$TMP_CONFIG")/devcontainer-lock.json"
 
 # 2. Git 情報などの取得
 U_NAME=$(git config --get user.name)
