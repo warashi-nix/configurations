@@ -61,7 +61,7 @@ for file in "${MERGE_TARGETS[@]}"; do
     LOCK_MERGE_TARGETS+=("$(dirname "$file")/devcontainer-lock.json")
   fi
 done
-echo >&2 "lock merge targets: ${LOCK_MERGE_TARGETS[@]}"
+echo >&2 "lock merge targets: ${LOCK_MERGE_TARGETS[*]}"
 merge "${LOCK_MERGE_TARGETS[@]}" >"$(dirname "$TMP_CONFIG")/devcontainer-lock.json"
 
 # 2. Git 情報などの取得
