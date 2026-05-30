@@ -38,7 +38,7 @@ merge() {
           ($a + $b) | unique
         else
           $b
-        fi;
+        end;
       reduce inputs as $item ({}; deep_merge(.; $item))
     ' "${files[@]}"
 }
