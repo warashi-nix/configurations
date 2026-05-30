@@ -30,7 +30,17 @@ merge() {
   local f files=()
   for f in "$@"; do [[ -f $f ]] && files+=("$f"); done
 
-  jq -n 'reduce inputs as $item ({}; . * $item)' "${files[@]}"
+  jq -n '
+      def deep_merge($a; $b):
+        if ($a | type == "object") and ($b | type == "object") then
+          reduce ($b | keys_unsorted[]) as $k ($a; .[$k] = deep_merge($a[$k]; $b[$k]))
+        elif ($a | type == "array") and ($b | type == "array") then
+          ($a + $b) | unique
+        else
+          $b
+        fi;
+      reduce inputs as $item ({}; deep_merge(.; $item))
+    ' "${files[@]}"
 }
 
 MERGE_TARGETS=()
