@@ -163,6 +163,7 @@
                   [
                     # keep-sorted start
                     age
+                    devcontainer
                     just
                     nix-output-monitor
                     nvfetcher
