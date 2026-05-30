@@ -4,7 +4,7 @@
     "ghcr.io/devcontainers/features/copilot-cli:1": {}
   },
   "mounts": [
-    "type=bind,source=${localEnv:HOME},target=/home/vscode/.copilot"
+    "type=bind,source=${localEnv:HOME}/.copilot,target=/home/vscode/.copilot"
   ],
   "remoteEnv": {
     "COLORTERM": "${localEnv:COLORTERM}",
