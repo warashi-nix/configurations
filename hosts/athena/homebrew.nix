@@ -13,6 +13,7 @@
       "1password"
       "alfred"
       "amazon-photos"
+      "asana"
       "cloudflare-warp"
       "cryptomator"
       "discord"
@@ -44,7 +45,6 @@
       Pastebot = 1179623856;
       Slack = 803453959;
       Things = 904280696;
-      Todoist = 585829637;
       # keep-sorted end
     };
     onActivation = {
