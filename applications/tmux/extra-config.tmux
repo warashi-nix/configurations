@@ -69,6 +69,9 @@ set-option -wg automatic-rename on
 set-option -wg popup-border-lines rounded
 set-option -wg pane-scrollbars off
 
+set-option -ga update-environment TERM
+set-option -ga update-environment TERM_PROGRAM
+
 # promptpane
 bind -n M-q run-shell \
 	'tmux split-window -v -l 10 \
