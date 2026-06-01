@@ -1,7 +1,7 @@
 {
     "vim": {
         "cargoLock": null,
-        "date": "2026-05-31",
+        "date": "2026-06-01",
         "extract": null,
         "name": "vim",
         "passthru": null,
@@ -13,11 +13,11 @@
             "name": null,
             "owner": "vim",
             "repo": "vim",
-            "rev": "868ad62cb8bf8038322eab2badd31bd98b02b9df",
-            "sha256": "sha256-P8LPOvMLeynsrOBcgVBQflAJ/uzUcQxWxd2pJvfxPwo=",
+            "rev": "e2d1c334ee88067e16351e091ece95f6c6f24af5",
+            "sha256": "sha256-qeu+T3e3QPa9CApISqdcwn6nFGtGuMNf5wElkcxDWJI=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "868ad62cb8bf8038322eab2badd31bd98b02b9df"
+        "version": "e2d1c334ee88067e16351e091ece95f6c6f24af5"
     }
 }
