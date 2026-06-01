@@ -3,18 +3,18 @@
 bind C-g send-prefix
 
 # window numberが飛び飛びにならないようにする
-set-option -g renumber-windows on
+set -g renumber-windows on
 
 # status line を下部に配置する
-set-option -g status-position bottom
+set -g status-position bottom
 
 # title設定
-set-option -g set-titles on
-set-option -g set-titles-string '#T'
+set -g set-titles on
+set -g set-titles-string '#T'
 
 # TrueColor 表示
 # xterm-256color or xterm-ghostty
-set-option -sa terminal-features ",xterm-*:RGB"
+set -sa terminal-features ",xterm-*:RGB"
 
 # C-w で window 一覧を開く
 bind C-w choose-tree -Zw
@@ -32,8 +32,8 @@ bind s split-window -v -c "#{pane_current_path}"
 # H, V で pane 再配置
 bind C-v select-layout main-vertical-mirrored
 bind C-s select-layout main-horizontal
-set-option -g main-pane-height "50%"
-set-option -g main-pane-width "50%"
+set -g main-pane-height "50%"
+set -g main-pane-width "50%"
 
 # C-o, M-o で分割した画面をRotate
 bind -r C-o rotate-window -D
@@ -46,31 +46,31 @@ bind -r C-k select-pane -U
 bind -r C-l select-pane -R
 
 # ベルの設定
-set-option -g bell-action any
-set-option -wg monitor-bell on
-set-option -g visual-bell both
+set -g bell-action any
+set -wg monitor-bell on
+set -g visual-bell both
 
 # OSC 52 clipboard
-set-option -s set-clipboard on
+set -s set-clipboard on
 
 # extended keys
-set-option -s extended-keys on
+set -s extended-keys on
 
 # pane options
-set-option -g allow-passthrough on
-set-option -g allow-rename on
-set-option -g allow-set-title on
-set-option -g alternate-screen on
+set -g allow-passthrough on
+set -g allow-rename on
+set -g allow-set-title on
+set -g alternate-screen on
 
 # other options
-set-option -wg aggressive-resize on
-set-option -wg automatic-rename on
+set -wg aggressive-resize on
+set -wg automatic-rename on
 
-set-option -wg popup-border-lines rounded
-set-option -wg pane-scrollbars off
+set -wg popup-border-lines rounded
+set -wg pane-scrollbars off
 
-set-option -ga update-environment TERM
-set-option -ga update-environment TERM_PROGRAM
+set -ga update-environment TERM
+set -ga update-environment TERM_PROGRAM
 
 # promptpane
 bind -n M-q run-shell \
