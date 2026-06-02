@@ -13,10 +13,10 @@ const undo_base_dir = expand('~/.cache/vim/undo_promptpane')
 def GetUndoFilePath(uri: string): string
     # 現在のカレントディレクトリを取得
     final cwd = getcwd()
-    
+
     # ディレクトリパスの特殊文字（:, /, \, 空白）をすべて '_' に置換
     final safe_name = substitute(cwd, '[:/\\\\ ]', '_', 'g')
-    
+
     # ペインに関わらず共通のプレフィックスを付与してファイル名にする
     return undo_base_dir .. '/promptpane_shared_' .. safe_name
 enddef
@@ -56,103 +56,80 @@ enddef
 
 # 重複登録を防ぐため augroup を作成
 augroup PromptPane
-  autocmd!
-  # バッファ作成時のセットアップ用コマンド
-  autocmd BufReadCmd promptpane://tmux/* SetupBuffer()
-  # :w 実行時のフック（送信処理）
-  autocmd BufWriteCmd promptpane://tmux/* SendToTmux(expand('<amatch>'))
+    autocmd!
+    # バッファ作成時のセットアップ用コマンド
+    autocmd BufReadCmd promptpane://tmux/* SetupBuffer()
+    # :w 実行時のフック（送信処理）
+    autocmd BufWriteCmd promptpane://tmux/* SendToTmux(expand('<amatch>'))
 augroup END
 
 def SetupBuffer()
-  # 通常のファイル保存を無効化し、専用バッファとして扱う
-  setlocal filetype=promptpane
-  setlocal buftype=acwrite
-  setlocal noswapfile
-  setlocal nomodified
+    # 通常のファイル保存を無効化し、専用バッファとして扱う
+    setlocal filetype=promptpane
+    setlocal buftype=acwrite
+    setlocal noswapfile
+    setlocal nomodified
 
-  # 補完をこのバッファ専用に設定
-  setlocal autocomplete
-  exec $'setlocal complete+=F{sid}PathComplete^10'
+    # 補完をこのバッファ専用に設定
+    setlocal autocomplete
+    exec $'setlocal complete+=F{sid}PathComplete^10'
 
-  # --------------------------------------------------------------------------
-  # 起動時: 過去の undo 履歴をディスクから読み込む
-  # --------------------------------------------------------------------------
-  if has('persistent_undo')
-    if !isdirectory(undo_base_dir)
-      mkdir(undo_base_dir, 'p', 0o700)
+    # --------------------------------------------------------------------------
+    # 起動時: 過去の undo 履歴をディスクから読み込む
+    # --------------------------------------------------------------------------
+    if has('persistent_undo')
+        if !isdirectory(undo_base_dir)
+            mkdir(undo_base_dir, 'p', 0o700)
+        endif
+
+        final uri = expand('<amatch>')
+        final undo_file = GetUndoFilePath(uri)
+        if filereadable(undo_file)
+            # バッファが完全に空の状態で履歴を読み込む（保存時と状態を一致させるため）
+            exec $'silent! rundofile {fnameescape(undo_file)}'
+        endif
     endif
-
-    final uri = expand('<amatch>')
-    final undo_file = GetUndoFilePath(uri)
-    if filereadable(undo_file)
-      # バッファが完全に空の状態で履歴を読み込む（保存時と状態を一致させるため）
-      exec $'silent! rundofile {fnameescape(undo_file)}'
-    endif
-  endif
 enddef
 
 def SendToTmux(uri: string)
-  final pane_id = matchstr(uri, 'promptpane://tmux/\zs.*')
-  if pane_id == ''
-    echohl ErrorMsg
-    echomsg '[PromptPane] 無効なURIフォーマットです: ' .. uri
-    echohl None
-    return
-  endif
+    final pane_id = matchstr(uri, 'promptpane://tmux/\zs.*')
+    if pane_id == ''
+        echohl ErrorMsg
+        echomsg '[PromptPane] 無効なURIフォーマットです: ' .. uri
+        echohl None
+        return
+    endif
 
-  final lines = getline(1, '$')
-  final payload = "\e[200~" .. join(lines, "\r") .. "\e[201~\e[13u"
+    final lines = getline(1, '$')
+    final payload = "\e[200~" .. join(lines, "\r") .. "\e[201~\e[13u"
 
-  final result = system([
-    'tmux',
-    'send-keys',
-    '-t',
-    pane_id,
-    '-l',
-    '--',
-    payload
-  ])
+    final result = system([
+        'tmux',
+        'send-keys',
+        '-t',
+        pane_id,
+        '-l',
+        '--',
+        payload
+    ])
 
-  if v:shell_error != 0
-    echohl ErrorMsg
-    echomsg '[PromptPane] 送信失敗: ' .. trim(result)
-    echohl None
-    return
-  endif
+    if v:shell_error != 0
+        echohl ErrorMsg
+        echomsg '[PromptPane] 送信失敗: ' .. trim(result)
+        echohl None
+        return
+    endif
 
-  # ==========================================================================
-  # 送信成功: 過去の履歴を消し、送信内容を1つのカタマリとしてセット
-  # ==========================================================================
-  try
-    while &modified
-      silent noautocmd undo
-    endwhile
-  catch /.*/
-  endtry
-
-  # 送信した内容をセット（これが 1つ目の undo ポイントになる）
-  setline(1, lines)
-
-  # 現在の関数を抜けた直後（0ミリ秒後）に、バッファをクリアして永続化する
-  # Vim9script の複数行ラムダを使って安全に処理を分離します
-  final bufnr = bufnr('%')
-  timer_start(0, (timer) => {
-    # 送信直後、ユーザーが別のバッファに移動していない場合のみ実行（安全策）
-    if bufnr('%') == bufnr
-      # バッファを空にする（これが 2つ目の undo ポイントになる）
-      setline(1, '')
-      if line('$') > 1
+    setline(1, '')
+    if line('$') > 1
         silent! deletebufline('%', 2, '$')
-      endif
-      setlocal nomodified
+    endif
+    setlocal nomodified
 
-      # 空になった最新の undo ツリー状態をディスクに書き出す
-      if has('persistent_undo')
+    if has('persistent_undo')
         final undo_file = GetUndoFilePath(uri)
         exec $'silent! wundofile {fnameescape(undo_file)}'
-      endif
     endif
-  })
 
-  echomsg '[PromptPane] 完了: Pane ' .. pane_id .. ' へ送信・実行しました'
+    echomsg '[PromptPane] 完了: Pane ' .. pane_id .. ' へ送信・実行しました'
 enddef
