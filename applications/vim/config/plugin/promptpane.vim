@@ -86,7 +86,7 @@ def SetupBuffer()
         final undo_file = GetUndoFilePath(uri)
         if filereadable(undo_file)
             # バッファが完全に空の状態で履歴を読み込む（保存時と状態を一致させるため）
-            exec $'silent! rundofile {fnameescape(undo_file)}'
+            exec $'silent! rundo {fnameescape(undo_file)}'
         endif
     endif
 enddef
@@ -128,7 +128,7 @@ def SendToTmux(uri: string)
 
     if has('persistent_undo')
         final undo_file = GetUndoFilePath(uri)
-        exec $'silent! wundofile {fnameescape(undo_file)}'
+        exec $'silent! wundo {fnameescape(undo_file)}'
     endif
 
     echomsg '[PromptPane] 完了: Pane ' .. pane_id .. ' へ送信・実行しました'
