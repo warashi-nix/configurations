@@ -25,20 +25,40 @@ enddef
 def ShowGhostText(line: number, col: number, text: string)
   prop_remove({ type: prop_type_name, all: v:true })
 
-  final first_line = split(text, '\n')[0]
-  if empty(first_line)
+  # 改行で分割（空行も維持するために第3引数に 1 を指定）
+  final lines = split(text, '\n', 1)
+  if empty(lines)
     return
   endif
 
   try
-    prop_add(line, col, {
-      type: prop_type_name,
-      text: first_line,
-    })
+    # 1行目: カーソル位置（インライン）に表示
+    if !empty(lines[0])
+      prop_add(line, col, {
+        type: prop_type_name,
+        text: lines[0],
+      })
+    endif
+
+    # 2行目以降: 行の下（below）に追加表示
+    if len(lines) > 1
+      for i in range(1, len(lines) - 1)
+        # Vimの仮想テキストは空文字("")を許容しないため、空行の場合はスペースに置換
+        final display_text = empty(lines[i]) ? ' ' : lines[i]
+        
+        prop_add(line, 0, {
+          type: prop_type_name,
+          text: display_text,
+          text_align: 'below',
+        })
+      endfor
+    endif
   catch
+    echohl ErrorMsg
+    echomsg 'Failed to show Copilot suggestion: ' .. v:exception
+    echohl None
   endtry
 enddef
-
 # -------------------------------------------------------------------------
 # LSP リクエストとレスポンスの処理
 # -------------------------------------------------------------------------
