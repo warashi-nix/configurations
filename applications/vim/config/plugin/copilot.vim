@@ -156,7 +156,7 @@ def HandleCopilotResponse(data: dict<any>, req_bufnr: number, req_lsp_pos: dict<
         display_col += r_len
 
       # 【パターンB】ghost_text の「末尾」が右側文字列と一致する場合（例: "hello") と ) ）
-      elif len(ghost_text) >= r_len && strpart(ghost_text, len(ghost_text) - r_len) ==# right_str
+      elseif len(ghost_text) >= r_len && strpart(ghost_text, len(ghost_text) - r_len) ==# right_str
         ghost_text = strpart(ghost_text, 0, len(ghost_text) - r_len)
         move_after = strchars(right_str)
         # 表示上も末尾を削る（表示位置 col はカーソル位置のまま）
