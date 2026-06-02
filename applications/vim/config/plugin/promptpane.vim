@@ -18,7 +18,7 @@ def PathComplete(findstart: number, base: string): any
         # ・パス区切り文字 (/, \) を含まない
         # ・先頭がホームディレクトリ (~) ではない
         # ・カレント・親ディレクトリ (. や ..) でもない
-        if text !~ '[/\\\\]' && text !~ '^~' && text != '.' && text != '..'
+        if text !~ '[/\\\\]' && text[0] != '~' && text != '.' && text != '..'
             return -2
         endif
 
