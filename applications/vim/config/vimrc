@@ -36,6 +36,17 @@ set wrapscan
 set hlsearch
 
 # --------------------------------------------------
+#  Undo
+# --------------------------------------------------
+
+set undofile
+const undo_dir = expand('~/.cache/vim/undo')
+exec $'set undodir={undo_dir}'
+if !isdirectory(undo_dir)
+    mkdir(undo_dir, 'p', 0o700)
+endif
+
+# --------------------------------------------------
 #  Timeouts
 # --------------------------------------------------
 
