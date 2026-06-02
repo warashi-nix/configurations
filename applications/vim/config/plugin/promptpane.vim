@@ -11,6 +11,17 @@ def PathComplete(findstart: number, base: string): any
         while start > 0 && line[start - 1] =~ '[a-zA-Z0-9_.,~@/\\-]'
             start -= 1
         endwhile
+
+        # カーソル直前までの文字列を抽出
+        final text = line[start : col('.') - 2]
+
+        # ・パス区切り文字 (/, \) を含まない
+        # ・先頭がホームディレクトリ (~) ではない
+        # ・カレント・親ディレクトリ (. や ..) でもない
+        if text !~ '[/\\\\]' && text !~ '^~' && text != '.' && text != '..'
+            return -2
+        endif
+
         return start
     else
         final pattern = base .. '*'
