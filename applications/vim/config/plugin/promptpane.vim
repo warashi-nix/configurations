@@ -120,9 +120,9 @@ def SendToTmux(uri: string)
     return
   endif
 
-  # --------------------------------------------------------------------------
-  # 送信成功: undo 粒度を調整（マージ）してクリア
-  # --------------------------------------------------------------------------
+  # ==========================================================================
+  # 送信成功: 過去の履歴を消し、送信内容を1つのカタマリとしてセット
+  # ==========================================================================
   try
     while &modified
       silent noautocmd undo
@@ -130,22 +130,29 @@ def SendToTmux(uri: string)
   catch /.*/
   endtry
 
+  # 送信した内容をセット（これが 1つ目の undo ポイントになる）
   setline(1, lines)
-  :undojoin
 
-  setline(1, '')
-  if line('$') > 1
-    silent! deletebufline('%', 2, '$')
-  endif
-  setlocal nomodified
+  # 現在の関数を抜けた直後（0ミリ秒後）に、バッファをクリアして永続化する
+  # Vim9script の複数行ラムダを使って安全に処理を分離します
+  final bufnr = bufnr('%')
+  timer_start(0, (timer) => {
+    # 送信直後、ユーザーが別のバッファに移動していない場合のみ実行（安全策）
+    if bufnr('%') == bufnr
+      # バッファを空にする（これが 2つ目の undo ポイントになる）
+      setline(1, '')
+      if line('$') > 1
+        silent! deletebufline('%', 2, '$')
+      endif
+      setlocal nomodified
 
-  # --------------------------------------------------------------------------
-  # 送信成功時: 最新の undo 履歴をディスクに書き出す
-  # --------------------------------------------------------------------------
-  if has('persistent_undo')
-    final undo_file = GetUndoFilePath(uri)
-    exec $'silent! wundofile {fnameescape(undo_file)}'
-  endif
+      # 空になった最新の undo ツリー状態をディスクに書き出す
+      if has('persistent_undo')
+        final undo_file = GetUndoFilePath(uri)
+        exec $'silent! wundofile {fnameescape(undo_file)}'
+      endif
+    endif
+  })
 
   echomsg '[PromptPane] 完了: Pane ' .. pane_id .. ' へ送信・実行しました'
 enddef
