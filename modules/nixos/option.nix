@@ -16,10 +16,5 @@ in
       default = true;
       description = "Enable warashi nixos module.";
     };
-    enableTailscale = mkOption {
-      type = types.bool;
-      default = true;
-      description = "Enable tailscale on nixos.";
-    };
   };
 }
