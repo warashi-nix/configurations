@@ -4,6 +4,9 @@
     onActivation = {
       autoUpdate = true;
       upgrade = true;
+      extraFlags = [
+        "--force-cleanup" # TODO: nix-darwin が対応したら消す
+      ];
     };
     brews = [
       "mas"
