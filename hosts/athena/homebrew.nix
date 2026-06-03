@@ -31,7 +31,6 @@
       "orbstack"
       "orion"
       "raycast"
-      "tailscale-app"
       "visual-studio-code"
       "zoom"
       # keep-sorted end
