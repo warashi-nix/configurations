@@ -64,7 +64,7 @@
     },
     "nongnu-elpa": {
         "cargoLock": null,
-        "date": "2026-05-14",
+        "date": "2026-06-03",
         "extract": null,
         "name": "nongnu-elpa",
         "passthru": null,
@@ -76,11 +76,11 @@
             "name": null,
             "owner": "elpa-mirrors",
             "repo": "nongnu",
-            "rev": "9a138bb309154f4595bd11b6e12cd2d56d99dc49",
-            "sha256": "sha256-U8FoYexh4glbG5yP7VF056fZwsW++wzEVNGph4MZ4fc=",
+            "rev": "75687fd1d60d7ad7f9dacb4379389a024d893138",
+            "sha256": "sha256-Uti87vKEtHZJl6xjA8Ek73OV+1WEiwqQtHSZWMBrsRQ=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "9a138bb309154f4595bd11b6e12cd2d56d99dc49"
+        "version": "75687fd1d60d7ad7f9dacb4379389a024d893138"
     }
 }
