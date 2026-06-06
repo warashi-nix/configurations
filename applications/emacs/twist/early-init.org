@@ -1,0 +1,78 @@
+#+title: early-init.org
+#+description: Warashi's Emacs config
+#+author: Warashi
+ 
+* Header
+#+begin_src emacs-lisp 
+  ;;; early-init.el ---  -*- lexical-binding: t -*-
+  ;;; Code:  
+#+end_src
+
+* profiler
+#+begin_src emacs-lisp :tangle no
+  (require 'profiler)
+  (profiler-start 'cpu)
+#+end_src
+
+* performance tuning for setopt
+#+begin_src emacs-lisp
+  ;; Temporarily disabe `setopt' because it is slower than `setq'
+  (fset 'real-setopt (symbol-function 'setopt))
+  (defmacro setopt (&rest args)
+    "setopt を setq に一時的に変えるためのマクロ."
+    `(setq ,@args))
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (fset 'setopt (symbol-function 'real-setopt))
+              (fmakunbound 'real-setopt)
+              ))
+#+end_src
+
+* Decrease GC
+#+begin_src emacs-lisp
+  (setopt gc-cons-threshold (* 512 1024 1024))
+#+end_src
+
+* Toolbar/Menubar
+#+begin_src emacs-lisp
+  (push '(tool-bar-lines . 0) default-frame-alist)
+  (push '(menu-bar-lines . 0) default-frame-alist)
+#+end_src
+
+* inhibit
+#+begin_src emacs-lisp
+  (setopt inhibit-splash-screen t
+  	inhibit-startup-buffer-menu t
+  	inhibit-startup-message t
+  	inhibit-startup-screen t
+  	inhibit-x-resources t)
+#+end_src
+
+* minibuffer
+#+begin_src emacs-lisp
+  (setopt enable-recursive-minibuffers t
+          echo-keystrokes 0.1)
+#+end_src
+
+* Suppress auto package loading
+#+begin_src emacs-lisp
+  (setopt package-enable-at-startup nil)
+  (setopt package-quickstart nil)
+#+end_src
+
+* native compile
+#+begin_src emacs-lisp
+  (custom-set-variables '(warning-suppress-types '((comp))))
+  (with-eval-after-load 'comp
+    (setopt native-comp-async-jobs-number 8)
+    (setopt native-comp-speed 3)
+    (setopt native-comp-always-compile t))
+#+end_src
+
+* Footer
+#+begin_src emacs-lisp
+  (provide 'early-init)
+
+  ;; End:
+  ;;; early-init.el ends here
+#+end_src
