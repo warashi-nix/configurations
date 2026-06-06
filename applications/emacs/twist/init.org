@@ -56,3 +56,8 @@
                               'magit-insert-stashes
                               'append)))
 #+end_src
+
+* theme
+#+begin_src emacs-lisp
+  (add-hook 'after-init-hook (lambda () (load-theme 'modus-operandi)))
+#+end_src
