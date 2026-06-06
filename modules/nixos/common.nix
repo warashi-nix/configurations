@@ -19,7 +19,10 @@ in
     };
 
     virtualisation.docker = {
-      enable = true;
+      rootless = {
+        enable = true;
+        setSocketVariable = true;
+      };
     };
 
     programs.nix-ld = {

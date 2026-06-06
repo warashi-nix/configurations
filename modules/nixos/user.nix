@@ -25,7 +25,6 @@ in
         extraGroups = [
           "wheel"
           "networkmanager"
-          "docker"
         ];
         openssh.authorizedKeys.keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/w9P7ws2J3mqoYBFbqcnIPw2idc8NYsoEF/Z3p87DL"
