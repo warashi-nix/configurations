@@ -1,6 +1,12 @@
 {
   description = "THIS IS AN AUTO-GENERATED FILE. PLEASE DON'T EDIT IT MANUALLY.";
   inputs = {
+    age = {
+      flake = false;
+      owner = "anticomputer";
+      repo = "age.el";
+      type = "github";
+    };
     compat = {
       flake = false;
       owner = "emacs-compat";

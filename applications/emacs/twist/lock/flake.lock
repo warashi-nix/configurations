@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "age": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1754501019,
+        "narHash": "sha256-cO3GpmI71XaA/l3e6wZjZvnzdGWhIXucY+pJGVWaLic=",
+        "owner": "anticomputer",
+        "repo": "age.el",
+        "rev": "e99165ef5274bc4512b8d77ba2ac208c59b5d456",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anticomputer",
+        "repo": "age.el",
+        "type": "github"
+      }
+    },
     "compat": {
       "flake": false,
       "locked": {
@@ -82,6 +98,7 @@
     },
     "root": {
       "inputs": {
+        "age": "age",
         "compat": "compat",
         "cond-let": "cond-let",
         "llama": "llama",

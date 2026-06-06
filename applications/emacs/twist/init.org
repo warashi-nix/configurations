@@ -39,6 +39,9 @@
               "Fake installation of PACKAGE."
               :repeatable t
               :shorthand cadr))
+
+    (defsetup :nixpkgs (&rest nixpkgs)
+              "Fake installation of packages from NIXPKGS for executables.")
 #+end_src
 
 * basic keybind
@@ -61,6 +64,16 @@
                               'magit-insert-modules
                               'magit-insert-stashes
                               'append)))
+#+end_src
+
+* age
+#+begin_src emacs-lisp
+  (setup (:package age)
+    (:nixpkgs age)
+    (:option age-default-identity "~/.config/age/secret-key"
+  	   age-default-recipient '("~/.config/age/public-key"))
+    (:with-hook after-init-hook
+      (:hook age-file-enable)))
 #+end_src
 
 * theme
