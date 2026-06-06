@@ -15,6 +15,7 @@
       # keep-sorted start
       "1password"
       "alfred"
+      "alt-tab"
       "amazon-photos"
       "asana"
       "cloudflare-warp"
@@ -29,6 +30,7 @@
       "font-biz-udpmincho"
       "google-chrome"
       "google-drive"
+      "google-gemini"
       "karabiner-elements"
       "lasso-app"
       "orbstack"
