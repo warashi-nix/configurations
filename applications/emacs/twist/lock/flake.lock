@@ -89,6 +89,7 @@
         "magit-section": "magit-section",
         "setup": "setup",
         "transient": "transient",
+        "twist": "twist",
         "with-editor": "with-editor"
       }
     },
@@ -121,6 +122,22 @@
       "original": {
         "owner": "magit",
         "repo": "transient",
+        "type": "github"
+      }
+    },
+    "twist": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1700878793,
+        "narHash": "sha256-R4wXVq9lb8WuTDdXjtaFiptJgBhKjoiJzUNXtZwkvto=",
+        "owner": "emacs-twist",
+        "repo": "twist.el",
+        "rev": "cc49891252ae060656bb859ca5bc49a5dcb47b40",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-twist",
+        "repo": "twist.el",
         "type": "github"
       }
     },

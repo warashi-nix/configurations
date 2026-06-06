@@ -27,6 +27,7 @@
         {
           emacsPackage = pkgs.emacs-nox;
           lockDir = ./lock;
+          extraRecipeDir = ./recipes;
           extraPackages = [ "setup" ];
           initParser = inputs.twist.lib.parseSetup { inherit (inputs.nixpkgs) lib; } { }; # for setup.el
           initFiles = [ (tangleOrgBabelFile "init.el" ./init.org { }) ];
@@ -50,9 +51,17 @@
               initFiles
               initParser
               lockDir
-              registries
               exportManifest
               ;
+
+            registries = [
+              {
+                name = "custom";
+                type = "melpa";
+                path = profile.${system}.extraRecipeDir;
+              }
+            ]
+            ++ profile.${system}.registries;
           };
         }
       );

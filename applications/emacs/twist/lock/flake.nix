@@ -42,6 +42,12 @@
       repo = "transient";
       type = "github";
     };
+    twist = {
+      flake = false;
+      owner = "emacs-twist";
+      repo = "twist.el";
+      type = "github";
+    };
     with-editor = {
       flake = false;
       owner = "magit";

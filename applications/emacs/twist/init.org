@@ -46,6 +46,12 @@
   (define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
 #+end_src
 
+* twist
+#+begin_src emacs-lisp
+  (setup (:package twist)
+    (add-hook 'emacs-startup-hook #'twist-watch-mode))
+#+end_src
+
 * magit
 #+begin_src emacs-lisp
   (setup (:package transient))
