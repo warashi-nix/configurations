@@ -1,7 +1,7 @@
 {
     "epkgs": {
         "cargoLock": null,
-        "date": "2026-06-01",
+        "date": "2026-06-06",
         "extract": null,
         "name": "epkgs",
         "passthru": null,
@@ -13,12 +13,12 @@
             "name": null,
             "owner": "emacsmirror",
             "repo": "epkgs",
-            "rev": "2503d3273ff3f352fe703338b64a9723e5b5ca2b",
-            "sha256": "sha256-GdLP6Lky7KTbKgu8pgTPln5/jPgrDlMciwkzMMrBIV8=",
+            "rev": "28480d5ca02c29ba4627d898bb882570094efe46",
+            "sha256": "sha256-ktSlINf0WbPut3y3+aIxZiKd6+HsHGitpA3fk6MqMsk=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "2503d3273ff3f352fe703338b64a9723e5b5ca2b"
+        "version": "28480d5ca02c29ba4627d898bb882570094efe46"
     },
     "gnu-elpa": {
         "cargoLock": null,
@@ -43,7 +43,7 @@
     },
     "melpa": {
         "cargoLock": null,
-        "date": "2026-06-04",
+        "date": "2026-06-05",
         "extract": null,
         "name": "melpa",
         "passthru": null,
@@ -55,12 +55,12 @@
             "name": null,
             "owner": "melpa",
             "repo": "melpa",
-            "rev": "5c4845003f7a970416c0db190987ba99369e8cb9",
-            "sha256": "sha256-i2Ou/7JNftuTtPcptde9z+X1+EqxMEPx2Ig3lz66SU8=",
+            "rev": "fd2082f1d5170d65f46116a012d2d1abedf62dba",
+            "sha256": "sha256-qUR8SHoTCGoslArhxGHNm3elYn6xXql5omByItSp9lg=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "5c4845003f7a970416c0db190987ba99369e8cb9"
+        "version": "fd2082f1d5170d65f46116a012d2d1abedf62dba"
     },
     "nongnu-elpa": {
         "cargoLock": null,
