@@ -225,6 +225,7 @@
         "org": "org",
         "ppp": "ppp",
         "setup": "setup",
+        "term-title": "term-title",
         "transient": "transient",
         "twist": "twist",
         "with-editor": "with-editor"
@@ -244,6 +245,22 @@
       "original": {
         "type": "git",
         "url": "https://codeberg.org/pkal/setup.el"
+      }
+    },
+    "term-title": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1641341204,
+        "narHash": "sha256-RS3zhlYyK9hh6WtEoLDLAKINriFGzA9V2s+zFuL8o0E=",
+        "owner": "CyberShadow",
+        "repo": "term-title",
+        "rev": "0a891957d4a6e2afc4176b555fc790d4c5bacd05",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CyberShadow",
+        "repo": "term-title",
+        "type": "github"
       }
     },
     "transient": {

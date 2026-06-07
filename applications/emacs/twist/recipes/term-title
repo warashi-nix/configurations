@@ -1,0 +1,2 @@
+(term-title :fetcher github
+	    :repo "CyberShadow/term-title")

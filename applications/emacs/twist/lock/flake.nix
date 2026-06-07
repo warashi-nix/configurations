@@ -84,6 +84,12 @@
       type = "git";
       url = "https://codeberg.org/pkal/setup.el";
     };
+    term-title = {
+      flake = false;
+      owner = "CyberShadow";
+      repo = "term-title";
+      type = "github";
+    };
     transient = {
       flake = false;
       owner = "magit";

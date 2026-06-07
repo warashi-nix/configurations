@@ -57,7 +57,17 @@
   	    "Use `keymap-set' to define keybindings."
   	    :after-loaded t
   	    :repeatable t
-  	    `(keymap-set ,(setup-get 'map) ,key ,command)))
+  	    `(keymap-set ,(setup-get 'map) ,key ,command))
+
+    (defsetup
+     :defer (sec &optional func)
+     "Call a function at N seconds after init."
+     `(add-hook 'after-init-hook
+  	      (lambda nil
+  		(run-with-timer ,sec nil
+  				,(or func
+  				     `(function ,(setup-get 'mode))))))))
+
 #+end_src
 
 * basic keybind
@@ -69,6 +79,12 @@
 #+begin_src emacs-lisp
   (setup (:package twist)
     (add-hook 'emacs-startup-hook #'twist-watch-mode))
+#+end_src
+
+* term-title
+#+begin_src emacs-lisp
+  (setup (:package term-title)
+    (:defer 0.1))
 #+end_src
 
 * util
