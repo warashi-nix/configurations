@@ -31,6 +31,12 @@
       repo = "cond-let";
       type = "github";
     };
+    copilot = {
+      flake = false;
+      owner = "copilot-emacs";
+      repo = "copilot.el";
+      type = "github";
+    };
     ddskk = {
       flake = false;
       owner = "skk-dev";

@@ -80,6 +80,22 @@
         "type": "github"
       }
     },
+    "copilot": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774941222,
+        "narHash": "sha256-hXZsu/pDE0/Li+GcFbC9ObbY4N1sVWDZ48CJfDrJmL4=",
+        "owner": "copilot-emacs",
+        "repo": "copilot.el",
+        "rev": "ab5c58bc969f52f6d75e972658f2c3381c70b4fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "copilot-emacs",
+        "repo": "copilot.el",
+        "type": "github"
+      }
+    },
     "ddskk": {
       "flake": false,
       "locked": {
@@ -200,6 +216,7 @@
         "cdb": "cdb",
         "compat": "compat",
         "cond-let": "cond-let",
+        "copilot": "copilot",
         "ddskk": "ddskk",
         "llama": "llama",
         "magit": "magit",

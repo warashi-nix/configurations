@@ -17,7 +17,10 @@
       profile = forAllSystems (
         system:
         let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          pkgs = import (inputs.nixpkgs) {
+            inherit system;
+            config.allowUnfree = true;
+          };
 
           # define tangleOrgBabelFile here to avoid using overlays.
           tangleOrgBabelFile =
@@ -39,7 +42,10 @@
       packages = forAllSystems (
         system:
         let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          pkgs = import (inputs.nixpkgs) {
+            inherit system;
+            config.allowUnfree = true;
+          };
         in
         {
           inherit (profile.${system}) tangleOrgBabelFile;
