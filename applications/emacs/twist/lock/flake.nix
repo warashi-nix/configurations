@@ -55,6 +55,24 @@
       repo = "magit";
       type = "github";
     };
+    mistty = {
+      flake = false;
+      owner = "szermatt";
+      repo = "mistty";
+      type = "github";
+    };
+    org = {
+      flake = false;
+      ref = "bugfix";
+      type = "git";
+      url = "https://git.savannah.gnu.org/git/emacs/org-mode.git";
+    };
+    ppp = {
+      flake = false;
+      owner = "conao3";
+      repo = "ppp.el";
+      type = "github";
+    };
     setup = {
       flake = false;
       type = "git";

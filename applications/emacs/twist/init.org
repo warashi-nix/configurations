@@ -71,10 +71,16 @@
     (add-hook 'emacs-startup-hook #'twist-watch-mode))
 #+end_src
 
+* util
+#+begin_src emacs-lisp
+  (setup (:package ppp))
+#+end_src
+
 * magit
 #+begin_src emacs-lisp
   (setup (:package transient))
   (setup (:package magit)
+    (:global-keymap "C-c g" #'magit-status)
     (:when-loaded
       (magit-add-section-hook 'magit-status-sections-hook
                               'magit-insert-modules
@@ -95,7 +101,21 @@
 * ddskk
 #+begin_src emacs-lisp
   (setup (:package ddskk)
-    (:global-keymap "C-c j" #'skk-mode))
+    (:global-keymap "C-c j" #'skk-mode)
+    (setq skk-user-directory (locate-user-emacs-file "ddskk")))
+#+end_src
+
+* org
+#+begin_src emacs-lisp
+  (setup (:package org)
+    (:also-load org-tempo))
+#+end_src
+
+* mistty
+#+begin_src emacs-lisp
+  (setup (:package mistty)
+    (:opt mistty-shell-command "fish")
+    (:global-keymap "C-c s" #'mistty))
 #+end_src
 
 * theme

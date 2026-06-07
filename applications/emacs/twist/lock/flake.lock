@@ -144,6 +144,55 @@
         "type": "github"
       }
     },
+    "mistty": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770302994,
+        "narHash": "sha256-oa8YQyjbJCqDDQo/xQXv7Nc4zbO7mMoyDlm1KFW0POI=",
+        "owner": "szermatt",
+        "repo": "mistty",
+        "rev": "1752970d1d303fae173527fbcdb3458e865197bb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "szermatt",
+        "repo": "mistty",
+        "type": "github"
+      }
+    },
+    "org": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780148101,
+        "narHash": "sha256-WJDHDWEO4S4znQgdJf7Y0//d/eYIEg7oX5uS+qtp4+I=",
+        "ref": "bugfix",
+        "rev": "0d02d72627428dddf21ec66b1eb87e46c2849ded",
+        "revCount": 28646,
+        "type": "git",
+        "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
+      },
+      "original": {
+        "ref": "bugfix",
+        "type": "git",
+        "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
+      }
+    },
+    "ppp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778254267,
+        "narHash": "sha256-8SBFuOkLYRuvPRuVtdoE70FLBHZITI6vx0PSDb3vImo=",
+        "owner": "conao3",
+        "repo": "ppp.el",
+        "rev": "404b987482f218a483831b95499548ff2550a71e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "conao3",
+        "repo": "ppp.el",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "age": "age",
@@ -155,6 +204,9 @@
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
+        "mistty": "mistty",
+        "org": "org",
+        "ppp": "ppp",
         "setup": "setup",
         "transient": "transient",
         "twist": "twist",
