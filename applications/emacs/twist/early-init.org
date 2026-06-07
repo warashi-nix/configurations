@@ -8,6 +8,14 @@
   ;;; Code:  
 #+end_src
 
+* Decrease GC
+#+begin_src emacs-lisp
+  (setopt gc-cons-threshold (* 1024 1024 1024))
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (setopt gc-cons-threshold (* 16 1024 1024))))
+#+end_src
+
 * profiler
 #+begin_src emacs-lisp :tangle no
   (require 'profiler)
@@ -16,7 +24,9 @@
             (lambda ()
               (message "Emacs initialized in %.3f sec with %d garbage collection(s)"
                        (float-time (time-subtract after-init-time before-init-time))
-                       gcs-done)))
+                       gcs-done)
+              (profiler-report)
+              (profiler-stop)))
 #+end_src
 
 * performance tuning for setopt
@@ -29,21 +39,16 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (fset 'setopt (symbol-function 'real-setopt))
-              (fmakunbound 'real-setopt)
-              ))
-#+end_src
-
-* Decrease GC
-#+begin_src emacs-lisp
-  (setopt gc-cons-threshold (* 512 1024 1024))
+              (fmakunbound 'real-setopt)))
 #+end_src
 
 * Toolbar/Menubar
 #+begin_src emacs-lisp
-  (setopt tool-var-mode nil)
-  (setopt menu-bar-mode nil)
-  (push '(tool-bar-lines . 0) default-frame-alist)
-  (push '(menu-bar-lines . 0) default-frame-alist)
+  (menu-bar-mode -1)
+  (when (fboundp #'tool-bar-mode)
+    (tool-bar-mode -1))
+  (when (fboundp #'scroll-bar-mode)
+  (scroll-bar-mode -1))
 #+end_src
 
 * inhibit
