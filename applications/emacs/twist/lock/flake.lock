@@ -16,6 +16,38 @@
         "type": "github"
       }
     },
+    "ccc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774790227,
+        "narHash": "sha256-4X7pAXJZoaF8hUfefyXo8r3ggDvsaHy1pockndTUsds=",
+        "owner": "skk-dev",
+        "repo": "ddskk",
+        "rev": "e8bf68b27021c29781dbfa6a8ef7b770565bdb5b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "skk-dev",
+        "repo": "ddskk",
+        "type": "github"
+      }
+    },
+    "cdb": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774790227,
+        "narHash": "sha256-4X7pAXJZoaF8hUfefyXo8r3ggDvsaHy1pockndTUsds=",
+        "owner": "skk-dev",
+        "repo": "ddskk",
+        "rev": "e8bf68b27021c29781dbfa6a8ef7b770565bdb5b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "skk-dev",
+        "repo": "ddskk",
+        "type": "github"
+      }
+    },
     "compat": {
       "flake": false,
       "locked": {
@@ -45,6 +77,22 @@
       "original": {
         "owner": "tarsius",
         "repo": "cond-let",
+        "type": "github"
+      }
+    },
+    "ddskk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774790227,
+        "narHash": "sha256-4X7pAXJZoaF8hUfefyXo8r3ggDvsaHy1pockndTUsds=",
+        "owner": "skk-dev",
+        "repo": "ddskk",
+        "rev": "e8bf68b27021c29781dbfa6a8ef7b770565bdb5b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "skk-dev",
+        "repo": "ddskk",
         "type": "github"
       }
     },
@@ -99,8 +147,11 @@
     "root": {
       "inputs": {
         "age": "age",
+        "ccc": "ccc",
+        "cdb": "cdb",
         "compat": "compat",
         "cond-let": "cond-let",
+        "ddskk": "ddskk",
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",

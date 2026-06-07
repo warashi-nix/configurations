@@ -7,6 +7,18 @@
       repo = "age.el";
       type = "github";
     };
+    ccc = {
+      flake = false;
+      owner = "skk-dev";
+      repo = "ddskk";
+      type = "github";
+    };
+    cdb = {
+      flake = false;
+      owner = "skk-dev";
+      repo = "ddskk";
+      type = "github";
+    };
     compat = {
       flake = false;
       owner = "emacs-compat";
@@ -17,6 +29,12 @@
       flake = false;
       owner = "tarsius";
       repo = "cond-let";
+      type = "github";
+    };
+    ddskk = {
+      flake = false;
+      owner = "skk-dev";
+      repo = "ddskk";
       type = "github";
     };
     llama = {

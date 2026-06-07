@@ -38,10 +38,20 @@
     (defsetup :package (package)
               "Fake installation of PACKAGE."
               :repeatable t
-              :shorthand cadr))
+              :shorthand cadr)
 
     (defsetup :nixpkgs (&rest nixpkgs)
               "Fake installation of packages from NIXPKGS for executables.")
+
+    (defsetup :opt (&rest pairs)
+  	    "Set the option NAME to VAL using `setopt'."
+  	    :after-loaded t
+  	    `(setopt ,@pairs))
+
+    (defsetup :global-keymap (key command)
+  	    "Globally bind KEY to COMMAND."
+  	    :repeatable t
+  	    `(keymap-global-set ,key ,command)))
 #+end_src
 
 * basic keybind
@@ -70,10 +80,16 @@
 #+begin_src emacs-lisp
   (setup (:package age)
     (:nixpkgs age)
-    (:option age-default-identity "~/.config/age/secret-key"
-  	   age-default-recipient '("~/.config/age/public-key"))
+    (:opt age-default-identity "~/.config/age/secret-key"
+  	age-default-recipient '("~/.config/age/public-key"))
     (:with-hook after-init-hook
       (:hook age-file-enable)))
+#+end_src
+
+* ddskk
+#+begin_src emacs-lisp
+  (setup (:package ddskk)
+    (:global-keymap "C-c j" #'skk-mode))
 #+end_src
 
 * theme
