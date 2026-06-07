@@ -5,6 +5,7 @@
     package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
     clearDefaultKeybinds = false;
     settings = {
+      term = "ghostty";
       font-size = 18;
       font-family = "PlemolJP Console NF";
       theme = "light:Modus Operandi,dark:Modus Vivendi";
