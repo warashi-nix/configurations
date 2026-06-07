@@ -139,13 +139,13 @@
   (setup (:package copilot)
     (:nixpkgs copilot-language-server)
     (:with-map copilot-completion-map
-      (:bind
-       ("<tab>" . copilot-accept-completion)
-       ("TAB" . copilot-accept-completion)
-       ("C-<tab>" . copilot-accept-completion-by-word)
-       ("C-TAB" . copilot-accept-completion-by-word)
-       ("C-n" . copilot-next-completion)
-       ("C-p" . copilot-previous-completion))))
+      (:keymap
+       "<tab>" #'copilot-accept-completion
+       "TAB" #'copilot-accept-completion
+       "C-<tab>" #'copilot-accept-completion-by-word
+       "C-TAB" #'copilot-accept-completion-by-word
+       "C-n" #'copilot-next-completion
+       "C-p" #'copilot-previous-completion)))
 #+end_src
 
 * theme
