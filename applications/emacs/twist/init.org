@@ -51,7 +51,13 @@
     (defsetup :global-keymap (key command)
   	    "Globally bind KEY to COMMAND."
   	    :repeatable t
-  	    `(keymap-global-set ,key ,command)))
+  	    `(keymap-global-set ,key ,command))
+
+    (defsetup :keymap (key command)
+  	    "Use `keymap-set' to define keybindings."
+  	    :after-loaded t
+  	    :repeatable t
+  	    `(keymap-set ,(setup-get 'map) ,key ,command)))
 #+end_src
 
 * basic keybind
