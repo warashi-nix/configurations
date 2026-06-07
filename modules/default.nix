@@ -8,7 +8,6 @@
 }:
 with lib;
 let
-  cfg = config.warashi;
   shouldImportModule = x: x != "default.nix" && (x == platform || (x != "nixos" && x != "darwin"));
 in
 {
