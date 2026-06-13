@@ -35,6 +35,20 @@ in
       watchIdAuth = false;
     };
 
+    environment = {
+      systemPath = lib.mkForce (
+        [
+          # save the original PATH for use in the shell profile
+          "\${PATH}\${PATH:+:}${(makeBinPath config.environment.profiles)}"
+        ]
+        ++ [ "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" ]
+      );
+      extraInit = ''
+        # Remove duplicate entries from PATH while preserving order, leaving the last occurrence of each entry.
+        PATH=$(printf '%s' "$PATH" | awk -v RS=: -v ORS=: '{a[NR]=$0; last[$0]=NR} END {for (i=1; i<=NR; i++) if (last[a[i]]==i) print a[i]}' | sed 's/:$//')
+      '';
+    };
+
     system = {
       primaryUser = username;
       stateVersion = 5;
