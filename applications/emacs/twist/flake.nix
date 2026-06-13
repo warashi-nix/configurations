@@ -28,7 +28,7 @@
             pkgs.writeText name (inputs.org-babel.lib.tangleOrgBabel options (builtins.readFile path));
         in
         {
-          emacsPackage = pkgs.emacs-nox;
+          emacsPackage = pkgs.emacs;
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
           extraPackages = [ "setup" ];

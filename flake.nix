@@ -24,7 +24,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     emacs-twist = {
-      url = "github:emacs-twist/twist.nix";
+      url = "github:Warashi/twist.nix/darwin-emacs-app";
     };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
