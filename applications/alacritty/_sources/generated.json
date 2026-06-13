@@ -1,7 +1,7 @@
 {
     "alacritty-theme": {
         "cargoLock": null,
-        "date": "2026-05-01",
+        "date": "2026-06-12",
         "extract": null,
         "name": "alacritty-theme",
         "passthru": null,
@@ -13,11 +13,11 @@
             "name": null,
             "owner": "alacritty",
             "repo": "alacritty-theme",
-            "rev": "2749b407b597790e6f08b218c2bc2acdf66210a0",
-            "sha256": "sha256-F8ye16jhfldsyxcOqxVS0PNecVcQcAPnEahDKS4PGwE=",
+            "rev": "659d2e1d669cd5722f11e58c44fd45dc26a6ffcd",
+            "sha256": "sha256-jXL0UCLoqiXwihko6F+o247FX4UNFFCOoiA4pZuL/v0=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "2749b407b597790e6f08b218c2bc2acdf66210a0"
+        "version": "659d2e1d669cd5722f11e58c44fd45dc26a6ffcd"
     }
 }
