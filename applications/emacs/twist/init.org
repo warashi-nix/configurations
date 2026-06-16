@@ -81,6 +81,13 @@
     (add-hook 'emacs-startup-hook #'twist-watch-mode))
 #+end_src
 
+* envrc
+#+begin_src emacs-lisp
+  (setup (:package envrc)
+    (:with-hook after-init-hook
+      (:hook envrc-global-mode)))
+#+end_src
+
 * term-title
 #+begin_src emacs-lisp
   (setup (:package term-title)

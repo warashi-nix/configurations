@@ -43,6 +43,18 @@
       repo = "ddskk";
       type = "github";
     };
+    envrc = {
+      flake = false;
+      owner = "purcell";
+      repo = "envrc";
+      type = "github";
+    };
+    inheritenv = {
+      flake = false;
+      owner = "purcell";
+      repo = "inheritenv";
+      type = "github";
+    };
     llama = {
       flake = false;
       owner = "tarsius";

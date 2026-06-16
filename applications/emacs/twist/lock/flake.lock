@@ -112,6 +112,38 @@
         "type": "github"
       }
     },
+    "envrc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779118644,
+        "narHash": "sha256-rPvW3UZ5hwsA0kGNs7ctLEeP0IsIcVVU0Rq97PX3Oqw=",
+        "owner": "purcell",
+        "repo": "envrc",
+        "rev": "1e63a3db367254897a39251944ba68938ec41020",
+        "type": "github"
+      },
+      "original": {
+        "owner": "purcell",
+        "repo": "envrc",
+        "type": "github"
+      }
+    },
+    "inheritenv": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1732024534,
+        "narHash": "sha256-qzM7uepVOTQyxJmngiePHVXFdeOw59wGvwiKl3xEDT4=",
+        "owner": "purcell",
+        "repo": "inheritenv",
+        "rev": "b9e67cc20c069539698a9ac54d0e6cc11e616c6f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "purcell",
+        "repo": "inheritenv",
+        "type": "github"
+      }
+    },
     "llama": {
       "flake": false,
       "locked": {
@@ -218,6 +250,8 @@
         "cond-let": "cond-let",
         "copilot": "copilot",
         "ddskk": "ddskk",
+        "envrc": "envrc",
+        "inheritenv": "inheritenv",
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
