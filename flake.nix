@@ -1,6 +1,13 @@
 {
   inputs = {
     # keep-sorted start block=yes
+    agent-skills = {
+      url = "github:Kyure-A/agent-skills-nix";
+      inputs = {
+        home-manager.follows = "home-manager";
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
     darwin = {
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
