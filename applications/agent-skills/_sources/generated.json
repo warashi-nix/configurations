@@ -1,0 +1,23 @@
+{
+    "mattpocock-skills": {
+        "cargoLock": null,
+        "date": "2026-06-18",
+        "extract": null,
+        "name": "mattpocock-skills",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "mattpocock",
+            "repo": "skills",
+            "rev": "6eeb81b5fcfeeb5bd531dd47ab2f9f2bbea27461",
+            "sha256": "sha256-6T0KwZcUIIbd6kpkQXPCnnJPVY2mEjxYjed4FjKnRAw=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "6eeb81b5fcfeeb5bd531dd47ab2f9f2bbea27461"
+    }
+}

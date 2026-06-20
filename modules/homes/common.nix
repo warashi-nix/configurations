@@ -19,6 +19,7 @@ in
       users.${username} = {
         imports = [
           # keep-sorted start
+          inputs.agent-skills.homeManagerModules.default
           inputs.direnv-instant.homeModules.direnv-instant
           inputs.emacs-twist.homeModules.emacs-twist
           inputs.sops-nix.homeManagerModules.sops

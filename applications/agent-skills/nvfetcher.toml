@@ -1,0 +1,3 @@
+[mattpocock-skills]
+src.git = "https://github.com/mattpocock/skills.git"
+fetch.github = "mattpocock/skills"
