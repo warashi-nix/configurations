@@ -25,6 +25,7 @@ in
       # keep-sorted start block=yes
       copilot = {
         enable = true;
+        structure = "copy-tree";
       };
       # keep-sorted end
     };
