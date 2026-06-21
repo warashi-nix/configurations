@@ -151,7 +151,7 @@
                   # keep-sorted start block=yes
                   nixfmt = {
                     excludes = [
-                      "**/_sources/generated.nix" # nvfetcher generatee sources
+                      "**/_sources/generated.nix" # nvfetcher generated sources
                     ];
                   };
                   tombi = {
