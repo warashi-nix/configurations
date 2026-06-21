@@ -17,7 +17,7 @@ in
       useGlobalPkgs = true;
       useUserPackages = true;
 
-      users.${username} = {
+      users.${username} = { config, ... }: {
         imports = [
           # keep-sorted start
           inputs.agent-skills.homeManagerModules.default
@@ -36,7 +36,7 @@ in
           preferXdgDirectories = true;
 
           sessionPath = [
-            "${config.home-manager.users.${username}.home.homeDirectory}/.local/bin"
+            "${config.home.homeDirectory}/.local/bin"
           ];
 
           sessionVariables = {
