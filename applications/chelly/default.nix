@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 with lib;
@@ -14,6 +15,11 @@ in
       type = types.bool;
       description = "Enable Chelly options.";
       default = true;
+    };
+    package = mkOption {
+      type = types.package;
+      description = "Package for Chelly.";
+      default = inputs.chelly.packages.${pkgs.stdenv.hostPlatform.system}.chelly;
     };
     dockerFile = mkOption {
       type = types.path;
@@ -39,6 +45,7 @@ in
   };
 
   config = mkIf cfg.enable {
+    home.packages = [ cfg.package ];
     xdg.configFile = {
       "chelly/config.toml".source = (pkgs.formats.toml { }).generate "chelly-config.toml" cfg.settings;
       "chelly/Dockerfile".source = cfg.dockerFile;

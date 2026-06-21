@@ -8,6 +8,13 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+    chelly = {
+      url = "github:Warashi/chelly";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+      };
+    };
     darwin = {
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
