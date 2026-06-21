@@ -18,12 +18,15 @@ in
       defaultLocale = "en_US.UTF-8";
     };
 
-    virtualisation.docker = {
-      rootless = {
-        enable = true;
-        setSocketVariable = true;
-      };
+    virtualisation.podman = {
+      enable = true;
+      extraRuntimes = [
+        pkgs.youki
+      ];
     };
+    environment.systemPackages = with pkgs; [
+      podman-compose
+    ];
 
     programs.nix-ld = {
       enable = true;
