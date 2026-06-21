@@ -48,7 +48,6 @@
           };
         in
         {
-          inherit (profile.${system}) tangleOrgBabelFile;
           default = inputs.twist.lib.makeEnv {
             inherit pkgs;
             inherit (profile.${system})
