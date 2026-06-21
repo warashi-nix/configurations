@@ -39,7 +39,7 @@ in
       systemPath = lib.mkForce (
         [
           # save the original PATH for use in the shell profile
-          "\${PATH}\${PATH:+:}${(makeBinPath config.environment.profiles)}"
+          "\${PATH}\${PATH:+:}${makeBinPath config.environment.profiles}"
         ]
         ++ [ "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" ]
       );
