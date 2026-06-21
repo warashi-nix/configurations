@@ -28,6 +28,11 @@ in
           "chelly-nix:/nix"
           "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
         ];
+        podman_options = {
+          run = [
+            "--userns=keep-id"
+          ];
+        };
       };
     };
   };
