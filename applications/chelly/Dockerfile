@@ -13,6 +13,7 @@ WORKDIR /home/warashi
 
 RUN curl -fsSL https://gh.io/copilot-install | bash
 
+RUN mkdir -p /home/warashi/.config/git && touch /home/warashi/.config/git/config
 RUN git config --global user.name 'Shinnosuke Sawada-Dazai'
 RUN git config --global user.email '3600530+Warashi@users.noreply.github.com'
 

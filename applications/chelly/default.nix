@@ -27,6 +27,7 @@ in
         additional_mounts = [
           "chelly-nix:/nix"
           "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
+          "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
         ];
         podman_options = {
           run = [
