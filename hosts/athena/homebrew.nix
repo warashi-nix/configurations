@@ -4,6 +4,7 @@
     onActivation = {
       autoUpdate = true;
       upgrade = true;
+      cleanup = "zap";
     };
     brews = [
       "mas"
@@ -48,9 +49,6 @@
       Slack = 803453959;
       Things = 904280696;
       # keep-sorted end
-    };
-    onActivation = {
-      cleanup = "zap";
     };
   };
 }
