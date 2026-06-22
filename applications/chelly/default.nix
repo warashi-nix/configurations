@@ -21,7 +21,7 @@ in
       description = "Package for Chelly.";
       default = inputs.chelly.packages.${pkgs.stdenv.hostPlatform.system}.chelly;
     };
-    dockerFile = mkOption {
+    dockerfile = mkOption {
       type = types.path;
       description = "Dockerfile for Chelly.";
       default = ./Dockerfile;
@@ -48,7 +48,7 @@ in
     home.packages = [ cfg.package ];
     xdg.configFile = {
       "chelly/config.toml".source = (pkgs.formats.toml { }).generate "chelly-config.toml" cfg.settings;
-      "chelly/Dockerfile".source = cfg.dockerFile;
+      "chelly/Dockerfile".source = cfg.dockerfile;
     };
   };
 }
