@@ -1,7 +1,9 @@
 FROM debian:stable
 
 RUN apt-get update
-RUN apt-get install -y sudo curl git bash xz-utils
+RUN apt-get install -y sudo curl git bash xz-utils locales
+
+ENV LANG=C.UTF-8
 
 RUN groupadd -g 1000 warashi
 RUN useradd -m -u 1000 -g warashi -G sudo -s /bin/bash warashi

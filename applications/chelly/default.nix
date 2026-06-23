@@ -37,7 +37,6 @@ in
         ];
         inherit_env = [
           "COLORTERM"
-          "LANG"
           "TERM"
           "TERM_PROGRAM"
           "TERM_PROGRAM_VERSION"
