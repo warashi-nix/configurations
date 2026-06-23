@@ -35,6 +35,13 @@ in
           "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
           "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
         ];
+        inherit_env = [
+          "COLORTERM"
+          "LANG"
+          "TERM"
+          "TERM_PROGRAM"
+          "TERM_PROGRAM_VERSION"
+        ];
         podman_options = {
           run = [
             "--userns=keep-id"
