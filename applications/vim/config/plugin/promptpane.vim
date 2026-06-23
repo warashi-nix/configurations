@@ -64,6 +64,10 @@ augroup PromptPane
 augroup END
 
 def SetupBuffer()
+    # UI設定
+    setlocal laststatus=0
+    setlocal nonumber
+
     # 通常のファイル保存を無効化し、専用バッファとして扱う
     setlocal filetype=promptpane
     setlocal buftype=acwrite
