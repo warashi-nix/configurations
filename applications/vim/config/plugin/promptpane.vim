@@ -76,7 +76,7 @@ def SetupBuffer()
 
     # 補完をこのバッファ専用に設定
     setlocal autocomplete
-    exec $'setlocal complete+=F{sid}PathComplete^10'
+    exec $'setlocal complete+=F{sid}PathComplete^10,Fskkeleton#completefunc'
 
     # --------------------------------------------------------------------------
     # 起動時: 過去の undo 履歴をディスクから読み込む
