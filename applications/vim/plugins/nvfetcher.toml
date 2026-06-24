@@ -3,8 +3,9 @@ src.git = "https://github.com/vim-denops/denops.vim.git"
 fetch.github = "vim-denops/denops.vim"
 
 [skkeleton]
-src.git = "https://github.com/vim-skk/skkeleton.git"
-fetch.github = "vim-skk/skkeleton"
+src.git = "https://github.com/Warashi/skkeleton.git"
+src.branch = "completefunc"
+fetch.github = "Warashi/skkeleton"
 
 [vim-nix]
 src.git = "https://github.com/LnL7/vim-nix.git"
