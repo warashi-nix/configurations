@@ -197,7 +197,12 @@ def AcceptCopilotCompletion(): string
   # 2. 挿入後に通り抜けるべき文字があれば移動
   var suffix = after > 0 ? repeat("\<Right>", after) : ''
 
-  return prefix .. substitute(text, '\n', "\<CR>", 'g') .. suffix
+  var insert_keys = substitute(text, '\n', "\<CR>", 'g')
+  if !&paste
+    insert_keys = "\<C-O>:set paste\<CR>" .. insert_keys .. "\<C-O>:set nopaste\<CR>"
+  endif
+
+  return prefix .. insert_keys .. suffix
 enddef
 
 inoremap <expr> <Tab> <SID>AcceptCopilotCompletion()
