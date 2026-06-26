@@ -15,12 +15,12 @@ WORKDIR /home/warashi
 
 RUN curl -fsSL https://gh.io/copilot-install | bash
 
+RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-channel-add
+RUN mkdir -p ~/.config/nix && echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+ENV PATH="/home/warashi/.local/bin:/home/warashi/.nix-profile/bin:${PATH}"
+
 RUN mkdir -p /home/warashi/.config/git && touch /home/warashi/.config/git/config
 RUN git config --global user.name 'Shinnosuke Sawada-Dazai'
 RUN git config --global user.email '3600530+Warashi@users.noreply.github.com'
-
-RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-channel-add
-RUN mkdir -p ~/.config/nix && echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
-ENV PATH="/home/warashi/.nix-profile/bin:${PATH}"
 
 CMD ["/bin/bash", "--login"]
