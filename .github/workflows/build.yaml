@@ -15,23 +15,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-26]
+        os: [ubuntu-26.04, ubuntu-26.04-arm, macos-26]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Nix
-        uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
           extra_nix_config: |
             accept-flake-config = true
             auto-optimise-store = ${{ startsWith(matrix.os, 'macos-') && 'false' || 'true' }}
             sandbox = ${{ startsWith(matrix.os, 'macos-') && 'relaxed' || 'true' }}
       - name: Setup cachix
-        uses: cachix/cachix-action@1eb2ef646ac0255473d23a5907ad7b04ce94065c # v17
+        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
           name: warashi
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           skipPush: false # PR でも push して、 main にマージされたときにキャッシュが使えるようにする
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           show-progress: false
