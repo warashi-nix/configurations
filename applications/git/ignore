@@ -4,6 +4,7 @@
 
 ## nix-shell
 shell.nix
+npins
 
 ## direnv
 .envrc
