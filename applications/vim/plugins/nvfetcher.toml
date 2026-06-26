@@ -4,7 +4,7 @@ fetch.github = "vim-denops/denops.vim"
 
 [skkeleton]
 src.git = "https://github.com/Warashi/skkeleton.git"
-src.branch = "completefunc"
+src.branch = "completefunc2"
 fetch.github = "Warashi/skkeleton"
 
 [vim-nix]

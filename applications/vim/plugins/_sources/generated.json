@@ -22,7 +22,7 @@
     },
     "skkeleton": {
         "cargoLock": null,
-        "date": "2026-06-25",
+        "date": "2026-06-26",
         "extract": null,
         "name": "skkeleton",
         "passthru": null,
@@ -34,12 +34,12 @@
             "name": null,
             "owner": "Warashi",
             "repo": "skkeleton",
-            "rev": "f00e66fef0930eb1e84df6dae9dfc0c84a404ad7",
-            "sha256": "sha256-ZRokul9B5poXq9IpSvTMUn7vrgPriRyURlX/z6FMung=",
+            "rev": "a963b714a34853fb3510550c3d92b49f9309388e",
+            "sha256": "sha256-OUjSGvi1kc5pOLBMx7BCfwgf0YmCMqestW7QGdeqDLY=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "f00e66fef0930eb1e84df6dae9dfc0c84a404ad7"
+        "version": "a963b714a34853fb3510550c3d92b49f9309388e"
     },
     "vim-lsp": {
         "cargoLock": null,
