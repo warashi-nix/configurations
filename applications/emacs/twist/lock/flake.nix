@@ -49,6 +49,12 @@
       repo = "envrc";
       type = "github";
     };
+    ghostel = {
+      flake = false;
+      owner = "dakra";
+      repo = "ghostel";
+      type = "github";
+    };
     inheritenv = {
       flake = false;
       owner = "purcell";
@@ -71,12 +77,6 @@
       flake = false;
       owner = "magit";
       repo = "magit";
-      type = "github";
-    };
-    mistty = {
-      flake = false;
-      owner = "szermatt";
-      repo = "mistty";
       type = "github";
     };
     nix-ts-mode = {

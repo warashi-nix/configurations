@@ -144,11 +144,11 @@
     (:hook eglot-ensure))
 #+end_src
 
-* mistty
+* ghostel
 #+begin_src emacs-lisp
-  (setup (:package mistty)
-    (:opt mistty-shell-command "fish")
-    (:global-keymap "C-c s" #'mistty))
+  (setup (:package ghostel)
+    (:opt ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
+    (:global-keymap "C-c s" #'ghostel))
 #+end_src
 
 * copilot

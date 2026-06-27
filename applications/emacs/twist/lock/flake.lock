@@ -128,6 +128,22 @@
         "type": "github"
       }
     },
+    "ghostel": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782478515,
+        "narHash": "sha256-havDs3fZENB/ozMWWKQkdsyHUIBIeewmrjL+3xJKM94=",
+        "owner": "dakra",
+        "repo": "ghostel",
+        "rev": "92bfcc57dc85f254ce95dcb51dbdd2411fea5f02",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dakra",
+        "repo": "ghostel",
+        "type": "github"
+      }
+    },
     "inheritenv": {
       "flake": false,
       "locked": {
@@ -192,22 +208,6 @@
         "type": "github"
       }
     },
-    "mistty": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1770302994,
-        "narHash": "sha256-oa8YQyjbJCqDDQo/xQXv7Nc4zbO7mMoyDlm1KFW0POI=",
-        "owner": "szermatt",
-        "repo": "mistty",
-        "rev": "1752970d1d303fae173527fbcdb3458e865197bb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "szermatt",
-        "repo": "mistty",
-        "type": "github"
-      }
-    },
     "nix-ts-mode": {
       "flake": false,
       "locked": {
@@ -267,11 +267,11 @@
         "copilot": "copilot",
         "ddskk": "ddskk",
         "envrc": "envrc",
+        "ghostel": "ghostel",
         "inheritenv": "inheritenv",
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
-        "mistty": "mistty",
         "nix-ts-mode": "nix-ts-mode",
         "org": "org",
         "ppp": "ppp",
