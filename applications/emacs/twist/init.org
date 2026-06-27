@@ -78,7 +78,8 @@
 * twist
 #+begin_src emacs-lisp
   (setup (:package twist)
-    (add-hook 'emacs-startup-hook #'twist-watch-mode))
+    (:with-hook emacs-startup-hook
+      (:hook twist-watch-mode)))
 #+end_src
 
 * envrc
@@ -128,10 +129,18 @@
     (setq skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
-* org
+* 言語モード
+** org
 #+begin_src emacs-lisp
   (setup (:package org)
     (:also-load org-tempo))
+#+end_src
+
+** nix
+#+begin_src emacs-lisp
+  (setup (:package nix-ts-mode)
+    (:file-match "\\.nix\\'")
+    (:hook eglot-ensure))
 #+end_src
 
 * mistty
@@ -158,4 +167,9 @@
 * theme
 #+begin_src emacs-lisp
   (add-hook 'after-init-hook (lambda () (load-theme 'modus-operandi)))
+#+end_src
+
+* treesit
+#+begin_src emacs-lisp
+  (setopt treesit-font-lock-level 4)
 #+end_src

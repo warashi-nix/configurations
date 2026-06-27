@@ -27,11 +27,20 @@
             name: path: options:
             pkgs.writeText name (inputs.org-babel.lib.tangleOrgBabel options (builtins.readFile path));
         in
-        {
+        rec {
           emacsPackage = if pkgs.stdenv.isLinux then pkgs.emacs else pkgs.emacs-macport;
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
           extraPackages = [ "setup" ];
+          extraSiteStartElisp = ''
+            (add-to-list 'treesit-extra-load-path "${
+              emacsPackage.pkgs.emacs-treesit-grammars.with-grammars (
+                pkgs.lib.attrsets.mapAttrsToList (
+                  name: grammar: grammar
+                ) emacsPackage.pkgs.emacs-treesit-grammars.grammars
+              )
+            }/lib/")
+          '';
           initParser = inputs.twist.lib.parseSetup { inherit (inputs.nixpkgs) lib; } { }; # for setup.el
           initFiles = [ (tangleOrgBabelFile "init.el" ./init.org { }) ];
           earlyInitFile = tangleOrgBabelFile "early-init.el" ./early-init.org { };

@@ -79,6 +79,12 @@
       repo = "mistty";
       type = "github";
     };
+    nix-ts-mode = {
+      flake = false;
+      owner = "nix-community";
+      repo = "nix-ts-mode";
+      type = "github";
+    };
     org = {
       flake = false;
       ref = "bugfix";
