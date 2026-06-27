@@ -34,10 +34,11 @@
           extraPackages = [ "setup" ];
           extraSiteStartElisp = ''
             (add-to-list 'treesit-extra-load-path "${
-              emacsPackage.pkgs.emacs-treesit-grammars.with-grammars (
-                pkgs.lib.attrsets.mapAttrsToList (
-                  name: grammar: grammar
-                ) emacsPackage.pkgs.emacs-treesit-grammars.grammars
+              emacsPackage.pkgs.treesit-grammars.with-grammars (
+                _:
+                builtins.filter (
+                  grammar: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform grammar
+                ) pkgs.tree-sitter.allGrammars
               )
             }/lib/")
           '';
@@ -62,6 +63,7 @@
             inherit (profile.${system})
               emacsPackage
               extraPackages
+              extraSiteStartElisp
               initFiles
               initParser
               lockDir
