@@ -139,7 +139,8 @@
 ** nix
 #+begin_src emacs-lisp
   (setup (:package nix-ts-mode)
-    (:match-file "\\.nix\\'")
+    (:nixpkgs "nil")
+    (:match-file "*.nix")
     (:hook eglot-ensure))
 #+end_src
 
