@@ -22,11 +22,11 @@ build: (build-for host)
 # デフォルト switch （マシン自身）
 switch: (switch-for host)
 
-# 仕事マシン用 build
-work-build: (build-for "work")
+emacs-lock:
+  nix run .#lock --impure
 
-# 仕事マシン用 switch
-work-switch: (switch-for "work")
+emacs-update:
+  nix run .#update --impure
 
 # マシンを指定しての build
 build-for HOST:
