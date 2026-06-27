@@ -22,7 +22,7 @@
     },
     "gnu-elpa": {
         "cargoLock": null,
-        "date": "2026-06-25",
+        "date": "2026-06-27",
         "extract": null,
         "name": "gnu-elpa",
         "passthru": null,
@@ -34,16 +34,16 @@
             "name": null,
             "owner": "elpa-mirrors",
             "repo": "elpa",
-            "rev": "85aeefd4771b2763cb92db90bb919f682dea1086",
-            "sha256": "sha256-xcSZht0wN2GkHgqcz12NvBPxUGcuFRIO+4vH/ew0YmE=",
+            "rev": "fcf738c3547216d700e1f67a2e1830ed2acba981",
+            "sha256": "sha256-xmX4v8LmAU6v0cbNx/oA8bci17JCtEreUCMWuJAFxK8=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "85aeefd4771b2763cb92db90bb919f682dea1086"
+        "version": "fcf738c3547216d700e1f67a2e1830ed2acba981"
     },
     "melpa": {
         "cargoLock": null,
-        "date": "2026-06-26",
+        "date": "2026-06-27",
         "extract": null,
         "name": "melpa",
         "passthru": null,
@@ -55,16 +55,16 @@
             "name": null,
             "owner": "melpa",
             "repo": "melpa",
-            "rev": "5d548cab3d1d0c5e9432e7051bafa57a21ab8c67",
-            "sha256": "sha256-l1p/c30HYGqFvK+ZLIhw6G3G+hI/oYl5JuBx5z0D6PI=",
+            "rev": "8f6016958fa8d1e0bd613609395f47a4a3ea65da",
+            "sha256": "sha256-ViovDdFhrEQcjGGDNlsy9OskTJ8Tvsl2N/1Y/XoyYOk=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "5d548cab3d1d0c5e9432e7051bafa57a21ab8c67"
+        "version": "8f6016958fa8d1e0bd613609395f47a4a3ea65da"
     },
     "nongnu-elpa": {
         "cargoLock": null,
-        "date": "2026-06-09",
+        "date": "2026-06-27",
         "extract": null,
         "name": "nongnu-elpa",
         "passthru": null,
@@ -76,11 +76,11 @@
             "name": null,
             "owner": "elpa-mirrors",
             "repo": "nongnu",
-            "rev": "3253fbf43762ee4310b414aa45473898b814762f",
-            "sha256": "sha256-LIUL6R+/HY+TV3g3kak5XCktLm4ejkie3vC/Z/AG+Ts=",
+            "rev": "2e12d173f9e329f1a37c07a4a84fdbaaff12d245",
+            "sha256": "sha256-4cTfnlfiz8O0ii0GWdHVqw1bJUreeCZY/eVhhq3PQGY=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "3253fbf43762ee4310b414aa45473898b814762f"
+        "version": "2e12d173f9e329f1a37c07a4a84fdbaaff12d245"
     }
 }
