@@ -151,6 +151,7 @@
   	      ghostel-comint)
     (:opt ghostel-shell-integration nil
   	ghostel-tramp-shell-integration nil
+  	ghostel-enable-osc52 t
   	ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
     (:global-keymap "C-c s" #'ghostel)
     (:with-hook after-init-hook
@@ -162,6 +163,8 @@
 #+begin_src emacs-lisp
   (setup (:package copilot)
     (:nixpkgs copilot-language-server)
+    (:with-hook prog-mode-hook
+      (:hook copilot-mode))
     (:with-map copilot-completion-map
       (:keymap
        "<tab>" #'copilot-accept-completion
@@ -172,9 +175,17 @@
        "C-p" #'copilot-previous-completion)))
 #+end_src
 
+* keybinds
+#+begin_src emacs-lisp
+  (setup emacs
+    (:global-keymap "C-c c" #'compile))
+#+end_src
+
 * theme
 #+begin_src emacs-lisp
-  (add-hook 'after-init-hook (lambda () (load-theme 'modus-operandi)))
+  (setup emacs
+    (:with-hook after-init-hook
+      (:hook (lambda () (load-theme 'modus-operandi)))))
 #+end_src
 
 * treesit
