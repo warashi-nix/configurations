@@ -582,6 +582,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-cloudflared": {
+      "locked": {
+        "lastModified": 1781141223,
+        "narHash": "sha256-Eye4UQJjC4TLobclolFCMl6MrjgiF6Bk1cOI5x8SH00=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "b503dde361500433ca25a32e8f4d218bf58fb659",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "b503dde361500433ca25a32e8f4d218bf58fb659",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1777168982,
@@ -660,6 +676,7 @@
         "my-emacs": "my-emacs",
         "my-emacs-pkgs": "my-emacs-pkgs",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-cloudflared": "nixpkgs-cloudflared",
         "org-babel": "org-babel",
         "sops-nix": "sops-nix",
         "treefmt-nix": "treefmt-nix"
