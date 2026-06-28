@@ -149,7 +149,9 @@
   (setup (:package ghostel)
     (:also-load ghostel-compile
   	      ghostel-comint)
-    (:opt ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
+    (:opt ghostel-shell-integration nil
+  	ghostel-tramp-shell-integration nil
+  	ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
     (:global-keymap "C-c s" #'ghostel)
     (:with-hook after-init-hook
       (:hook ghostel-compile-global-mode)

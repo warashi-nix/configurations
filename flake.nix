@@ -63,6 +63,9 @@
         twist.follows = "emacs-twist";
       };
     };
+    my-emacs-pkgs = {
+      url = "path:./applications/emacs/twist/lock";
+    };
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };
