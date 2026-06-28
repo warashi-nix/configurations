@@ -208,6 +208,22 @@
         "type": "github"
       }
     },
+    "msgpack": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1584968399,
+        "narHash": "sha256-5pP2uhTvtaLYAuexOXikePLG1UJ7xMW1uMHJfnoqKj0=",
+        "owner": "xuchunyang",
+        "repo": "msgpack.el",
+        "rev": "90e3086f259549b1667a3c5b9aa2d70aaeaa4d3d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xuchunyang",
+        "repo": "msgpack.el",
+        "type": "github"
+      }
+    },
     "nix-ts-mode": {
       "flake": false,
       "locked": {
@@ -272,11 +288,14 @@
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
+        "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
         "org": "org",
         "ppp": "ppp",
         "setup": "setup",
         "term-title": "term-title",
+        "tramp": "tramp",
+        "tramp-rpc": "tramp-rpc",
         "transient": "transient",
         "twist": "twist",
         "with-editor": "with-editor"
@@ -311,6 +330,39 @@
       "original": {
         "owner": "CyberShadow",
         "repo": "term-title",
+        "type": "github"
+      }
+    },
+    "tramp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780125111,
+        "narHash": "sha256-346eYprvdCpMy3JLUgU7sJRUipi55eH8YAnhGjYgRps=",
+        "ref": "externals/tramp",
+        "rev": "8283083697197d4f6e36c265253471441350892d",
+        "revCount": 113,
+        "type": "git",
+        "url": "https://git.savannah.gnu.org/git/tramp.git"
+      },
+      "original": {
+        "ref": "externals/tramp",
+        "type": "git",
+        "url": "https://git.savannah.gnu.org/git/tramp.git"
+      }
+    },
+    "tramp-rpc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782337656,
+        "narHash": "sha256-Ge5v9QHufbdW79lWoIf/MnItNvBZkGElpUPomvvrSrM=",
+        "owner": "ArthurHeymans",
+        "repo": "emacs-tramp-rpc",
+        "rev": "94db78c00bbd7b9112f946f617dcce989102ce69",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ArthurHeymans",
+        "repo": "emacs-tramp-rpc",
         "type": "github"
       }
     },

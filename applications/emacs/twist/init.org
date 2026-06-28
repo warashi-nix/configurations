@@ -175,6 +175,12 @@
        "C-p" #'copilot-previous-completion)))
 #+end_src
 
+* tramp
+#+begin_src emacs-lisp
+  (setup (:package tramp))
+  (setup (:package tramp-rpc))
+#+end_src
+
 * keybinds
 #+begin_src emacs-lisp
   (setup emacs

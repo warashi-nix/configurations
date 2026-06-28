@@ -79,6 +79,12 @@
       repo = "magit";
       type = "github";
     };
+    msgpack = {
+      flake = false;
+      owner = "xuchunyang";
+      repo = "msgpack.el";
+      type = "github";
+    };
     nix-ts-mode = {
       flake = false;
       owner = "nix-community";
@@ -106,6 +112,18 @@
       flake = false;
       owner = "CyberShadow";
       repo = "term-title";
+      type = "github";
+    };
+    tramp = {
+      flake = false;
+      ref = "externals/tramp";
+      type = "git";
+      url = "https://git.savannah.gnu.org/git/tramp.git";
+    };
+    tramp-rpc = {
+      flake = false;
+      owner = "ArthurHeymans";
+      repo = "emacs-tramp-rpc";
       type = "github";
     };
     transient = {
