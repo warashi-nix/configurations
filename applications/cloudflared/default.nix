@@ -1,9 +1,6 @@
-{ inputs, pkgs, ... }:
-let
-  inherit (inputs.nixpkgs-cloudflared.legacyPackages.${pkgs.stdenv.hostPlatform.system}) cloudflared;
-in
+{ pkgs, ... }:
 {
-  home.packages = [
+  home.packages = with pkgs; [
     cloudflared
   ];
 }

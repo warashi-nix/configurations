@@ -69,9 +69,6 @@
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };
-    nixpkgs-cloudflared = {
-      url = "github:NixOS/nixpkgs/b503dde361500433ca25a32e8f4d218bf58fb659";
-    };
     org-babel = {
       url = "github:emacs-twist/org-babel";
     };
