@@ -1,7 +1,7 @@
 {
     "mattpocock-skills": {
         "cargoLock": null,
-        "date": "2026-06-25",
+        "date": "2026-06-29",
         "extract": null,
         "name": "mattpocock-skills",
         "passthru": null,
@@ -13,11 +13,11 @@
             "name": null,
             "owner": "mattpocock",
             "repo": "skills",
-            "rev": "5d78bd0903420f97c791f834201e550c765699f8",
-            "sha256": "sha256-efsb/AXAmEvcjoknbExBeEHFB28o2c2Nk8muWwNNQFQ=",
+            "rev": "448d0adee7cb797db5a2ad278e9e8d6c874e12af",
+            "sha256": "sha256-FzoicELpTDKpiHhXWC3YmBfReW/B1M27LrJykh5x5aQ=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "5d78bd0903420f97c791f834201e550c765699f8"
+        "version": "448d0adee7cb797db5a2ad278e9e8d6c874e12af"
     }
 }
