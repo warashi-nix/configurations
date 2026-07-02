@@ -35,6 +35,7 @@ jobs:
           gc-max-store-size-linux: 1G
           purge: true
           purge-prefixes: nix-${{ matrix.os }}-
+          purge-created: 0
           purge-last-accessed: P1DT12H
           purge-primary-key: never
       - name: Setup cachix
