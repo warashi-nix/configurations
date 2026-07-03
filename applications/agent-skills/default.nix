@@ -12,6 +12,10 @@ in
         subdir = "skills";
         idPrefix = "mattpocock";
       };
+      warashi = {
+        path = ./skills;
+        idPrefix = "warashi";
+      };
       # keep-sorted end
     };
     skills = {
@@ -19,6 +23,9 @@ in
         # keep-sorted start
         "mattpocock/productivity/grilling"
         # keep-sorted end
+      ];
+      enableAll = [
+        "warashi"
       ];
     };
     targets = {
