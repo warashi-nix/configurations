@@ -41,11 +41,29 @@ in
           "TERM_PROGRAM"
           "TERM_PROGRAM_VERSION"
         ];
-        podman_options = {
-          run = [
-            "--userns=keep-id"
-          ];
-        };
+        runtime_options = [
+          {
+            runtime = "podman";
+            subcommand = "run";
+            args = [
+              "--userns=keep-id"
+            ];
+          }
+          {
+            runtime = "container";
+            subcommand = "build";
+            args = [
+              "--dns=1.1.1.1"
+            ];
+          }
+          {
+            runtime = "container";
+            subcommand = "run";
+            args = [
+              "--dns=1.1.1.1"
+            ];
+          }
+        ];
       };
     };
   };
