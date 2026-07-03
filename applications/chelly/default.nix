@@ -26,6 +26,11 @@ in
       description = "Dockerfile for Chelly.";
       default = ./Dockerfile;
     };
+    envfiles = mkOption {
+      type = types.listOf types.path;
+      description = "Envfile for Chelly.";
+      default = [ config.sops.secrets.chelly-dotenv.path ];
+    };
     settings = mkOption {
       type = types.attrs;
       description = "Settings for Chelly.";
@@ -41,6 +46,7 @@ in
           "TERM_PROGRAM"
           "TERM_PROGRAM_VERSION"
         ];
+        env_files = cfg.envfiles;
         runtime_options = [
           {
             runtime = "podman";
@@ -69,6 +75,7 @@ in
   };
 
   config = mkIf cfg.enable {
+    sops.secrets.chelly-dotenv = { };
     home.packages = [ cfg.package ];
     xdg.configFile = {
       "chelly/config.toml".source = (pkgs.formats.toml { }).generate "chelly-config.toml" cfg.settings;
