@@ -105,7 +105,8 @@ def SendToTmux(uri: string)
     endif
 
     final lines = getline(1, '$')
-    final payload = "\e[200~" .. join(lines, "\r") .. "\e[201~"
+    final start_marker = "\e[200~"
+    final end_marker = "\e[201~"
 
     final result = system([
         'tmux',
@@ -114,12 +115,50 @@ def SendToTmux(uri: string)
         pane_id,
         '-l',
         '--',
-        payload
+        start_marker
     ])
 
     if v:shell_error != 0
         echohl ErrorMsg
         echomsg '[PromptPane] 送信失敗: ' .. trim(result)
+        echohl None
+        return
+    endif
+
+    for index in range(len(lines))
+        final line = lines[index]
+        final chunk = line .. (index < len(lines) - 1 ? "\r" : '')
+        final result_chunk = system([
+            'tmux',
+            'send-keys',
+            '-t',
+            pane_id,
+            '-l',
+            '--',
+            chunk
+        ])
+
+        if v:shell_error != 0
+            echohl ErrorMsg
+            echomsg '[PromptPane] 送信失敗: ' .. trim(result_chunk)
+            echohl None
+            return
+        endif
+    endfor
+
+    final result_end = system([
+        'tmux',
+        'send-keys',
+        '-t',
+        pane_id,
+        '-l',
+        '--',
+        end_marker
+    ])
+
+    if v:shell_error != 0
+        echohl ErrorMsg
+        echomsg '[PromptPane] 送信失敗: ' .. trim(result_end)
         echohl None
         return
     endif
