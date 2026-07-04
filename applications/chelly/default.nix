@@ -37,6 +37,8 @@ in
       default = {
         additional_mounts = [
           "chelly-nix:/nix"
+          "go-cache:/home/warashi/.cache/go-build"
+          "go-mod:/home/warashi/go/pkg/mod"
           "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
           "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
         ];
