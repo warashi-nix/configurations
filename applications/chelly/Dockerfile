@@ -13,6 +13,8 @@ USER warashi
 ENV USER=warashi
 WORKDIR /home/warashi
 
+RUN mkdir -p /home/warashi/.cache/go-build /home/warashi/go/pkg/mod
+
 RUN curl -fsSL https://gh.io/copilot-install | bash
 
 RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-channel-add
