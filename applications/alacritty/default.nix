@@ -18,6 +18,9 @@ in
       env = {
         TERM = "xterm-256color";
       };
+      terminal = {
+        osc52 = "CopyPaste";
+      };
       window = {
         opacity = 1.0;
         padding = {
