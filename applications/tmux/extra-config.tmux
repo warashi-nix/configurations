@@ -9,6 +9,7 @@ set -g renumber-windows on
 set -g status-position bottom
 
 # status line にホスト名・日時を表示する
+set -g status-left ""
 set -g status-left-length 0
 set -g status-right " #h | %Y-%m-%d(%a) %H:%M "
 set -g status-justify absolute-centre
