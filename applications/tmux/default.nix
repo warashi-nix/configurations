@@ -16,6 +16,11 @@
     shortcut = "g";
     terminal = "tmux-256color";
     sensibleOnTop = false;
-    extraConfig = builtins.readFile ./extra-config.tmux;
+    extraConfig = ''
+      ${builtins.readFile ./extra-config.tmux}
+      # ターミナルのライト/ダークテーマに追従する
+      set-hook -g client-light-theme "source-file ${./modus-operandi.tmux}"
+      set-hook -g client-dark-theme "source-file ${./modus-vivendi.tmux}"
+    '';
   };
 }
