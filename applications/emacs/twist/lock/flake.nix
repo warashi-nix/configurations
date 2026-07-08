@@ -43,6 +43,12 @@
       repo = "ddskk";
       type = "github";
     };
+    el-job = {
+      flake = false;
+      owner = "meedstrom";
+      repo = "el-job";
+      type = "github";
+    };
     envrc = {
       flake = false;
       owner = "purcell";
@@ -97,6 +103,18 @@
       type = "git";
       url = "https://git.savannah.gnu.org/git/emacs/org-mode.git";
     };
+    org-mem = {
+      flake = false;
+      owner = "meedstrom";
+      repo = "org-mem";
+      type = "github";
+    };
+    org-node = {
+      flake = false;
+      owner = "meedstrom";
+      repo = "org-node";
+      type = "github";
+    };
     ppp = {
       flake = false;
       owner = "conao3";
@@ -130,6 +148,12 @@
       flake = false;
       owner = "magit";
       repo = "transient";
+      type = "github";
+    };
+    truename-cache = {
+      flake = false;
+      owner = "meedstrom";
+      repo = "truename-cache";
       type = "github";
     };
     twist = {

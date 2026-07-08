@@ -112,6 +112,22 @@
         "type": "github"
       }
     },
+    "el-job": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772779395,
+        "narHash": "sha256-AQ/e2vNCt9s8mzq+X/ujwBg2aqfeWtVDlkSU56dYltM=",
+        "owner": "meedstrom",
+        "repo": "el-job",
+        "rev": "8b21c8f9a47a71102bf4ec08504b044aeab880fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meedstrom",
+        "repo": "el-job",
+        "type": "github"
+      }
+    },
     "envrc": {
       "flake": false,
       "locked": {
@@ -257,6 +273,38 @@
         "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
       }
     },
+    "org-mem": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774525557,
+        "narHash": "sha256-TGuuoaCABgLTHDPfx0/MmHN7JoS4c2M+eAiJ8X3SgiU=",
+        "owner": "meedstrom",
+        "repo": "org-mem",
+        "rev": "07094dac902e452d59533e4d01e8177afaa0cfd1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meedstrom",
+        "repo": "org-mem",
+        "type": "github"
+      }
+    },
+    "org-node": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773070104,
+        "narHash": "sha256-uK0VN0ABA+iOpTMFqXW2vxnWtjp/S7vEVH2s/FS0bus=",
+        "owner": "meedstrom",
+        "repo": "org-node",
+        "rev": "10ea878528a24ae9bf6903da198f347d093f2b11",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meedstrom",
+        "repo": "org-node",
+        "type": "github"
+      }
+    },
     "ppp": {
       "flake": false,
       "locked": {
@@ -282,6 +330,7 @@
         "cond-let": "cond-let",
         "copilot": "copilot",
         "ddskk": "ddskk",
+        "el-job": "el-job",
         "envrc": "envrc",
         "ghostel": "ghostel",
         "inheritenv": "inheritenv",
@@ -291,12 +340,15 @@
         "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
         "org": "org",
+        "org-mem": "org-mem",
+        "org-node": "org-node",
         "ppp": "ppp",
         "setup": "setup",
         "term-title": "term-title",
         "tramp": "tramp",
         "tramp-rpc": "tramp-rpc",
         "transient": "transient",
+        "truename-cache": "truename-cache",
         "twist": "twist",
         "with-editor": "with-editor"
       }
@@ -379,6 +431,22 @@
       "original": {
         "owner": "magit",
         "repo": "transient",
+        "type": "github"
+      }
+    },
+    "truename-cache": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772678784,
+        "narHash": "sha256-321Kfr8jdYwRpixKmXJ2VzmolAwibzneQuwhNLznsic=",
+        "owner": "meedstrom",
+        "repo": "truename-cache",
+        "rev": "6540dd050c0db1e73e03dfa6fe253dd5fb03b579",
+        "type": "github"
+      },
+      "original": {
+        "owner": "meedstrom",
+        "repo": "truename-cache",
         "type": "github"
       }
     },
