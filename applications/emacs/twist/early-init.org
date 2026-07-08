@@ -72,6 +72,11 @@
   (setopt package-quickstart nil)
 #+end_src
 
+* default-frame-alist
+#+begin_src emacs-lisp
+  (add-to-list 'default-frame-alist '(font . "PlemolJP Console NF-18"))
+#+end_src
+
 * Footer
 #+begin_src emacs-lisp
   (provide 'early-init)
