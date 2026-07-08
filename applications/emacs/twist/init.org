@@ -160,7 +160,8 @@
     (:global-keymap "C-c s" #'ghostel)
     (:with-hook after-init-hook
       (:hook ghostel-compile-global-mode)
-      (:hook ghostel-comint-global-mode)))
+      (:hook ghostel-comint-global-mode))
+    (add-to-list 'warning-suppress-types '(ghostel)))
 #+end_src
 
 * copilot
@@ -176,7 +177,8 @@
        "C-<tab>" #'copilot-accept-completion-by-word
        "C-TAB" #'copilot-accept-completion-by-word
        "C-n" #'copilot-next-completion
-       "C-p" #'copilot-previous-completion)))
+       "C-p" #'copilot-previous-completion))
+    (add-to-list 'warning-suppress-types '(copilot)))
 #+end_src
 
 * tramp
