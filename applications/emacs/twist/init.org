@@ -178,7 +178,9 @@
        "C-TAB" #'copilot-accept-completion-by-word
        "C-n" #'copilot-next-completion
        "C-p" #'copilot-previous-completion))
-    (add-to-list 'warning-suppress-types '(copilot)))
+    (add-to-list 'warning-suppress-types '(copilot))
+    (:when-loaded
+      (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
 #+end_src
 
 * tramp
