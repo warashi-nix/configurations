@@ -48,7 +48,7 @@
   (when (fboundp #'tool-bar-mode)
     (tool-bar-mode -1))
   (when (fboundp #'scroll-bar-mode)
-  (scroll-bar-mode -1))
+    (scroll-bar-mode -1))
 #+end_src
 
 * inhibit
@@ -70,15 +70,6 @@
 #+begin_src emacs-lisp
   (setopt package-enable-at-startup nil)
   (setopt package-quickstart nil)
-#+end_src
-
-* native compile
-#+begin_src emacs-lisp
-  (custom-set-variables '(warning-suppress-types '((comp))))
-  (with-eval-after-load 'comp
-    (setopt native-comp-async-jobs-number 8)
-    (setopt native-comp-speed 3)
-    (setopt native-comp-always-compile t))
 #+end_src
 
 * Footer
