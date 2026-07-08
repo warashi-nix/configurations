@@ -16,7 +16,6 @@ in
       e = "emacsclient";
       g = "git";
       gt = "gitu";
-      tn = "tmux new-session -AD -s $(hostname -s)";
       v = "vim";
       ":q" = "exit";
     };
@@ -74,6 +73,10 @@ in
     configFile = {
       "fish/themes" = {
         source = ./themes;
+        recursive = true;
+      };
+      "fish/functions" = {
+        source = ./funcitons;
         recursive = true;
       };
     };
