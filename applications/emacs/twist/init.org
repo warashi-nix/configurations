@@ -148,6 +148,14 @@
     (:hook eglot-ensure))
 #+end_src
 
+** go
+#+begin_src emacs-lisp
+  (setup go-ts-mode
+    (:nixpkgs gopls)
+    (:match-file "*.go")
+    (:hook eglot-ensure))
+#+end_src
+
 * ghostel
 #+begin_src emacs-lisp
   (setup (:package ghostel)
