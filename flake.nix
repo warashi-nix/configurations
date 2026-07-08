@@ -50,6 +50,13 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+    git-wit = {
+      url = "github:Warashi/git-wit";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+      };
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
