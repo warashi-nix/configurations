@@ -178,6 +178,8 @@
     (:nixpkgs copilot-language-server)
     (:with-hook prog-mode-hook
       (:hook copilot-mode))
+    (:with-hook git-commit-mode-hook
+      (:hook copilot-mode))
     (:with-map copilot-completion-map
       (:keymap
        "<tab>" #'copilot-accept-completion
