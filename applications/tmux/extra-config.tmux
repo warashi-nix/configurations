@@ -80,6 +80,6 @@ set -ga update-environment TERM_PROGRAM
 
 # promptpane
 bind -n M-q run-shell \
-	'tmux split-window -v -l 10 \
+	'exec tmux split-window -v -l 10 \
 		-c "#{pane_current_path}" \
-		"vim promptpane://tmux/#{pane_id}"'
+		"exec vim promptpane://tmux/#{pane_id}"'
