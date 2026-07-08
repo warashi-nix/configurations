@@ -133,7 +133,11 @@
 ** org
 #+begin_src emacs-lisp
   (setup (:package org)
-    (:also-load org-tempo))
+    (:also-load org-tempo)
+    (:with-hook org-agenda-mode-hook
+      (:hook #'hack-dir-local-variables-non-file-buffer))
+    (:global-keymap "C-c o c" #'org-capture)
+    (:global-keymap "C-c o a" #'org-agenda))
 #+end_src
 
 ** nix
