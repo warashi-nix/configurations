@@ -31,6 +31,12 @@
       repo = "cond-let";
       type = "github";
     };
+    consult = {
+      flake = false;
+      owner = "minad";
+      repo = "consult";
+      type = "github";
+    };
     copilot = {
       flake = false;
       owner = "copilot-emacs";
@@ -91,6 +97,12 @@
       repo = "magit";
       type = "github";
     };
+    marginalia = {
+      flake = false;
+      owner = "minad";
+      repo = "marginalia";
+      type = "github";
+    };
     msgpack = {
       flake = false;
       owner = "xuchunyang";
@@ -101,6 +113,12 @@
       flake = false;
       owner = "nix-community";
       repo = "nix-ts-mode";
+      type = "github";
+    };
+    orderless = {
+      flake = false;
+      owner = "oantolin";
+      repo = "orderless";
       type = "github";
     };
     org = {

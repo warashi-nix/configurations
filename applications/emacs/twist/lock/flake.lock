@@ -80,6 +80,22 @@
         "type": "github"
       }
     },
+    "consult": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783492845,
+        "narHash": "sha256-lKtfg0qJ/2/O0hdmdVwdB4Cv4vV4r4caZMCE18JzhBY=",
+        "owner": "minad",
+        "repo": "consult",
+        "rev": "e43b8315bd1a8d9125fff84ad84c4c003e177acb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "consult",
+        "type": "github"
+      }
+    },
     "copilot": {
       "flake": false,
       "locked": {
@@ -240,6 +256,22 @@
         "type": "github"
       }
     },
+    "marginalia": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782652506,
+        "narHash": "sha256-0lfo3vI9eU4A+pNbd2H5kLl+Z4HoDUexlD+o8+hdIQw=",
+        "owner": "minad",
+        "repo": "marginalia",
+        "rev": "7604eb0463994b0528b92aaf6e594f64089b8b95",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "marginalia",
+        "type": "github"
+      }
+    },
     "msgpack": {
       "flake": false,
       "locked": {
@@ -269,6 +301,22 @@
       "original": {
         "owner": "nix-community",
         "repo": "nix-ts-mode",
+        "type": "github"
+      }
+    },
+    "orderless": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782652430,
+        "narHash": "sha256-s/xX72yq0gjC+RmBtZGrRbKS566QBnFwymJNe/c+EOQ=",
+        "owner": "oantolin",
+        "repo": "orderless",
+        "rev": "0ffd9d6903714c1f6d8fcbb6a20941fb33dd7ae5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oantolin",
+        "repo": "orderless",
         "type": "github"
       }
     },
@@ -360,6 +408,7 @@
         "cdb": "cdb",
         "compat": "compat",
         "cond-let": "cond-let",
+        "consult": "consult",
         "copilot": "copilot",
         "corfu": "corfu",
         "ddskk": "ddskk",
@@ -370,8 +419,10 @@
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
+        "marginalia": "marginalia",
         "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
+        "orderless": "orderless",
         "org": "org",
         "org-mem": "org-mem",
         "org-node": "org-node",

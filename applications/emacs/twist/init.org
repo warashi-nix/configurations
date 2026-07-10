@@ -264,16 +264,29 @@
           read-extended-command-predicate #'command-completion-default-include-p
           minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
     (:with-hook minibuffer-setup-hook
-      (:hook cursor-intangible-mode))
-    
-    (defun crm-indicator (args)
-      (cons (format "[CRM%s] %s"
-                    (replace-regexp-in-string
-                     "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-                     crm-separator)
-                    (car args))
-            (cdr args)))
-    (advice-add #'completing-read-multiple :filter-args #'crm-indicator))
+      (:hook cursor-intangible-mode)))
+#+end_src
+
+* consult
+#+begin_src emacs-lisp
+  (setup (:package consult)
+    (:global-keymap "M-g M-g" #'consult-goto-line
+                    "M-g o" #'consult-outline
+  		  "C-x b" #'consult-buffer))
+#+end_src
+
+* orderless
+#+begin_src emacs-lisp
+  (setup (:package orderless)
+    (setopt completion-styles '(orderless basic)
+  	  completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
+
+* marginalia
+#+begin_src emacs-lisp
+  (setup (:package marginalia)
+    (:with-hook after-init-hook
+      (:hook marginalia-mode)))
 #+end_src
 
 * puni
@@ -281,6 +294,17 @@
   (setup (:package puni)
     (:with-hook after-init-hook
       (:hook puni-global-mode)))
+#+end_src
+
+* recentf
+#+begin_src emacs-lisp
+  (setup recentf
+    (:opt recentf-max-saved-items 2000
+  	recentf-auto-cleanup 'never
+  	recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
+  	recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
+    (:with-hook after-init-hook
+      (:hook recentf-mode)))
 #+end_src
 
 * server
