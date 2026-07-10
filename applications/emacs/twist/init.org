@@ -44,29 +44,29 @@
               "Fake installation of packages from NIXPKGS for executables.")
 
     (defsetup :opt (&rest pairs)
-  	    "Set the option NAME to VAL using `setopt'."
-  	    :after-loaded t
-  	    `(setopt ,@pairs))
+              "Set the option NAME to VAL using `setopt'."
+              :after-loaded t
+              `(setopt ,@pairs))
 
     (defsetup :global-keymap (key command)
-  	    "Globally bind KEY to COMMAND."
-  	    :repeatable t
-  	    `(keymap-global-set ,key ,command))
+              "Globally bind KEY to COMMAND."
+              :repeatable t
+              `(keymap-global-set ,key ,command))
 
     (defsetup :keymap (key command)
-  	    "Use `keymap-set' to define keybindings."
-  	    :after-loaded t
-  	    :repeatable t
-  	    `(keymap-set ,(setup-get 'map) ,key ,command))
+              "Use `keymap-set' to define keybindings."
+              :after-loaded t
+              :repeatable t
+              `(keymap-set ,(setup-get 'map) ,key ,command))
 
     (defsetup
      :defer (sec &optional func)
      "Call a function at N seconds after init."
      `(add-hook 'after-init-hook
-  	      (lambda nil
-  		(run-with-timer ,sec nil
-  				,(or func
-  				     `(function ,(setup-get 'mode))))))))
+                (lambda nil
+                  (run-with-timer ,sec nil
+                                  ,(or func
+                                       `(function ,(setup-get 'mode))))))))
 
 #+end_src
 
@@ -117,7 +117,7 @@
   (setup (:package age)
     (:nixpkgs age)
     (:opt age-default-identity "~/.config/age/secret-key"
-  	age-default-recipient '("~/.config/age/public-key"))
+          age-default-recipient '("~/.config/age/public-key"))
     (:with-hook after-init-hook
       (:hook age-file-enable)))
 #+end_src
@@ -146,9 +146,9 @@
     (:with-hook org-agenda-mode-hook
       (:hook #'hack-dir-local-variables-non-file-buffer))
     (:global-keymap "C-c o c" #'org-capture
-  		  "C-c o a" #'org-agenda)
+                    "C-c o a" #'org-agenda)
     (:opt org-tags-column -120
-  	org-agenda-tags-column -120))
+          org-agenda-tags-column -120))
 #+end_src
 
 ** nix
@@ -171,11 +171,11 @@
 #+begin_src emacs-lisp
   (setup (:package ghostel)
     (:also-load ghostel-compile
-  	      ghostel-comint)
+                ghostel-comint)
     (:opt ghostel-shell-integration nil
-  	ghostel-tramp-shell-integration nil
-  	ghostel-enable-osc52 t
-  	ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
+          ghostel-tramp-shell-integration nil
+          ghostel-enable-osc52 t
+          ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
     (:global-keymap "C-c s" #'ghostel)
     (:with-hook after-init-hook
       (:hook ghostel-compile-global-mode)
@@ -241,7 +241,7 @@
 
   (setup emacs
     (:opt tab-always-indent 'complete
-  	text-mode-ispell-word-completion nil
+          text-mode-ispell-word-completion nil
           read-extended-command-predicate #'command-completion-default-include-p))
 #+end_src
 
@@ -262,7 +262,7 @@
   (setup emacs
     (:opt enable-recursive-minibuffers t
           read-extended-command-predicate #'command-completion-default-include-p
-  	minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+          minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
     (:with-hook minibuffer-setup-hook
       (:hook cursor-intangible-mode))
     
