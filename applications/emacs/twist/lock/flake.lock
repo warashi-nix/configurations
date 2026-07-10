@@ -96,6 +96,22 @@
         "type": "github"
       }
     },
+    "corfu": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782652958,
+        "narHash": "sha256-JRgZ0KECw8UmclXlMJLNHoGv/De9dDewm+DEmr94BJY=",
+        "owner": "minad",
+        "repo": "corfu",
+        "rev": "c588350d8f9fc60ed0fcf4b78c37671835be01a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "corfu",
+        "type": "github"
+      }
+    },
     "ddskk": {
       "flake": false,
       "locked": {
@@ -321,6 +337,22 @@
         "type": "github"
       }
     },
+    "puni": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779204424,
+        "narHash": "sha256-LwGNrSrY8Ff13xYx9B7zI81YmKQHX8IwfXJEyaFVzV8=",
+        "owner": "AmaiKinono",
+        "repo": "puni",
+        "rev": "04819e0bad5ed62af9e412ef9715b33bb1edc3ba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AmaiKinono",
+        "repo": "puni",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "age": "age",
@@ -329,6 +361,7 @@
         "compat": "compat",
         "cond-let": "cond-let",
         "copilot": "copilot",
+        "corfu": "corfu",
         "ddskk": "ddskk",
         "el-job": "el-job",
         "envrc": "envrc",
@@ -343,6 +376,7 @@
         "org-mem": "org-mem",
         "org-node": "org-node",
         "ppp": "ppp",
+        "puni": "puni",
         "setup": "setup",
         "term-title": "term-title",
         "tramp": "tramp",
@@ -350,6 +384,7 @@
         "transient": "transient",
         "truename-cache": "truename-cache",
         "twist": "twist",
+        "vertico": "vertico",
         "with-editor": "with-editor"
       }
     },
@@ -463,6 +498,22 @@
       "original": {
         "owner": "emacs-twist",
         "repo": "twist.el",
+        "type": "github"
+      }
+    },
+    "vertico": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783602303,
+        "narHash": "sha256-W64xsCd0Te+jNMTDGw3lWvfOl9PI5AvTMuFF9OrLUpI=",
+        "owner": "minad",
+        "repo": "vertico",
+        "rev": "95bd36e27bafe36158085017b5c5726391089d6b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "vertico",
         "type": "github"
       }
     },

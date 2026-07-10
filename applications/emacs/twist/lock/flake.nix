@@ -37,6 +37,12 @@
       repo = "copilot.el";
       type = "github";
     };
+    corfu = {
+      flake = false;
+      owner = "minad";
+      repo = "corfu";
+      type = "github";
+    };
     ddskk = {
       flake = false;
       owner = "skk-dev";
@@ -121,6 +127,12 @@
       repo = "ppp.el";
       type = "github";
     };
+    puni = {
+      flake = false;
+      owner = "AmaiKinono";
+      repo = "puni";
+      type = "github";
+    };
     setup = {
       flake = false;
       type = "git";
@@ -160,6 +172,12 @@
       flake = false;
       owner = "emacs-twist";
       repo = "twist.el";
+      type = "github";
+    };
+    vertico = {
+      flake = false;
+      owner = "minad";
+      repo = "vertico";
       type = "github";
     };
     with-editor = {
