@@ -201,12 +201,8 @@
       (:hook copilot-mode))
     (:with-map copilot-completion-map
       (:keymap
-       "<tab>" #'copilot-accept-completion
-       "TAB" #'copilot-accept-completion
-       "C-<tab>" #'copilot-accept-completion-by-word
-       "C-TAB" #'copilot-accept-completion-by-word
-       "C-n" #'copilot-next-completion
-       "C-p" #'copilot-previous-completion))
+       "<right>" #'copilot-accept-completion
+       "C-f" #'copilot-accept-completion))
     (add-to-list 'warning-suppress-types '(copilot))
     (:when-loaded
       (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
