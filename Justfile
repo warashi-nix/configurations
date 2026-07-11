@@ -22,9 +22,11 @@ build: (build-for host)
 # デフォルト switch （マシン自身）
 switch: (switch-for host)
 
+# emacs の lock ファイルを更新する
 emacs-lock:
   nix run .#lock --impure
 
+# emacs の lock ファイルを更新する（update も同時に行う）
 emacs-update:
   nix run .#update --impure
 
