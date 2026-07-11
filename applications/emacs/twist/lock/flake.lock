@@ -176,6 +176,22 @@
         "type": "github"
       }
     },
+    "ellama": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782476638,
+        "narHash": "sha256-45WdUSsaMqwsfEu8GPy5zpXoI3zM7vQS6cefcHKwPAI=",
+        "owner": "s-kostyaev",
+        "repo": "ellama",
+        "rev": "09857e5d2ec8a7bfc68b510a2a6afce2b165566b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "s-kostyaev",
+        "repo": "ellama",
+        "type": "github"
+      }
+    },
     "envrc": {
       "flake": false,
       "locked": {
@@ -285,6 +301,22 @@
       "original": {
         "owner": "tarsius",
         "repo": "llama",
+        "type": "github"
+      }
+    },
+    "llm": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783639525,
+        "narHash": "sha256-cUxUVThHGYanV8IzNOuVrRIWqtZFo1KcOogwM+OiaK8=",
+        "owner": "ahyatt",
+        "repo": "llm",
+        "rev": "2fe1f99a51e66c1f50e2c0b603b949783b9320f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ahyatt",
+        "repo": "llm",
         "type": "github"
       }
     },
@@ -433,6 +465,55 @@
         "type": "github"
       }
     },
+    "plz": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1723842760,
+        "narHash": "sha256-GRdYTm+7lslbfiMzT3xFKWiekQrYXWW8RXkuThDPL/Y=",
+        "owner": "alphapapa",
+        "repo": "plz.el",
+        "rev": "c579f039ffdb52ff61775ff25510a9c26e25d0c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alphapapa",
+        "ref": "stable",
+        "repo": "plz.el",
+        "type": "github"
+      }
+    },
+    "plz-event-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744536667,
+        "narHash": "sha256-tK0/eXnOQe+IO853Q0Hf1Usu1OOPn2BoNWH7pee+A7o=",
+        "owner": "r0man",
+        "repo": "plz-event-source",
+        "rev": "de89214ce14e2b82cbfdc30e1adcf3e77b1f250a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "r0man",
+        "repo": "plz-event-source",
+        "type": "github"
+      }
+    },
+    "plz-media-type": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744452044,
+        "narHash": "sha256-Ehcz6umf9pMNuUR9w/FE2Nodr0bPdule62rZWMEXLEw=",
+        "owner": "r0man",
+        "repo": "plz-media-type",
+        "rev": "b1127982d53affff082447030cda6e8ead3899cb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "r0man",
+        "repo": "plz-media-type",
+        "type": "github"
+      }
+    },
     "ppp": {
       "flake": false,
       "locked": {
@@ -478,6 +559,7 @@
         "dash": "dash",
         "ddskk": "ddskk",
         "el-job": "el-job",
+        "ellama": "ellama",
         "envrc": "envrc",
         "f": "f",
         "ghostel": "ghostel",
@@ -485,6 +567,7 @@
         "just-ts-mode": "just-ts-mode",
         "justl": "justl",
         "llama": "llama",
+        "llm": "llm",
         "magit": "magit",
         "magit-section": "magit-section",
         "marginalia": "marginalia",
@@ -494,6 +577,9 @@
         "org": "org",
         "org-mem": "org-mem",
         "org-node": "org-node",
+        "plz": "plz",
+        "plz-event-source": "plz-event-source",
+        "plz-media-type": "plz-media-type",
         "ppp": "ppp",
         "puni": "puni",
         "s": "s",
@@ -505,7 +591,8 @@
         "truename-cache": "truename-cache",
         "twist": "twist",
         "vertico": "vertico",
-        "with-editor": "with-editor"
+        "with-editor": "with-editor",
+        "yaml": "yaml"
       }
     },
     "s": {
@@ -666,6 +753,22 @@
       "original": {
         "owner": "magit",
         "repo": "with-editor",
+        "type": "github"
+      }
+    },
+    "yaml": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780648466,
+        "narHash": "sha256-pUmUPrMC+LOzo66ET+mu+cZQ4qBV5bebPxkg+xCFRxs=",
+        "owner": "zkry",
+        "repo": "yaml.el",
+        "rev": "5546f36bde24a9a8c1934e0f6ce205cd41d72537",
+        "type": "github"
+      },
+      "original": {
+        "owner": "zkry",
+        "repo": "yaml.el",
         "type": "github"
       }
     }

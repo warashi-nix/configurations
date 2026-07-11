@@ -354,6 +354,21 @@
       (:hook puni-mode)))
 #+end_src
 
+* ellama
+#+begin_src emacs-lisp
+  (setup (:package ellama)
+    (:also-load llm-openai)
+    (:global-keymap "C-c e" #'ellama)
+    (:with-hook org-ctrl-c-ctrl-c-hook
+      (:hook ellama-chat-send-last-message))
+    (:opt ellama-auto-scroll t
+  	ellama-provider (make-llm-openai-compatible :url "http://localhost:11435/v1"
+  						    :chat-model "gemma-4-12b-qat"))
+    (:when-loaded
+      (ellama-context-header-line-global-mode +1)
+      (ellama-session-header-line-global-mode +1)))
+#+end_src
+
 * recentf
 #+begin_src emacs-lisp
   (setup recentf
