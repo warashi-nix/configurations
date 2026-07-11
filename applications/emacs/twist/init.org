@@ -261,6 +261,13 @@
        "C-f" #'copilot-accept-completion))
     (add-to-list 'warning-suppress-types '(copilot))
     (:when-loaded
+      (keymap-unset copilot-completion-map "TAB")
+      (keymap-unset copilot-completion-map "C-TAB")
+      (keymap-unset copilot-completion-map "<tab>")
+      (keymap-unset copilot-completion-map "C-<tab>")
+      (keymap-unset copilot-completion-map "M-n")
+      (keymap-unset copilot-completion-map "M-p")
+
       (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
 #+end_src
 
