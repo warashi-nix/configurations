@@ -41,8 +41,8 @@
               :shorthand cadr)
 
     (defsetup :nixpkgs (nixpkgs)
-              :repeatable t
-              "Fake installation of packages from NIXPKGS for executables.")
+              "Fake installation of packages from NIXPKGS for executables."
+              :repeatable t)
 
     (defsetup :opt (&rest pairs)
               "Set the option NAME to VAL using `setopt'."
@@ -60,15 +60,20 @@
               :repeatable t
               `(keymap-set ,(setup-get 'map) ,key ,command))
 
-    (defsetup
-     :defer (sec &optional func)
-     "Call a function at N seconds after init."
-     `(add-hook 'after-init-hook
-                (lambda nil
-                  (run-with-timer ,sec nil
-                                  ,(or func
-                                       `(function ,(setup-get 'mode))))))))
+    (defsetup :defer (sec &optional func)
+              "Call a function at N seconds after init."
+              `(add-hook 'after-init-hook
+                         (lambda nil
+                           (run-with-timer ,sec nil
+                                           ,(or func
+                                                `(function ,(setup-get 'mode)))))))
 
+    (defsetup :after-init (func &rest args)
+              "Run func with ARGS after init."
+              `(add-hook 'after-init-hook
+                         ,(static-if args
+                              `(lambda nil (,func ,@args))
+                            `(function ,func)))))
 #+end_src
 
 * basic keybind
@@ -79,15 +84,13 @@
 * twist
 #+begin_src emacs-lisp
   (setup (:package twist)
-    (:with-hook emacs-startup-hook
-      (:hook twist-watch-mode)))
+    (:after-init twist-watch-mode))
 #+end_src
 
 * envrc
 #+begin_src emacs-lisp
   (setup (:package envrc)
-    (:with-hook after-init-hook
-      (:hook envrc-global-mode)))
+    (:after-init envrc-global-mode))
 #+end_src
 
 * term-title
@@ -119,8 +122,7 @@
     (:nixpkgs age)
     (:opt age-default-identity "~/.config/age/secret-key"
           age-default-recipient '("~/.config/age/public-key"))
-    (:with-hook after-init-hook
-      (:hook age-file-enable)))
+    (:after-init age-file-enable))
 #+end_src
 
 * ddskk
@@ -218,9 +220,8 @@
           ghostel-enable-osc52 t
           ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
     (:global-keymap "C-c s" #'ghostel)
-    (:with-hook after-init-hook
-      (:hook ghostel-compile-global-mode)
-      (:hook ghostel-comint-global-mode))
+    (:after-init ghostel-compile-global-mode)
+    (:after-init ghostel-comint-global-mode)
 
     (:when-loaded
       (defun warashi-envrc--ghostel-update-directory (update-directory directory)
@@ -278,8 +279,7 @@
 * theme
 #+begin_src emacs-lisp
   (setup emacs
-    (:with-hook after-init-hook
-      (:hook (lambda () (load-theme 'modus-operandi)))))
+    (:after-init load-theme 'modus-operandi))
 #+end_src
 
 * treesit
@@ -295,8 +295,7 @@
           corfu-auto t
           corfu-separator ?\s
           corfu-scroll-margin 5)
-    (:with-hook after-init-hook
-      (:hook global-corfu-mode)))
+    (:after-init global-corfu-mode))
 
   (setup emacs
     (:opt tab-always-indent 'complete
@@ -311,12 +310,10 @@
           vertico-count 20
           vertico-resize t
           vertico-cycle t)
-    (:with-hook after-init-hook
-      (:hook vertico-mode)))
+    (:after-init vertico-mode))
 
   (setup savehist
-    (:with-hook after-init-hook
-      (:hook savehist-mode)))
+    (:after-init savehist-mode))
 
   (setup emacs
     (:opt enable-recursive-minibuffers t
@@ -344,8 +341,7 @@
 * marginalia
 #+begin_src emacs-lisp
   (setup (:package marginalia)
-    (:with-hook after-init-hook
-      (:hook marginalia-mode)))
+    (:after-init marginalia-mode))
 #+end_src
 
 * puni
@@ -379,14 +375,14 @@
           recentf-auto-cleanup 'never
           recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
           recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
-    (:with-hook after-init-hook
-      (:hook recentf-mode)))
+    (:after-init recentf-mode))
 #+end_src
 
 * misc
 #+begin_src emacs-lisp
   (setup emacs
-    (:opt indent-tabs-mode nil))
+    (:after-init which-key-mode)
+    (:after-init indent-tabs-mode nil))
 #+end_src
 
 * server
