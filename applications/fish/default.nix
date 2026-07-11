@@ -76,7 +76,7 @@ in
         recursive = true;
       };
       "fish/functions" = {
-        source = ./funcitons;
+        source = ./functions;
         recursive = true;
       };
     };
