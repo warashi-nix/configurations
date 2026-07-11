@@ -220,6 +220,28 @@
     (:with-hook after-init-hook
       (:hook ghostel-compile-global-mode)
       (:hook ghostel-comint-global-mode))
+
+    (:when-loaded
+      (defun warashi-envrc--ghostel-update-directory (update-directory directory)
+        "Run UPDATE-DIRECTORY for DIRECTORY and refresh envrc when it changes."
+        (let ((previous-directory default-directory))
+  	(prog1 (funcall update-directory directory)
+  	  (unless (equal previous-directory default-directory)
+              (cond
+               ((file-remote-p default-directory)
+                (when envrc-mode
+  		(envrc--apply (current-buffer) 'none)))
+               (envrc-mode
+                (envrc--update))
+               ((and envrc-global-mode
+  		   (executable-find envrc-direnv-executable))
+                (envrc-mode 1)))))))
+
+      (unless (advice-member-p #'warashi-envrc--ghostel-update-directory
+                               #'ghostel--update-directory)
+        (advice-add #'ghostel--update-directory :around
+                    #'warashi-envrc--ghostel-update-directory)))
+
     (add-to-list 'warning-suppress-types '(ghostel)))
 #+end_src
 
