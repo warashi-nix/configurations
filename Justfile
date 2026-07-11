@@ -22,13 +22,11 @@ build: (build-for host)
 # デフォルト switch （マシン自身）
 switch: (switch-for host)
 
-# emacs の lock ファイルを更新する
 emacs-lock:
-  nix run .#lock --impure
+  nix run .#lock --impure && nix flake update my-emacs-pkgs
 
-# emacs の lock ファイルを更新する（update も同時に行う）
 emacs-update:
-  nix run .#update --impure
+  cd ./applications/emacs/twist/lock && nix flake update && cd - && nix flake update my-emacs-pkgs
 
 # マシンを指定しての build
 build-for HOST:
