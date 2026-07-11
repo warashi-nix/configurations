@@ -55,6 +55,7 @@ in
             subcommand = "run";
             args = [
               "--userns=keep-id"
+              "--detach-keys=ctrl-^,ctrl-^"
             ];
           }
           {
