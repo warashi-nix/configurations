@@ -2,8 +2,11 @@
 - git commit は意味のある最小の単位で行う
 - git commit の粒度を考慮して作業の順序や粒度を決める
 - commit message は `conventional commits` に従う
-- 変更の経緯や意味はgit commit messageのみに記載する
-- 変更の経緯や意味をコードのコメントに記載することは禁止
+- 以下のように、各場所に書く内容を明確に分ける
+  * コードには How
+  * テストコードには What
+  * コミットログには Why
+  * コードコメントには Why not
 - 実装を追加・変更・削除したら、関連テストも同じ粒度で更新する
 - 作業は小さな単位で進め、各単位ごとに lint と test を通す
 - git add -p や git add --patch は禁止
