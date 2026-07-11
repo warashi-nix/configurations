@@ -383,6 +383,12 @@
       (:hook recentf-mode)))
 #+end_src
 
+* misc
+#+begin_src emacs-lisp
+  (setup emacs
+    (:opt indent-tabs-mode nil))
+#+end_src
+
 * server
 #+begin_src emacs-lisp
   (setup server
