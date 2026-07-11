@@ -11,10 +11,6 @@ permissions:
   contents: read
   actions: write
 
-concurrency:
-  group: build
-  cancel-in-progress: false
-
 jobs:
   build:
     strategy:
