@@ -127,6 +127,22 @@
         "type": "github"
       }
     },
+    "consult": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783492845,
+        "narHash": "sha256-lKtfg0qJ/2/O0hdmdVwdB4Cv4vV4r4caZMCE18JzhBY=",
+        "owner": "minad",
+        "repo": "consult",
+        "rev": "e43b8315bd1a8d9125fff84ad84c4c003e177acb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "consult",
+        "type": "github"
+      }
+    },
     "copilot": {
       "flake": false,
       "locked": {
@@ -140,6 +156,22 @@
       "original": {
         "owner": "copilot-emacs",
         "repo": "copilot.el",
+        "type": "github"
+      }
+    },
+    "corfu": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782652958,
+        "narHash": "sha256-JRgZ0KECw8UmclXlMJLNHoGv/De9dDewm+DEmr94BJY=",
+        "owner": "minad",
+        "repo": "corfu",
+        "rev": "c588350d8f9fc60ed0fcf4b78c37671835be01a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "corfu",
         "type": "github"
       }
     },
@@ -573,6 +605,22 @@
         "type": "github"
       }
     },
+    "marginalia": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782652506,
+        "narHash": "sha256-0lfo3vI9eU4A+pNbd2H5kLl+Z4HoDUexlD+o8+hdIQw=",
+        "owner": "minad",
+        "repo": "marginalia",
+        "rev": "7604eb0463994b0528b92aaf6e594f64089b8b95",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "marginalia",
+        "type": "github"
+      }
+    },
     "msgpack": {
       "flake": false,
       "locked": {
@@ -618,7 +666,9 @@
         "cdb": "cdb",
         "compat": "compat",
         "cond-let": "cond-let",
+        "consult": "consult",
         "copilot": "copilot",
+        "corfu": "corfu",
         "ddskk": "ddskk",
         "el-job": "el-job",
         "envrc": "envrc",
@@ -627,12 +677,15 @@
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
+        "marginalia": "marginalia",
         "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
+        "orderless": "orderless",
         "org": "org",
         "org-mem": "org-mem",
         "org-node": "org-node",
         "ppp": "ppp",
+        "puni": "puni",
         "setup": "setup",
         "term-title": "term-title",
         "tramp": "tramp",
@@ -640,6 +693,7 @@
         "transient": "transient",
         "truename-cache": "truename-cache",
         "twist": "twist",
+        "vertico": "vertico",
         "with-editor": "with-editor"
       },
       "locked": {
@@ -696,6 +750,22 @@
       "original": {
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
+    "orderless": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782652430,
+        "narHash": "sha256-s/xX72yq0gjC+RmBtZGrRbKS566QBnFwymJNe/c+EOQ=",
+        "owner": "oantolin",
+        "repo": "orderless",
+        "rev": "0ffd9d6903714c1f6d8fcbb6a20941fb33dd7ae5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oantolin",
+        "repo": "orderless",
         "type": "github"
       }
     },
@@ -776,6 +846,22 @@
       "original": {
         "owner": "conao3",
         "repo": "ppp.el",
+        "type": "github"
+      }
+    },
+    "puni": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779204424,
+        "narHash": "sha256-LwGNrSrY8Ff13xYx9B7zI81YmKQHX8IwfXJEyaFVzV8=",
+        "owner": "AmaiKinono",
+        "repo": "puni",
+        "rev": "04819e0bad5ed62af9e412ef9715b33bb1edc3ba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AmaiKinono",
+        "repo": "puni",
         "type": "github"
       }
     },
@@ -980,6 +1066,22 @@
       "original": {
         "owner": "emacs-twist",
         "repo": "twist.el",
+        "type": "github"
+      }
+    },
+    "vertico": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783602303,
+        "narHash": "sha256-W64xsCd0Te+jNMTDGw3lWvfOl9PI5AvTMuFF9OrLUpI=",
+        "owner": "minad",
+        "repo": "vertico",
+        "rev": "95bd36e27bafe36158085017b5c5726391089d6b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "minad",
+        "repo": "vertico",
         "type": "github"
       }
     },
