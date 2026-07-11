@@ -40,6 +40,14 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
+      - name: 
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/nix
+          key: nix-cache-${{ matrix.os }}-${{ hashFiles('**/flake.lock') }}-${{ hashFiles('**/*.nix') }}
+          restore-keys: |
+            nix-cache-${{ matrix.os }}-${{ hashFiles('**/flake.lock') }}-
+            nix-cache-${{ matrix.os }}-
       - run: ./.github/workflows/build-all.sh
       - name: Check disk usage
         if: always()
