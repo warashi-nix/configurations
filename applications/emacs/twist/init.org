@@ -296,8 +296,8 @@
 * puni
 #+begin_src emacs-lisp
   (setup (:package puni)
-    (:with-hook after-init-hook
-      (:hook puni-global-mode)))
+    (:with-hook prog-mode-hook
+      (:hook puni-mode)))
 #+end_src
 
 * recentf
