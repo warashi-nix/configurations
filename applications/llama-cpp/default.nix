@@ -75,4 +75,44 @@ in
       ThrottleInterval = 30;
     };
   };
+
+  launchd.agents.llama-embedding-server = lib.mkIf pkgs.stdenv.isDarwin {
+    enable = true;
+    config = {
+      EnvironmentVariables = {
+        LLAMA_CACHE = "${config.xdg.cacheHome}/llama.cpp";
+      };
+      KeepAlive = true;
+      ProcessType = "Background";
+      Program = llama-server;
+      ProgramArguments = [
+        "-hf"
+        "Qwen/Qwen3-Embedding-4B-GGUF:Q4_K_M"
+        "--embedding"
+        "--pooling"
+        "last"
+        "--alias"
+        "qwen3-embedding-4b"
+        "--host"
+        "127.0.0.1"
+        "--port"
+        "11436"
+        "--ctx-size"
+        "8192"
+        "--parallel"
+        "1"
+        "--gpu-layers"
+        "999"
+        "--flash-attn"
+        "on"
+        "--sleep-idle-seconds"
+        "900"
+        "--no-webui"
+      ];
+      RunAtLoad = true;
+      StandardErrorPath = "${state-directory}/embedding-stderr.log";
+      StandardOutPath = "${state-directory}/embedding-stdout.log";
+      ThrottleInterval = 30;
+    };
+  };
 }
