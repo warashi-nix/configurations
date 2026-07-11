@@ -63,11 +63,11 @@ in
         "5.0"
         "--mirostat-lr"
         "0.1"
-        "--chat-template-kwargs"
-        (builtins.toJSON { enable_thinking = false; })
+        "--reasoning"
+        "off"
         "--sleep-idle-seconds"
         "900"
-        "--no-webui"
+        "--no-ui"
       ];
       RunAtLoad = true;
       StandardErrorPath = "${state-directory}/stderr.log";
