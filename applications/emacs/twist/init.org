@@ -40,7 +40,8 @@
               :repeatable t
               :shorthand cadr)
 
-    (defsetup :nixpkgs (&rest nixpkgs)
+    (defsetup :nixpkgs (nixpkgs)
+              :repeatable t
               "Fake installation of packages from NIXPKGS for executables.")
 
     (defsetup :opt (&rest pairs)
@@ -181,15 +182,15 @@
       (require 'ghostel-compile)
 
       (defun justl-ghostel--make-process
-  	(_original-function command &optional args _parent-buffer)
+          (_original-function command &optional args _parent-buffer)
         "Run justl COMMAND through `ghostel-compile'.
   ARGS supplies the output buffer and working directory."
         (let* ((buffer-name
                 (or (plist-get args :buffer) justl--output-process-buffer))
                (directory
                 (or (plist-get args :directory)
-  		  (and justl-justfile (file-name-directory justl-justfile))
-  		  default-directory))
+                    (and justl-justfile (file-name-directory justl-justfile))
+                    default-directory))
                (shell-command (mapconcat #'shell-quote-argument command " "))
                (ghostel-compile-buffer-name buffer-name)
                (compile-command compile-command)
@@ -197,9 +198,9 @@
                (compilation-save-buffers-predicate #'ignore)
                (default-directory directory)
                (buffer (ghostel-compile shell-command)))
-  	(if justl-pop-to-buffer-on-display
+          (if justl-pop-to-buffer-on-display
               (pop-to-buffer buffer)
-  	  buffer)))
+            buffer)))
 
       (unless (advice-member-p #'justl-ghostel--make-process
                                'justl--make-process)
@@ -225,16 +226,16 @@
       (defun warashi-envrc--ghostel-update-directory (update-directory directory)
         "Run UPDATE-DIRECTORY for DIRECTORY and refresh envrc when it changes."
         (let ((previous-directory default-directory))
-  	(prog1 (funcall update-directory directory)
-  	  (unless (equal previous-directory default-directory)
+          (prog1 (funcall update-directory directory)
+            (unless (equal previous-directory default-directory)
               (cond
                ((file-remote-p default-directory)
                 (when envrc-mode
-  		(envrc--apply (current-buffer) 'none)))
+                  (envrc--apply (current-buffer) 'none)))
                (envrc-mode
                 (envrc--update))
                ((and envrc-global-mode
-  		   (executable-find envrc-direnv-executable))
+                     (executable-find envrc-direnv-executable))
                 (envrc-mode 1)))))))
 
       (unless (advice-member-p #'warashi-envrc--ghostel-update-directory
@@ -330,14 +331,14 @@
   (setup (:package consult)
     (:global-keymap "M-g M-g" #'consult-goto-line
                     "M-g o" #'consult-outline
-  		  "C-x b" #'consult-buffer))
+                    "C-x b" #'consult-buffer))
 #+end_src
 
 * orderless
 #+begin_src emacs-lisp
   (setup (:package orderless)
     (setopt completion-styles '(orderless basic)
-  	  completion-category-overrides '((file (styles basic partial-completion)))))
+            completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 
 * marginalia
@@ -375,9 +376,9 @@
 #+begin_src emacs-lisp
   (setup recentf
     (:opt recentf-max-saved-items 2000
-  	recentf-auto-cleanup 'never
-  	recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
-  	recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
+          recentf-auto-cleanup 'never
+          recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
+          recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
     (:with-hook after-init-hook
       (:hook recentf-mode)))
 #+end_src
