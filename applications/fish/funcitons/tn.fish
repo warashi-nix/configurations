@@ -4,6 +4,7 @@ function tn --description "Open a new tmux session in the selected directory"
     return 1
   end
   set -l session_name "$(basename "$(dirname "$selected_path")")/$(basename "$selected_path")"
+  set session_name (string replace --all '.' '_' "$session_name")
 
   # HOME を選択した場合は、セッション名を $HOME にする
   if string match --quiet "$selected_path" '$HOME'
