@@ -49,6 +49,12 @@
       repo = "corfu";
       type = "github";
     };
+    dash = {
+      flake = false;
+      owner = "magnars";
+      repo = "dash.el";
+      type = "github";
+    };
     ddskk = {
       flake = false;
       owner = "skk-dev";
@@ -67,6 +73,12 @@
       repo = "envrc";
       type = "github";
     };
+    "f" = {
+      flake = false;
+      owner = "rejeep";
+      repo = "f.el";
+      type = "github";
+    };
     ghostel = {
       flake = false;
       owner = "dakra";
@@ -77,6 +89,18 @@
       flake = false;
       owner = "purcell";
       repo = "inheritenv";
+      type = "github";
+    };
+    just-ts-mode = {
+      flake = false;
+      owner = "leon-barrett";
+      repo = "just-ts-mode.el";
+      type = "github";
+    };
+    justl = {
+      flake = false;
+      owner = "psibi";
+      repo = "justl.el";
       type = "github";
     };
     llama = {
@@ -149,6 +173,12 @@
       flake = false;
       owner = "AmaiKinono";
       repo = "puni";
+      type = "github";
+    };
+    "s" = {
+      flake = false;
+      owner = "magnars";
+      repo = "s.el";
       type = "github";
     };
     setup = {

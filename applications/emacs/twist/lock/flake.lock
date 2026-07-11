@@ -128,6 +128,22 @@
         "type": "github"
       }
     },
+    "dash": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771681581,
+        "narHash": "sha256-VkBJAX1zPjQ0tH3nVSmMH5veOaQl1fgtzWIi4BN0v5A=",
+        "owner": "magnars",
+        "repo": "dash.el",
+        "rev": "d3a84021dbe48dba63b52ef7665651e0cf02e915",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magnars",
+        "repo": "dash.el",
+        "type": "github"
+      }
+    },
     "ddskk": {
       "flake": false,
       "locked": {
@@ -176,6 +192,22 @@
         "type": "github"
       }
     },
+    "f": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1727955076,
+        "narHash": "sha256-rDUl2oUlcnSjNbFZn9A/80RVk6neaTScw2kvh6FjmTE=",
+        "owner": "rejeep",
+        "repo": "f.el",
+        "rev": "931b6d0667fe03e7bf1c6c282d6d8d7006143c52",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rejeep",
+        "repo": "f.el",
+        "type": "github"
+      }
+    },
     "ghostel": {
       "flake": false,
       "locked": {
@@ -205,6 +237,38 @@
       "original": {
         "owner": "purcell",
         "repo": "inheritenv",
+        "type": "github"
+      }
+    },
+    "just-ts-mode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773933198,
+        "narHash": "sha256-AiCdeM/jyUiUkBrO7kNO92Lo9pm3aWjny1TKdQCQ72c=",
+        "owner": "leon-barrett",
+        "repo": "just-ts-mode.el",
+        "rev": "94f788eccb13cd3ade827af5612ffe3cad5fddf0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leon-barrett",
+        "repo": "just-ts-mode.el",
+        "type": "github"
+      }
+    },
+    "justl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782793168,
+        "narHash": "sha256-aKKPNzxSypY4qsVQrBCsnd0Yxi6PsAS1fazKnnlHP9Y=",
+        "owner": "psibi",
+        "repo": "justl.el",
+        "rev": "2603c5b45105514dc3190a00278879688d34cbc3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "psibi",
+        "repo": "justl.el",
         "type": "github"
       }
     },
@@ -411,11 +475,15 @@
         "consult": "consult",
         "copilot": "copilot",
         "corfu": "corfu",
+        "dash": "dash",
         "ddskk": "ddskk",
         "el-job": "el-job",
         "envrc": "envrc",
+        "f": "f",
         "ghostel": "ghostel",
         "inheritenv": "inheritenv",
+        "just-ts-mode": "just-ts-mode",
+        "justl": "justl",
         "llama": "llama",
         "magit": "magit",
         "magit-section": "magit-section",
@@ -428,6 +496,7 @@
         "org-node": "org-node",
         "ppp": "ppp",
         "puni": "puni",
+        "s": "s",
         "setup": "setup",
         "term-title": "term-title",
         "tramp": "tramp",
@@ -437,6 +506,22 @@
         "twist": "twist",
         "vertico": "vertico",
         "with-editor": "with-editor"
+      }
+    },
+    "s": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779413747,
+        "narHash": "sha256-xP4nFNjFAPcB5GbzJAqLmwfIUqX4pFspz1GdyOolEbQ=",
+        "owner": "magnars",
+        "repo": "s.el",
+        "rev": "7393fa6fa305403e628058c0ec78c35d610fab05",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magnars",
+        "repo": "s.el",
+        "type": "github"
       }
     },
     "setup": {

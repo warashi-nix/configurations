@@ -167,6 +167,14 @@
     (:hook eglot-ensure))
 #+end_src
 
+** just
+#+begin_src emacs-lisp
+  (setup (:package just-ts-mode)
+    (:nixpkgs just just-lsp))
+  (setup (:package justl)
+    (:nixpkgs just))
+#+end_src
+
 * ghostel
 #+begin_src emacs-lisp
   (setup (:package ghostel)
