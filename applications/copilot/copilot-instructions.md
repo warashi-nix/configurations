@@ -13,3 +13,9 @@
 - git add --force は禁止
 - git add で複数のファイルを一度に追加するのは禁止
 - .warashi はユーザーの設定で git ignore されているため、.warashi 内のファイルは git add できない
+- サブエージェントは以下のモデルを主に利用する
+  * 軽量タスク : GPT-5.6 Luna
+  * 中難易度のタスク : GPT-5.6 Terra
+  * 高難易度のタスク : GPT-5.6 Sol, Claude Fable 5
+  * 敵対的レビュー : GPT-5.6 Sol, Claude Fable 5
+- 敵対的レビューは複数のモデルで行い、レビュー結果を比較する
