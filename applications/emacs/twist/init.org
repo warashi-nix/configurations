@@ -226,6 +226,8 @@
     (:after-init ghostel-comint-global-mode)
 
     (:when-loaded
+      (add-to-list 'ghostel-tramp-shells '("rpc" login-shell))
+
       (defun warashi-envrc--ghostel-update-directory (update-directory directory)
         "Run UPDATE-DIRECTORY for DIRECTORY and refresh envrc when it changes."
         (let ((previous-directory default-directory))
@@ -275,7 +277,10 @@
 
 * tramp
 #+begin_src emacs-lisp
-  (setup (:package tramp))
+  (setup (:package tramp)
+    (:when-loaded
+      (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
+
   (setup (:package tramp-rpc))
 #+end_src
 
