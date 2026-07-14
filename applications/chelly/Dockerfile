@@ -38,4 +38,4 @@ RUN git config --global user.name 'Shinnosuke Sawada-Dazai'
 RUN git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
 ENTRYPOINT ["/home/warashi/.local/bin/chelly-entrypoint"]
-CMD ["/bin/bash", "--login"]
+CMD ["/bin/bash"]
