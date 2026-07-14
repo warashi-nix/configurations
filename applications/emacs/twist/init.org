@@ -386,7 +386,8 @@
   (setup (:package agent-shell
                    agent-shell-tramp)
     (:opt agent-shell-command-prefix '("chelly" "run")
-          agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config)))
+          agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config))
+    (:after-init agent-shell-tramp-mode))
 #+end_src
 
 * recentf
