@@ -25,8 +25,14 @@ COPY --chown=warashi:warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chell
 #!/bin/sh
 
 if [ -f flake.nix ]; then
+  if [ "$#" -eq 0 ]; then
+    exec nix develop --accept-flake-config
+  fi
   exec nix develop --accept-flake-config --command "$@"
 elif [ -f shell.nix ]; then
+  if [ "$#" -eq 0 ]; then
+    exec nix-shell
+  fi
   exec nix-shell --run "$*"
 else
   exec "$@"
@@ -38,4 +44,3 @@ RUN git config --global user.name 'Shinnosuke Sawada-Dazai'
 RUN git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
 ENTRYPOINT ["/home/warashi/.local/bin/chelly-entrypoint"]
-CMD ["/bin/bash"]
