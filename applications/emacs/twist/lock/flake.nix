@@ -1,10 +1,28 @@
 {
   description = "THIS IS AN AUTO-GENERATED FILE. PLEASE DON'T EDIT IT MANUALLY.";
   inputs = {
+    acp = {
+      flake = false;
+      owner = "xenodium";
+      repo = "acp.el";
+      type = "github";
+    };
     age = {
       flake = false;
       owner = "anticomputer";
       repo = "age.el";
+      type = "github";
+    };
+    agent-shell = {
+      flake = false;
+      owner = "xenodium";
+      repo = "agent-shell";
+      type = "github";
+    };
+    agent-shell-tramp = {
+      flake = false;
+      owner = "junyi-hou";
+      repo = "agent-shell-tramp";
       type = "github";
     };
     ccc = {
@@ -216,6 +234,12 @@
       flake = false;
       type = "git";
       url = "https://codeberg.org/pkal/setup.el";
+    };
+    shell-maker = {
+      flake = false;
+      owner = "xenodium";
+      repo = "shell-maker";
+      type = "github";
     };
     term-title = {
       flake = false;

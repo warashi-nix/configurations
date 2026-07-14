@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "acp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783583962,
+        "narHash": "sha256-md6gjgwyNnWQF6I3b96TQWgw10ReCB0UbiyxgnUQDlI=",
+        "owner": "xenodium",
+        "repo": "acp.el",
+        "rev": "5140f4121156707245567b8fc3072d4c3b5c867f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xenodium",
+        "repo": "acp.el",
+        "type": "github"
+      }
+    },
     "age": {
       "flake": false,
       "locked": {
@@ -13,6 +29,38 @@
       "original": {
         "owner": "anticomputer",
         "repo": "age.el",
+        "type": "github"
+      }
+    },
+    "agent-shell": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784026466,
+        "narHash": "sha256-lwwyCnqcwCnk2nAfR9NXucOyoBwl+0R9JyQlw6dNKa0=",
+        "owner": "xenodium",
+        "repo": "agent-shell",
+        "rev": "10b668816d62c8debfe6e7fad36f85f211771edf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xenodium",
+        "repo": "agent-shell",
+        "type": "github"
+      }
+    },
+    "agent-shell-tramp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783182127,
+        "narHash": "sha256-J4TBVkhlaso+TQvFLBwnWqGu5q2eCW8978mYuD1BbqM=",
+        "owner": "junyi-hou",
+        "repo": "agent-shell-tramp",
+        "rev": "14560d42440c17d9b59fc18d304687641ddf06e5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "junyi-hou",
+        "repo": "agent-shell-tramp",
         "type": "github"
       }
     },
@@ -179,11 +227,11 @@
     "ellama": {
       "flake": false,
       "locked": {
-        "lastModified": 1782476638,
-        "narHash": "sha256-45WdUSsaMqwsfEu8GPy5zpXoI3zM7vQS6cefcHKwPAI=",
+        "lastModified": 1783876609,
+        "narHash": "sha256-NcnnFR9fDyQWtfzGrD5znGAYieWBF/mSB2cNXULA3Zo=",
         "owner": "s-kostyaev",
         "repo": "ellama",
-        "rev": "09857e5d2ec8a7bfc68b510a2a6afce2b165566b",
+        "rev": "b00c307c97a2e447948a589fe591e3cad2d4b93a",
         "type": "github"
       },
       "original": {
@@ -227,11 +275,11 @@
     "ghostel": {
       "flake": false,
       "locked": {
-        "lastModified": 1783779179,
-        "narHash": "sha256-4f1koUgxkqoHlhhzSNLaK5ek7UdEW2asmZLewVCvZSY=",
+        "lastModified": 1784025286,
+        "narHash": "sha256-NYgPKn1NtGIVeJn7fGdJYAFmWf5KKxzCnG56+FhBLUI=",
         "owner": "dakra",
         "repo": "ghostel",
-        "rev": "df9b7e1ab3bb2a5305232f02f7619e4e2f0570b4",
+        "rev": "1978b3ed6e3c8be0edc9835a1364a2305ac5f181",
         "type": "github"
       },
       "original": {
@@ -548,7 +596,10 @@
     },
     "root": {
       "inputs": {
+        "acp": "acp",
         "age": "age",
+        "agent-shell": "agent-shell",
+        "agent-shell-tramp": "agent-shell-tramp",
         "ccc": "ccc",
         "cdb": "cdb",
         "compat": "compat",
@@ -584,6 +635,7 @@
         "puni": "puni",
         "s": "s",
         "setup": "setup",
+        "shell-maker": "shell-maker",
         "term-title": "term-title",
         "tramp": "tramp",
         "tramp-rpc": "tramp-rpc",
@@ -625,6 +677,22 @@
       "original": {
         "type": "git",
         "url": "https://codeberg.org/pkal/setup.el"
+      }
+    },
+    "shell-maker": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783932251,
+        "narHash": "sha256-G7hU6tm4nFau9/f8I9kn7gQBjS80XymvYdHI8OAocK0=",
+        "owner": "xenodium",
+        "repo": "shell-maker",
+        "rev": "071c6df3ca22a2f4c0daa689848ac9bd21bf4e2b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "xenodium",
+        "repo": "shell-maker",
+        "type": "github"
       }
     },
     "term-title": {

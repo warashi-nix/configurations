@@ -108,8 +108,8 @@
 
 * magit
 #+begin_src emacs-lisp
-  (setup (:package transient))
-  (setup (:package magit)
+  (setup (:package magit
+                   transient)
     (:global-keymap "C-c g" #'magit-status)
     (:when-loaded
       (magit-add-section-hook 'magit-status-sections-hook
@@ -277,11 +277,10 @@
 
 * tramp
 #+begin_src emacs-lisp
-  (setup (:package tramp)
+  (setup (:package tramp
+                   tramp-rpc)
     (:when-loaded
       (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
-
-  (setup (:package tramp-rpc))
 #+end_src
 
 * keybinds
@@ -382,6 +381,14 @@
       (ellama-session-header-line-global-mode +1)))
 #+end_src
 
+* agent-shell
+#+begin_src emacs-lisp
+  (setup (:package agent-shell
+                   agent-shell-tramp)
+    (:opt agent-shell-command-prefix '("chelly" "run")
+          agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config)))
+#+end_src
+
 * recentf
 #+begin_src emacs-lisp
   (setup recentf
@@ -395,8 +402,8 @@
 * misc
 #+begin_src emacs-lisp
   (setup emacs
-    (:after-init which-key-mode)
-    (:after-init indent-tabs-mode nil))
+    (:opt indent-tabs-mode nil)
+    (:after-init which-key-mode))
 #+end_src
 
 * server
