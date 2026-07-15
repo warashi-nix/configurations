@@ -150,6 +150,8 @@
     (:also-load org-tempo)
     (:with-hook org-agenda-mode-hook
       (:hook #'hack-dir-local-variables-non-file-buffer))
+    (:with-hook org-mode-hook
+      (:hook #'auto-fill-mode))
     (:global-keymap "C-c o c" #'org-capture
                     "C-c o a" #'org-agenda)
     (:opt org-tags-column -120
