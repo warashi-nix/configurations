@@ -1,3 +1,5 @@
+#+STARTUP: overview
+
 * Header
 #+begin_src emacs-lisp
   ;;; init.el ---  -*- lexical-binding: t -*-
