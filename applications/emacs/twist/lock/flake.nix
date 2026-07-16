@@ -103,6 +103,12 @@
       repo = "f.el";
       type = "github";
     };
+    fish-mode = {
+      flake = false;
+      owner = "wwwjfy";
+      repo = "emacs-fish";
+      type = "github";
+    };
     ghostel = {
       flake = false;
       owner = "dakra";
@@ -155,6 +161,12 @@
       flake = false;
       owner = "minad";
       repo = "marginalia";
+      type = "github";
+    };
+    markdown-ts-mode = {
+      flake = false;
+      owner = "LionyxML";
+      repo = "markdown-ts-mode";
       type = "github";
     };
     msgpack = {

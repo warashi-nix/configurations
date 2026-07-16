@@ -2,419 +2,450 @@
 
 * Header
 #+begin_src emacs-lisp
-  ;;; init.el ---  -*- lexical-binding: t -*-
-  ;;; Code:
+;;; init.el ---  -*- lexical-binding: t -*-
+;;; Code:
 #+end_src
 
 * custom-file
 #+begin_src emacs-lisp
-  (setopt custom-file (locate-user-emacs-file "custom.el"))
-  (when (file-readable-p custom-file)
-    (load-file custom-file))
+(setopt custom-file (locate-user-emacs-file "custom.el"))
+(when (file-readable-p custom-file)
+  (load-file custom-file))
 #+end_src
 
 * setup.el
 #+begin_src emacs-lisp
-  (eval-when-compile
-    (require 'setup)
-    (require 'cl-lib)
+(eval-when-compile
+  (require 'setup)
+  (require 'cl-lib)
 
-    ;; https://www.emacswiki.org/emacs/SetupEl#h5o-4
-    (defmacro defsetup (name signature &rest body)
-      "Shorthand for `setup-define'.
+  ;; https://www.emacswiki.org/emacs/SetupEl#h5o-4
+  (defmacro defsetup (name signature &rest body)
+    "Shorthand for `setup-define'.
   NAME is the name of the local macro.  SIGNATURE is used as the
   argument list for FN.  If BODY starts with a string, use this as
   the value for :documentation.  Any following keywords are passed
   as OPTS to `setup-define'."
-      (declare (debug defun))
-      (let (opts)
-        (when (stringp (car body))
-          (setq opts (nconc (list :documentation (pop body))
-                            opts)))
-        (while (keywordp (car body))
-          (let* ((prop (pop body))
-                 (val `',(pop body)))
-            (setq opts (nconc (list prop val) opts))))
-        `(setup-define ,name
-           (cl-function (lambda ,signature ,@body))
-           ,@opts)))
+    (declare (debug defun))
+    (let (opts)
+      (when (stringp (car body))
+        (setq opts (nconc (list :documentation (pop body))
+                          opts)))
+      (while (keywordp (car body))
+        (let* ((prop (pop body))
+               (val `',(pop body)))
+          (setq opts (nconc (list prop val) opts))))
+      `(setup-define ,name
+         (cl-function (lambda ,signature ,@body))
+         ,@opts)))
 
-    (defsetup :package (package)
-              "Fake installation of PACKAGE."
-              :repeatable t
-              :shorthand cadr)
+  (defsetup :package (package)
+            "Fake installation of PACKAGE."
+            :repeatable t
+            :shorthand cadr)
 
-    (defsetup :nixpkgs (nixpkgs)
-              "Fake installation of packages from NIXPKGS for executables."
-              :repeatable t)
+  (defsetup :nixpkgs (nixpkgs)
+            "Fake installation of packages from NIXPKGS for executables."
+            :repeatable t)
 
-    (defsetup :opt (&rest pairs)
-              "Set the option NAME to VAL using `setopt'."
-              :after-loaded t
-              `(setopt ,@pairs))
+  (defsetup :opt (&rest pairs)
+            "Set the option NAME to VAL using `setopt'."
+            :after-loaded t
+            `(setopt ,@pairs))
 
-    (defsetup :global-keymap (key command)
-              "Globally bind KEY to COMMAND."
-              :repeatable t
-              `(keymap-global-set ,key ,command))
+  (defsetup :global-keymap (key command)
+            "Globally bind KEY to COMMAND."
+            :repeatable t
+            `(keymap-global-set ,key ,command))
 
-    (defsetup :keymap (key command)
-              "Use `keymap-set' to define keybindings."
-              :after-loaded t
-              :repeatable t
-              `(keymap-set ,(setup-get 'map) ,key ,command))
+  (defsetup :keymap (key command)
+            "Use `keymap-set' to define keybindings."
+            :after-loaded t
+            :repeatable t
+            `(keymap-set ,(setup-get 'map) ,key ,command))
 
-    (defsetup :defer (sec &optional func)
-              "Call a function at N seconds after init."
-              `(add-hook 'after-init-hook
-                         (lambda nil
-                           (run-with-timer ,sec nil
-                                           ,(or func
-                                                `(function ,(setup-get 'mode)))))))
+  (defsetup :defer (sec &optional func)
+            "Call a function at N seconds after init."
+            `(add-hook 'after-init-hook
+                       (lambda nil
+                         (run-with-timer ,sec nil
+                                         ,(or func
+                                              `(function ,(setup-get 'mode)))))))
 
-    (defsetup :after-init (func &rest args)
-              "Run func with ARGS after init."
-              `(add-hook 'after-init-hook
-                         ,(static-if args
-                              `(lambda nil (,func ,@args))
-                            `(function ,func)))))
+  (defsetup :after-init (func &rest args)
+            "Run func with ARGS after init."
+            `(add-hook 'after-init-hook
+                       ,(if args
+                            `(lambda nil (,func ,@args))
+                          `(function ,func)))))
 #+end_src
 
 * basic keybind
 #+begin_src emacs-lisp
-  (define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
+(define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
 #+end_src
 
 * twist
 #+begin_src emacs-lisp
-  (setup (:package twist)
-    (:after-init twist-watch-mode))
+(setup (:package twist)
+  (:after-init twist-watch-mode))
 #+end_src
 
 * envrc
 #+begin_src emacs-lisp
-  (setup (:package envrc)
-    (:after-init envrc-global-mode))
+(setup (:package envrc)
+  (:after-init envrc-global-mode))
 #+end_src
 
 * term-title
 #+begin_src emacs-lisp
-  (setup (:package term-title)
-    (:defer 0.1))
+(setup (:package term-title)
+  (:defer 0.1))
 #+end_src
 
 * util
 #+begin_src emacs-lisp
-  (setup (:package ppp))
+(setup (:package ppp))
 #+end_src
 
 * magit
 #+begin_src emacs-lisp
-  (setup (:package magit
-                   transient)
-    (:global-keymap "C-c g" #'magit-status)
-    (:when-loaded
-      (magit-add-section-hook 'magit-status-sections-hook
-                              'magit-insert-modules
-                              'magit-insert-stashes
-                              'append)))
+(setup (:package magit
+                 transient)
+  (:global-keymap "C-c g" #'magit-status)
+  (:when-loaded
+    (magit-add-section-hook 'magit-status-sections-hook
+                            'magit-insert-modules
+                            'magit-insert-stashes
+                            'append)))
 #+end_src
 
 * age
 #+begin_src emacs-lisp
-  (setup (:package age)
-    (:nixpkgs age)
-    (:opt age-default-identity "~/.config/age/secret-key"
-          age-default-recipient '("~/.config/age/public-key"))
-    (:after-init age-file-enable))
+(setup (:package age)
+  (:nixpkgs age)
+  (:opt age-default-identity "~/.config/age/secret-key"
+        age-default-recipient '("~/.config/age/public-key"))
+  (:after-init age-file-enable))
 #+end_src
 
 * ddskk
 #+begin_src emacs-lisp
-  (setup (:package ddskk)
-    (setopt default-input-method "japanese-skk")
-    (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
+(setup (:package ddskk)
+  (setopt default-input-method "japanese-skk")
+  (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
 * 言語モード
 ** org
 #+begin_src emacs-lisp
-  (setup (:package org-mem)
-    (:when-loaded
-      (org-mem-updater-mode 1)))
+(setup (:package org-mem)
+  (:when-loaded
+    (org-mem-updater-mode 1)))
 
-  (setup (:package org-node)
-    (:global-keymap "C-c o n" org-node-global-prefix-map)
-    (:when-loaded
-      (org-node-cache-mode 1)))
+(setup (:package org-node)
+  (:global-keymap "C-c o n" org-node-global-prefix-map)
+  (:when-loaded
+    (org-node-cache-mode 1)))
 
-  (setup (:package org)
-    (:also-load org-tempo)
-    (:with-hook org-agenda-mode-hook
-      (:hook #'hack-dir-local-variables-non-file-buffer))
-    (:with-hook org-mode-hook
-      (:hook #'auto-fill-mode))
-    (:global-keymap "C-c o c" #'org-capture
-                    "C-c o a" #'org-agenda)
-    (:opt org-tags-column -120
-          org-agenda-tags-column -120))
+(setup (:package org)
+  (:also-load org-tempo)
+  (:with-hook org-agenda-mode-hook
+    (:hook #'hack-dir-local-variables-non-file-buffer))
+  (:with-hook org-mode-hook
+    (:hook #'auto-fill-mode))
+  (:global-keymap "C-c o c" #'org-capture
+                  "C-c o a" #'org-agenda)
+  (:opt org-tags-column -120
+        org-agenda-tags-column -120
+        org-src-preserve-indentation t))
 #+end_src
 
 ** nix
 #+begin_src emacs-lisp
-  (setup (:package nix-ts-mode)
-    (:nixpkgs "nil")
-    (:match-file "*.nix")
-    (:hook eglot-ensure))
+(setup (:package nix-ts-mode)
+  (:nixpkgs "nil")
+  (:match-file "*.nix")
+  (:hook eglot-ensure))
 #+end_src
 
 ** go
 #+begin_src emacs-lisp
-  (setup go-ts-mode
-    (:nixpkgs gopls)
-    (:match-file "*.go")
-    (:hook eglot-ensure))
+(setup go-ts-mode
+  (:nixpkgs gopls)
+  (:match-file "*.go")
+  (:hook eglot-ensure))
+#+end_src
+
+** terraform
+#+begin_src emacs-lisp
+(setup terraform-ts-mode
+  (:nixpkgs terraform terraform-ls)
+  (:match-file "*.tf")
+  (:hook eglot-ensure))
+#+end_src
+
+** markdown
+#+begin_src emacs-lisp
+(setup markdown-ts-mode
+  (:match-file "*.md"))
+#+end_src
+
+** bash
+#+begin_src emacs-lisp
+(setup bash-ts-mode
+  (:nixpkgs bash-language-server)
+  (:match-file "*.sh" "*.bash")
+  (:hook eglot-ensure))
+#+end_src
+
+** fish
+#+begin_src emacs-lisp
+(setup (:package fish-mode)
+  (:nixpkgs fish-lsp)
+  (:match-file "*.fish")
+  (:hook eglot-ensure))
 #+end_src
 
 ** just
 #+begin_src emacs-lisp
-  (setup (:package just-ts-mode)
-    (:nixpkgs just just-lsp)
-    (:also-load justl)
-    (:keymap "C-c c" #'justl-exec-recipe-in-dir))
+(setup (:package just-ts-mode)
+  (:nixpkgs just just-lsp)
+  (:also-load justl)
+  (:keymap "C-c c" #'justl-exec-recipe-in-dir))
 
-  (setup (:package justl)
-    (:nixpkgs just)
-    (:also-load ghostel-compile)
-    (:when-loaded
-      (require 'ghostel-compile)
+(setup (:package justl)
+  (:nixpkgs just)
+  (:also-load ghostel-compile)
+  (:when-loaded
+    (require 'ghostel-compile)
 
-      (defun justl-ghostel--make-process
-          (_original-function command &optional args _parent-buffer)
-        "Run justl COMMAND through `ghostel-compile'.
+    (defun justl-ghostel--make-process
+        (_original-function command &optional args _parent-buffer)
+      "Run justl COMMAND through `ghostel-compile'.
   ARGS supplies the output buffer and working directory."
-        (let* ((buffer-name
-                (or (plist-get args :buffer) justl--output-process-buffer))
-               (directory
-                (or (plist-get args :directory)
-                    (and justl-justfile (file-name-directory justl-justfile))
-                    default-directory))
-               (shell-command (mapconcat #'shell-quote-argument command " "))
-               (ghostel-compile-buffer-name buffer-name)
-               (compile-command compile-command)
-               (compilation-ask-about-save t)
-               (compilation-save-buffers-predicate #'ignore)
-               (default-directory directory)
-               (buffer (ghostel-compile shell-command)))
-          (if justl-pop-to-buffer-on-display
-              (pop-to-buffer buffer)
-            buffer)))
+      (let* ((buffer-name
+              (or (plist-get args :buffer) justl--output-process-buffer))
+             (directory
+              (or (plist-get args :directory)
+                  (and justl-justfile (file-name-directory justl-justfile))
+                  default-directory))
+             (shell-command (mapconcat #'shell-quote-argument command " "))
+             (ghostel-compile-buffer-name buffer-name)
+             (compile-command compile-command)
+             (compilation-ask-about-save t)
+             (compilation-save-buffers-predicate #'ignore)
+             (default-directory directory)
+             (buffer (ghostel-compile shell-command)))
+        (if justl-pop-to-buffer-on-display
+            (pop-to-buffer buffer)
+          buffer)))
 
-      (unless (advice-member-p #'justl-ghostel--make-process
-                               'justl--make-process)
-        (advice-add 'justl--make-process :around
-                    #'justl-ghostel--make-process))))
+    (unless (advice-member-p #'justl-ghostel--make-process
+                             'justl--make-process)
+      (advice-add 'justl--make-process :around
+                  #'justl-ghostel--make-process))))
 #+end_src
 
 * ghostel
 #+begin_src emacs-lisp
-  (setup (:package ghostel)
-    (:also-load ghostel-compile
-                ghostel-comint)
-    (:opt ghostel-shell-integration nil
-          ghostel-tramp-shell-integration nil
-          ghostel-enable-osc52 t
-          ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
-    (:global-keymap "C-c s" #'ghostel)
-    (:after-init ghostel-compile-global-mode)
-    (:after-init ghostel-comint-global-mode)
+(setup (:package ghostel)
+  (:also-load ghostel-compile
+              ghostel-comint)
+  (:opt ghostel-shell-integration nil
+        ghostel-tramp-shell-integration nil
+        ghostel-enable-osc52 t
+        ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
+  (:global-keymap "C-c s" #'ghostel)
+  (:after-init ghostel-compile-global-mode)
+  (:after-init ghostel-comint-global-mode)
 
-    (:when-loaded
-      (add-to-list 'ghostel-tramp-shells '("rpc" login-shell))
+  (:when-loaded
+    (add-to-list 'ghostel-tramp-shells '("rpc" login-shell))
 
-      (defun warashi-envrc--ghostel-update-directory (update-directory directory)
-        "Run UPDATE-DIRECTORY for DIRECTORY and refresh envrc when it changes."
-        (let ((previous-directory default-directory))
-          (prog1 (funcall update-directory directory)
-            (unless (equal previous-directory default-directory)
-              (cond
-               ((file-remote-p default-directory)
-                (when envrc-mode
-                  (envrc--apply (current-buffer) 'none)))
-               (envrc-mode
-                (envrc--update))
-               ((and envrc-global-mode
-                     (executable-find envrc-direnv-executable))
-                (envrc-mode 1)))))))
+    (defun warashi-envrc--ghostel-update-directory (update-directory directory)
+      "Run UPDATE-DIRECTORY for DIRECTORY and refresh envrc when it changes."
+      (let ((previous-directory default-directory))
+        (prog1 (funcall update-directory directory)
+          (unless (equal previous-directory default-directory)
+            (cond
+             ((file-remote-p default-directory)
+              (when envrc-mode
+                (envrc--apply (current-buffer) 'none)))
+             (envrc-mode
+              (envrc--update))
+             ((and envrc-global-mode
+                   (executable-find envrc-direnv-executable))
+              (envrc-mode 1)))))))
 
-      (unless (advice-member-p #'warashi-envrc--ghostel-update-directory
-                               #'ghostel--update-directory)
-        (advice-add #'ghostel--update-directory :around
-                    #'warashi-envrc--ghostel-update-directory)))
+    (unless (advice-member-p #'warashi-envrc--ghostel-update-directory
+                             #'ghostel--update-directory)
+      (advice-add #'ghostel--update-directory :around
+                  #'warashi-envrc--ghostel-update-directory)))
 
-    (add-to-list 'warning-suppress-types '(ghostel)))
+  (add-to-list 'warning-suppress-types '(ghostel)))
 #+end_src
 
 * copilot
 #+begin_src emacs-lisp
-  (setup (:package copilot)
-    (:nixpkgs copilot-language-server)
-    (:with-hook prog-mode-hook
-      (:hook copilot-mode))
-    (:with-hook git-commit-mode-hook
-      (:hook copilot-mode))
-    (:with-map copilot-completion-map
-      (:keymap
-       "<right>" #'copilot-accept-completion
-       "C-f" #'copilot-accept-completion))
-    (add-to-list 'warning-suppress-types '(copilot))
-    (:when-loaded
-      (keymap-unset copilot-completion-map "TAB")
-      (keymap-unset copilot-completion-map "C-TAB")
-      (keymap-unset copilot-completion-map "<tab>")
-      (keymap-unset copilot-completion-map "C-<tab>")
-      (keymap-unset copilot-completion-map "M-n")
-      (keymap-unset copilot-completion-map "M-p")
+(setup (:package copilot)
+  (:nixpkgs copilot-language-server)
+  (:with-hook prog-mode-hook
+    (:hook copilot-mode))
+  (:with-hook git-commit-mode-hook
+    (:hook copilot-mode))
+  (:with-map copilot-completion-map
+    (:keymap
+     "<right>" #'copilot-accept-completion
+     "C-f" #'copilot-accept-completion))
+  (add-to-list 'warning-suppress-types '(copilot))
+  (:when-loaded
+    (keymap-unset copilot-completion-map "TAB")
+    (keymap-unset copilot-completion-map "C-TAB")
+    (keymap-unset copilot-completion-map "<tab>")
+    (keymap-unset copilot-completion-map "C-<tab>")
+    (keymap-unset copilot-completion-map "M-n")
+    (keymap-unset copilot-completion-map "M-p")
 
-      (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
+    (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
 #+end_src
 
 * tramp
 #+begin_src emacs-lisp
-  (setup (:package tramp
-                   tramp-rpc)
-    (:when-loaded
-      (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
+(setup (:package tramp
+                 tramp-rpc)
+  (:when-loaded
+    (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
 #+end_src
 
 * keybinds
 #+begin_src emacs-lisp
-  (setup emacs
-    (:global-keymap "C-c c" #'compile))
+(setup emacs
+  (:global-keymap "C-c c" #'compile))
 #+end_src
 
 * theme
 #+begin_src emacs-lisp
-  (setup emacs
-    (:after-init load-theme 'modus-operandi))
+(setup emacs
+  (:after-init load-theme 'modus-operandi))
 #+end_src
 
 * treesit
 #+begin_src emacs-lisp
-  (setup treesit
-    (:opt treesit-font-lock-level 4))
+(setup treesit
+  (:opt treesit-font-lock-level 4))
 #+end_src
 
 * corfu
 #+begin_src emacs-lisp
-  (setup (:package corfu)
-    (:opt corfu-cycle t
-          corfu-auto t
-          corfu-separator ?\s
-          corfu-scroll-margin 5)
-    (:after-init global-corfu-mode))
+(setup (:package corfu)
+  (:opt corfu-cycle t
+        corfu-auto t
+        corfu-separator ?\s
+        corfu-scroll-margin 5)
+  (:after-init global-corfu-mode))
 
-  (setup emacs
-    (:opt tab-always-indent 'complete
-          text-mode-ispell-word-completion nil
-          read-extended-command-predicate #'command-completion-default-include-p))
+(setup emacs
+  (:opt tab-always-indent 'complete
+        text-mode-ispell-word-completion nil
+        read-extended-command-predicate #'command-completion-default-include-p))
 #+end_src
 
 * vertico
 #+begin_src emacs-lisp
-  (setup (:package vertico)
-    (:opt vertico-scroll-margin 0
-          vertico-count 20
-          vertico-resize t
-          vertico-cycle t)
-    (:after-init vertico-mode))
+(setup (:package vertico)
+  (:opt vertico-scroll-margin 0
+        vertico-count 20
+        vertico-resize t
+        vertico-cycle t)
+  (:after-init vertico-mode))
 
-  (setup savehist
-    (:after-init savehist-mode))
+(setup savehist
+  (:after-init savehist-mode))
 
-  (setup emacs
-    (:opt enable-recursive-minibuffers t
-          read-extended-command-predicate #'command-completion-default-include-p
-          minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
-    (:with-hook minibuffer-setup-hook
-      (:hook cursor-intangible-mode)))
+(setup emacs
+  (:opt enable-recursive-minibuffers t
+        read-extended-command-predicate #'command-completion-default-include-p
+        minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+  (:with-hook minibuffer-setup-hook
+    (:hook cursor-intangible-mode)))
 #+end_src
 
 * consult
 #+begin_src emacs-lisp
-  (setup (:package consult)
-    (:global-keymap "M-g M-g" #'consult-goto-line
-                    "M-g o" #'consult-outline
-                    "C-x b" #'consult-buffer))
+(setup (:package consult)
+  (:global-keymap "M-g M-g" #'consult-goto-line
+                  "M-g o" #'consult-outline
+                  "C-x b" #'consult-buffer))
 #+end_src
 
 * orderless
 #+begin_src emacs-lisp
-  (setup (:package orderless)
-    (setopt completion-styles '(orderless basic)
-            completion-category-overrides '((file (styles basic partial-completion)))))
+(setup (:package orderless)
+  (setopt completion-styles '(orderless basic)
+          completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 
 * marginalia
 #+begin_src emacs-lisp
-  (setup (:package marginalia)
-    (:after-init marginalia-mode))
+(setup (:package marginalia)
+  (:after-init marginalia-mode))
 #+end_src
 
 * puni
 #+begin_src emacs-lisp
-  (setup (:package puni)
-    (:with-hook prog-mode-hook
-      (:hook puni-mode)))
+(setup (:package puni)
+  (:with-hook prog-mode-hook
+    (:hook puni-mode)))
 #+end_src
 
 * ellama
 #+begin_src emacs-lisp
-  (setup (:package ellama)
-    (:also-load llm llm-openai)
-    (:global-keymap "C-c e" #'ellama)
-    (:with-hook org-ctrl-c-ctrl-c-hook
-      (:hook ellama-chat-send-last-message))
-    (:opt llm-warn-on-nonfree nil
-          ellama-auto-scroll t
-          ellama-provider (make-llm-openai-compatible :url "http://localhost:11435/v1"
-                                                      :chat-model "gemma-4-12b-qat"
-                                                      :embedding-model "qwen3-embedding-4b"))
-    (:when-loaded
-      (ellama-context-header-line-global-mode +1)
-      (ellama-session-header-line-global-mode +1)))
+(setup (:package ellama)
+  (:also-load llm llm-openai)
+  (:global-keymap "C-c e" #'ellama)
+  (:with-hook org-ctrl-c-ctrl-c-hook
+    (:hook ellama-chat-send-last-message))
+  (:opt llm-warn-on-nonfree nil
+        ellama-auto-scroll t
+        ellama-provider (make-llm-openai-compatible :url "http://localhost:11435/v1"
+                                                    :chat-model "gemma-4-12b-qat"
+                                                    :embedding-model "qwen3-embedding-4b"))
+  (:when-loaded
+    (ellama-context-header-line-global-mode +1)
+    (ellama-session-header-line-global-mode +1)))
 #+end_src
 
 * agent-shell
 #+begin_src emacs-lisp
-  (setup (:package agent-shell
-                   agent-shell-tramp)
-    (:opt agent-shell-command-prefix '("chelly" "run")
-          agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config))
-    (:after-init agent-shell-tramp-mode))
+(setup (:package agent-shell
+                 agent-shell-tramp)
+  (:opt agent-shell-command-prefix '("chelly" "run")
+        agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config))
+  (:after-init agent-shell-tramp-mode))
 #+end_src
 
 * recentf
 #+begin_src emacs-lisp
-  (setup recentf
-    (:opt recentf-max-saved-items 2000
-          recentf-auto-cleanup 'never
-          recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
-          recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
-    (:after-init recentf-mode))
+(setup recentf
+  (:opt recentf-max-saved-items 2000
+        recentf-auto-cleanup 'never
+        recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
+        recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
+  (:after-init recentf-mode))
 #+end_src
 
 * misc
 #+begin_src emacs-lisp
-  (setup emacs
-    (:opt indent-tabs-mode nil)
-    (:after-init which-key-mode))
+(setup emacs
+  (:opt indent-tabs-mode nil)
+  (:after-init which-key-mode))
 #+end_src
 
 * server
 #+begin_src emacs-lisp
-  (setup server
-    (require 'server)
-    (unless (server-running-p)
-      (server-start)))
+(setup server
+  (require 'server)
+  (unless (server-running-p)
+    (server-start)))
 #+end_src

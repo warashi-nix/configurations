@@ -28,7 +28,7 @@
             pkgs.writeText name (inputs.org-babel.lib.tangleOrgBabel options (builtins.readFile path));
         in
         rec {
-          emacsPackage = if pkgs.stdenv.isLinux then pkgs.emacs else pkgs.emacs-macport;
+          emacsPackage = pkgs.emacs31;
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
           extraPackages = [ "setup" ];

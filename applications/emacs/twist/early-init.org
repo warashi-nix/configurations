@@ -4,8 +4,8 @@
  
 * Header
 #+begin_src emacs-lisp 
-  ;;; early-init.el ---  -*- lexical-binding: t -*-
-  ;;; Code:  
+;;; early-init.el ---  -*- lexical-binding: t -*-
+;;; Code:  
 #+end_src
 
 * Decrease GC
@@ -27,19 +27,6 @@
                        gcs-done)
               (profiler-report)
               (profiler-stop)))
-#+end_src
-
-* performance tuning for setopt
-#+begin_src emacs-lisp
-  ;; Temporarily disabe `setopt' because it is slower than `setq'
-  (fset 'real-setopt (symbol-function 'setopt))
-  (defmacro setopt (&rest args)
-    "setopt を setq に一時的に変えるためのマクロ."
-    `(setq ,@args))
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (fset 'setopt (symbol-function 'real-setopt))
-              (fmakunbound 'real-setopt)))
 #+end_src
 
 * Toolbar/Menubar
