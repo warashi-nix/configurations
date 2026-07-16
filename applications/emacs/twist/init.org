@@ -136,6 +136,14 @@
   (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
+* eglot
+#+begin_src emacs-lisp
+(setup eglot
+  (:when-loaded
+    (add-to-list 'eglot-server-programs
+                 '(fish-mode . ("fish-lsp" "start")))))
+#+end_src
+
 * 言語モード
 ** org
 #+begin_src emacs-lisp
