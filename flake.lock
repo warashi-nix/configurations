@@ -426,6 +426,22 @@
         "type": "github"
       }
     },
+    "exec-path-from-shell": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781870398,
+        "narHash": "sha256-aQ9eOqRu1pYTPF/Wqo/XDMcFiHVp6dRZLZ7rsRuSy7Q=",
+        "owner": "purcell",
+        "repo": "exec-path-from-shell",
+        "rev": "6146fdc16e9882df270be7e58ae8d628032d6bc4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "purcell",
+        "repo": "exec-path-from-shell",
+        "type": "github"
+      }
+    },
     "f": {
       "flake": false,
       "locked": {
@@ -781,22 +797,6 @@
         "type": "github"
       }
     },
-    "markdown-ts-mode": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778087269,
-        "narHash": "sha256-jaCOVAIi/zBUwt2gWg6YR7cq7HqmOO9xhKju0Lr4pG4=",
-        "owner": "LionyxML",
-        "repo": "markdown-ts-mode",
-        "rev": "801579b9b955f63673dd6dc9742c1fd5311b76c9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LionyxML",
-        "repo": "markdown-ts-mode",
-        "type": "github"
-      }
-    },
     "msgpack": {
       "flake": false,
       "locked": {
@@ -853,6 +853,7 @@
         "el-job": "el-job",
         "ellama": "ellama",
         "envrc": "envrc",
+        "exec-path-from-shell": "exec-path-from-shell",
         "f": "f",
         "fish-mode": "fish-mode",
         "ghostel": "ghostel",
@@ -864,7 +865,6 @@
         "magit": "magit",
         "magit-section": "magit-section",
         "marginalia": "marginalia",
-        "markdown-ts-mode": "markdown-ts-mode",
         "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
         "orderless": "orderless",
