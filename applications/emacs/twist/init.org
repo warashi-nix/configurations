@@ -454,7 +454,8 @@
 * misc
 #+begin_src emacs-lisp
 (setup emacs
-  (:opt indent-tabs-mode nil)
+  (:opt indent-tabs-mode nil
+        frame-resize-pixelwise t)
   (:after-init which-key-mode))
 #+end_src
 
