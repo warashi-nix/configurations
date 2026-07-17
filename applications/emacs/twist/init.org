@@ -444,11 +444,6 @@
 #+end_src
 
 #+begin_src emacs-lisp
-(setup emacs
-  (:after-init load-theme 'modus-operandi))
-#+end_src
-
-#+begin_src emacs-lisp
 (setup treesit
   (:opt treesit-font-lock-level 4))
 #+end_src
@@ -457,7 +452,8 @@
 (setup emacs
   (:opt indent-tabs-mode nil
         frame-resize-pixelwise t)
-  (:after-init which-key-mode))
+  (:after-init which-key-mode)
+  (:after-init load-theme 'modus-operandi))
 #+end_src
 
 * server
