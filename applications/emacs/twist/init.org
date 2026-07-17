@@ -80,12 +80,18 @@
                           `(function ,func)))))
 #+end_src
 
-* basic keybind
+* 基本キーバインド
 #+begin_src emacs-lisp
 (define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
 #+end_src
 
-* exec-path-from-shell
+#+begin_src emacs-lisp
+(setup emacs
+  (:global-keymap "C-c c" #'compile))
+#+end_src
+
+* シェル/環境
+** exec-path-from-shell
 #+begin_src emacs-lisp
 (setup (:package exec-path-from-shell)
   (:opt exec-path-from-shell-variables '("PATH" "MANPATH" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "NIX_SSL_CERT_FILE" "NIX_PATH")
@@ -93,42 +99,19 @@
   (:after-init exec-path-from-shell-initialize))
 #+end_src
 
-* twist
+** twist
 #+begin_src emacs-lisp
 (setup (:package twist)
   (:after-init twist-watch-mode))
 #+end_src
 
-* envrc
+** envrc
 #+begin_src emacs-lisp
 (setup (:package envrc)
   (:after-init envrc-global-mode))
 #+end_src
 
-* term-title
-#+begin_src emacs-lisp
-(setup (:package term-title)
-  (:defer 0.1))
-#+end_src
-
-* util
-#+begin_src emacs-lisp
-(setup (:package ppp))
-#+end_src
-
-* magit
-#+begin_src emacs-lisp
-(setup (:package magit
-                 transient)
-  (:global-keymap "C-c g" #'magit-status)
-  (:when-loaded
-    (magit-add-section-hook 'magit-status-sections-hook
-                            'magit-insert-modules
-                            'magit-insert-stashes
-                            'append)))
-#+end_src
-
-* age
+** age
 #+begin_src emacs-lisp
 (setup (:package age)
   (:nixpkgs age)
@@ -137,14 +120,29 @@
   (:after-init age-file-enable))
 #+end_src
 
-* ddskk
+** term-title
+#+begin_src emacs-lisp
+(setup (:package term-title)
+  (:defer 0.1))
+#+end_src
+
+* 入力・編集
+** ddskk
 #+begin_src emacs-lisp
 (setup (:package ddskk)
   (setopt default-input-method "japanese-skk")
   (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
-* eglot
+** puni
+#+begin_src emacs-lisp
+(setup (:package puni)
+  (:with-hook prog-mode-hook
+    (:hook puni-mode)))
+#+end_src
+
+* 言語モード
+** eglot
 #+begin_src emacs-lisp
 (setup eglot
   (:when-loaded
@@ -152,7 +150,6 @@
                  '(fish-mode . ("fish-lsp" "start")))))
 #+end_src
 
-* 言語モード
 ** org
 #+begin_src emacs-lisp
 (setup (:package org-mem)
@@ -263,7 +260,128 @@
                   #'justl-ghostel--make-process))))
 #+end_src
 
-* ghostel
+* 補完
+** corfu
+#+begin_src emacs-lisp
+(setup (:package corfu)
+  (:opt corfu-cycle t
+        corfu-auto t
+        corfu-separator ?\s
+        corfu-scroll-margin 5)
+  (:after-init global-corfu-mode))
+
+(setup emacs
+  (:opt tab-always-indent 'complete
+        text-mode-ispell-word-completion nil
+        read-extended-command-predicate #'command-completion-default-include-p))
+#+end_src
+
+** vertico
+#+begin_src emacs-lisp
+(setup (:package vertico)
+  (:opt vertico-scroll-margin 0
+        vertico-count 20
+        vertico-resize t
+        vertico-cycle t)
+  (:after-init vertico-mode))
+
+(setup savehist
+  (:after-init savehist-mode))
+
+(setup emacs
+  (:opt enable-recursive-minibuffers t
+        read-extended-command-predicate #'command-completion-default-include-p
+        minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+  (:with-hook minibuffer-setup-hook
+    (:hook cursor-intangible-mode)))
+#+end_src
+
+** consult
+#+begin_src emacs-lisp
+(setup (:package consult)
+  (:global-keymap "M-g M-g" #'consult-goto-line
+                  "M-g o" #'consult-outline
+                  "C-x b" #'consult-buffer))
+#+end_src
+
+** orderless
+#+begin_src emacs-lisp
+(setup (:package orderless)
+  (setopt completion-styles '(orderless basic)
+          completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
+
+** marginalia
+#+begin_src emacs-lisp
+(setup (:package marginalia)
+  (:after-init marginalia-mode))
+#+end_src
+
+* AI
+** copilot
+#+begin_src emacs-lisp
+(setup (:package copilot)
+  (:nixpkgs copilot-language-server)
+  (:with-hook prog-mode-hook
+    (:hook copilot-mode))
+  (:with-hook git-commit-mode-hook
+    (:hook copilot-mode))
+  (:with-map copilot-completion-map
+    (:keymap
+     "<right>" #'copilot-accept-completion
+     "C-f" #'copilot-accept-completion))
+  (add-to-list 'warning-suppress-types '(copilot))
+  (:when-loaded
+    (keymap-unset copilot-completion-map "TAB")
+    (keymap-unset copilot-completion-map "C-TAB")
+    (keymap-unset copilot-completion-map "<tab>")
+    (keymap-unset copilot-completion-map "C-<tab>")
+    (keymap-unset copilot-completion-map "M-n")
+    (keymap-unset copilot-completion-map "M-p")
+
+    (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
+#+end_src
+
+** ellama
+#+begin_src emacs-lisp
+(setup (:package ellama)
+  (:also-load llm llm-openai)
+  (:global-keymap "C-c e" #'ellama)
+  (:with-hook org-ctrl-c-ctrl-c-hook
+    (:hook ellama-chat-send-last-message))
+  (:opt llm-warn-on-nonfree nil
+        ellama-auto-scroll t
+        ellama-provider (make-llm-openai-compatible :url "http://localhost:11435/v1"
+                                                    :chat-model "gemma-4-12b-qat"
+                                                    :embedding-model "qwen3-embedding-4b"))
+  (:when-loaded
+    (ellama-context-header-line-global-mode +1)
+    (ellama-session-header-line-global-mode +1)))
+#+end_src
+
+** agent-shell
+#+begin_src emacs-lisp
+(setup (:package agent-shell
+                 agent-shell-tramp)
+  (:opt agent-shell-command-prefix '("chelly" "run")
+        agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config))
+  (:after-init agent-shell-tramp-mode))
+#+end_src
+
+* 開発ツール
+** magit
+#+begin_src emacs-lisp
+(setup (:package magit
+                 transient)
+  (:global-keymap "C-c g" #'magit-status)
+  (:when-loaded
+    (magit-add-section-hook 'magit-status-sections-hook
+                            'magit-insert-modules
+                            'magit-insert-stashes
+                            'append)))
+#+end_src
+
+** ghostel
 #+begin_src emacs-lisp
 (setup (:package ghostel)
   (:also-load ghostel-compile
@@ -302,143 +420,12 @@
   (add-to-list 'warning-suppress-types '(ghostel)))
 #+end_src
 
-* copilot
-#+begin_src emacs-lisp
-(setup (:package copilot)
-  (:nixpkgs copilot-language-server)
-  (:with-hook prog-mode-hook
-    (:hook copilot-mode))
-  (:with-hook git-commit-mode-hook
-    (:hook copilot-mode))
-  (:with-map copilot-completion-map
-    (:keymap
-     "<right>" #'copilot-accept-completion
-     "C-f" #'copilot-accept-completion))
-  (add-to-list 'warning-suppress-types '(copilot))
-  (:when-loaded
-    (keymap-unset copilot-completion-map "TAB")
-    (keymap-unset copilot-completion-map "C-TAB")
-    (keymap-unset copilot-completion-map "<tab>")
-    (keymap-unset copilot-completion-map "C-<tab>")
-    (keymap-unset copilot-completion-map "M-n")
-    (keymap-unset copilot-completion-map "M-p")
-
-    (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
-#+end_src
-
-* tramp
+** tramp
 #+begin_src emacs-lisp
 (setup (:package tramp
                  tramp-rpc)
   (:when-loaded
     (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
-#+end_src
-
-* keybinds
-#+begin_src emacs-lisp
-(setup emacs
-  (:global-keymap "C-c c" #'compile))
-#+end_src
-
-* theme
-#+begin_src emacs-lisp
-(setup emacs
-  (:after-init load-theme 'modus-operandi))
-#+end_src
-
-* treesit
-#+begin_src emacs-lisp
-(setup treesit
-  (:opt treesit-font-lock-level 4))
-#+end_src
-
-* corfu
-#+begin_src emacs-lisp
-(setup (:package corfu)
-  (:opt corfu-cycle t
-        corfu-auto t
-        corfu-separator ?\s
-        corfu-scroll-margin 5)
-  (:after-init global-corfu-mode))
-
-(setup emacs
-  (:opt tab-always-indent 'complete
-        text-mode-ispell-word-completion nil
-        read-extended-command-predicate #'command-completion-default-include-p))
-#+end_src
-
-* vertico
-#+begin_src emacs-lisp
-(setup (:package vertico)
-  (:opt vertico-scroll-margin 0
-        vertico-count 20
-        vertico-resize t
-        vertico-cycle t)
-  (:after-init vertico-mode))
-
-(setup savehist
-  (:after-init savehist-mode))
-
-(setup emacs
-  (:opt enable-recursive-minibuffers t
-        read-extended-command-predicate #'command-completion-default-include-p
-        minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
-  (:with-hook minibuffer-setup-hook
-    (:hook cursor-intangible-mode)))
-#+end_src
-
-* consult
-#+begin_src emacs-lisp
-(setup (:package consult)
-  (:global-keymap "M-g M-g" #'consult-goto-line
-                  "M-g o" #'consult-outline
-                  "C-x b" #'consult-buffer))
-#+end_src
-
-* orderless
-#+begin_src emacs-lisp
-(setup (:package orderless)
-  (setopt completion-styles '(orderless basic)
-          completion-category-overrides '((file (styles basic partial-completion)))))
-#+end_src
-
-* marginalia
-#+begin_src emacs-lisp
-(setup (:package marginalia)
-  (:after-init marginalia-mode))
-#+end_src
-
-* puni
-#+begin_src emacs-lisp
-(setup (:package puni)
-  (:with-hook prog-mode-hook
-    (:hook puni-mode)))
-#+end_src
-
-* ellama
-#+begin_src emacs-lisp
-(setup (:package ellama)
-  (:also-load llm llm-openai)
-  (:global-keymap "C-c e" #'ellama)
-  (:with-hook org-ctrl-c-ctrl-c-hook
-    (:hook ellama-chat-send-last-message))
-  (:opt llm-warn-on-nonfree nil
-        ellama-auto-scroll t
-        ellama-provider (make-llm-openai-compatible :url "http://localhost:11435/v1"
-                                                    :chat-model "gemma-4-12b-qat"
-                                                    :embedding-model "qwen3-embedding-4b"))
-  (:when-loaded
-    (ellama-context-header-line-global-mode +1)
-    (ellama-session-header-line-global-mode +1)))
-#+end_src
-
-* agent-shell
-#+begin_src emacs-lisp
-(setup (:package agent-shell
-                 agent-shell-tramp)
-  (:opt agent-shell-command-prefix '("chelly" "run")
-        agent-shell-preferred-agent-config (agent-shell-github-make-copilot-config))
-  (:after-init agent-shell-tramp-mode))
 #+end_src
 
 * recentf
@@ -452,6 +439,20 @@
 #+end_src
 
 * misc
+#+begin_src emacs-lisp
+(setup (:package ppp))
+#+end_src
+
+#+begin_src emacs-lisp
+(setup emacs
+  (:after-init load-theme 'modus-operandi))
+#+end_src
+
+#+begin_src emacs-lisp
+(setup treesit
+  (:opt treesit-font-lock-level 4))
+#+end_src
+
 #+begin_src emacs-lisp
 (setup emacs
   (:opt indent-tabs-mode nil
