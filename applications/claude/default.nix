@@ -133,14 +133,14 @@ in
       warashi-claude-code-configs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${lib.getExe pkgs.rsync} -a ${./CLAUDE.md} ${config.home.homeDirectory}/.claude/CLAUDE.md
         if [ -f ${config.home.homeDirectory}/.claude/settings.json ]; then
-          run cp -a ${config.home.homeDirectory}/.claude/settings.json ${config.home.homeDirectory}/.claude/settings.json.backup
+          run cp -af ${config.home.homeDirectory}/.claude/settings.json ${config.home.homeDirectory}/.claude/settings.json.backup
           run ${lib.getExe pkgs.jq} -s '.[0] * .[1]' \
             ${config.home.homeDirectory}/.claude/settings.json \
             ${config-overrides} \
             > ${config.home.homeDirectory}/.claude/settings.merged.json
           run mv ${config.home.homeDirectory}/.claude/settings.merged.json ${config.home.homeDirectory}/.claude/settings.json
         else
-          run cp -a ${config-overrides} ${config.home.homeDirectory}/.claude/settings.json
+          run cp -af ${config-overrides} ${config.home.homeDirectory}/.claude/settings.json
         fi
       '';
     };
