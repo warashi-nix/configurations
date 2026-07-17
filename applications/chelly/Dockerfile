@@ -1,26 +1,65 @@
 FROM debian:stable
 
-RUN apt-get update
-RUN apt-get install -y sudo curl git bash xz-utils locales
+# --------------------------------------------------------
+# パッケージインストール
+# --------------------------------------------------------
+# aptのキャッシュ用設定（キャッシュを削除しないように設定を変更）
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-ENV LANG=C.UTF-8
+# apt-get update と install を1レイヤーにまとめ、--mount=type=cache を利用
+# あえて --no-install-recommends を使用しない
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y \
+    sudo \
+    curl \
+    git \
+    bash \
+    jq \
+    xz-utils \
+    podman-docker \
+    locales \
+    ncurses-term \
+    ;
 
-RUN groupadd -g 1000 warashi
-RUN useradd -m -u 501 -g warashi -G sudo -s /bin/bash warashi
-RUN echo 'warashi ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# --------------------------------------------------------
+# ユーザー作成と権限設定
+# --------------------------------------------------------
+RUN groupadd -g 1000 warashi && \
+    useradd -m -u 501 -g warashi -G sudo -s /bin/bash warashi && \
+    echo 'warashi ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/warashi && \
+    chmod 0440 /etc/sudoers.d/warashi
 
 USER warashi
 ENV USER=warashi
 WORKDIR /home/warashi
 
-RUN mkdir -p /home/warashi/.cache/go-build /home/warashi/go/pkg/mod
-ENV PATH="/home/warashi/.local/bin:/home/warashi/.nix-profile/bin:${PATH}"
+ENV \
+    CLAUDE_CONFIG_DIR=/home/warashi/.claude \
+    LANG=C.UTF-8 \
+    PATH="/home/warashi/.nix-profile/bin:/home/warashi/.local/bin:${PATH}" \
+    TZ=Asia/Tokyo
 
+# --------------------------------------------------------
+# Git・Claude・Copilot・Nixの設定
+# --------------------------------------------------------
+# Git初期設定
+RUN mkdir -p /home/warashi/.config/git && \
+    git config --global user.name 'Shinnosuke Sawada-Dazai' && \
+    git config --global user.email '3600530+Warashi@users.noreply.github.com'
+
+# Claude CLI インストール
 RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# Copilot CLI インストール
 RUN curl -fsSL https://gh.io/copilot-install | bash
 
-RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-channel-add
-RUN mkdir -p ~/.config/nix && echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+# Nix インストール（single user install）
+RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-channel-add && \
+    mkdir -p ~/.config/nix && \
+    echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
 COPY --chown=warashi:warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
@@ -39,9 +78,5 @@ else
   exec "$@"
 fi
 EOF
-
-RUN mkdir -p /home/warashi/.config/git && touch /home/warashi/.config/git/config
-RUN git config --global user.name 'Shinnosuke Sawada-Dazai'
-RUN git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
 ENTRYPOINT ["/home/warashi/.local/bin/chelly-entrypoint"]

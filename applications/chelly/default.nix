@@ -54,8 +54,16 @@ in
             runtime = "podman";
             subcommand = "run";
             args = [
-              "--userns=keep-id"
+              # keep-sorted start
+              "--cap-add=SYS_ADMIN,SETUID,SETGID"
               "--detach-keys=ctrl-^,ctrl-^"
+              "--device=/dev/fuse"
+              "--device=/dev/net/tun"
+              "--security-opt=label=disable"
+              "--security-opt=seccomp=unconfined"
+              "--security-opt=unmask=/proc/*"
+              "--userns=keep-id"
+              # keep-sorted end
             ];
           }
           {
