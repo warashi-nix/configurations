@@ -43,6 +43,10 @@ in
             EDITOR = "vim";
           };
 
+          shellAliases = {
+            tmux = "direnv exec / tmux"; # 起動する時にdirenvの影響を受けないようにする
+          };
+
           stateVersion = "24.11";
         };
 
