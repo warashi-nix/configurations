@@ -30,6 +30,10 @@ in
     };
     targets = {
       # keep-sorted start block=yes
+      claude = {
+        enable = true;
+        structure = "copy-tree";
+      };
       copilot = {
         enable = true;
         structure = "copy-tree";
