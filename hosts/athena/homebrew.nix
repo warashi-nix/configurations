@@ -32,7 +32,6 @@
       "google-gemini"
       "karabiner-elements"
       "lasso-app"
-      "orbstack"
       "orion"
       "raycast"
       "visual-studio-code"
