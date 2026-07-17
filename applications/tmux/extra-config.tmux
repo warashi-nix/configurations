@@ -20,7 +20,7 @@ set -g set-titles on
 set -g set-titles-string '#T'
 
 # terminal-features for xterm-ghostty
-set -as terminal-features ',xterm-ghostty:256,clipboard,ccolour,cstyle,extkeys,focus,hyperlinks,margins,mouse,osc7,overline,progressbar,RGB,strikethrough,sync,title,usstyle'
+set -as terminal-features ',xterm-ghostty:256:clipboard:ccolour:cstyle:extkeys:focus:hyperlinks:margins:mouse:osc7:overline:progressbar:RGB:strikethrough:sync:title:usstyle'
 
 # C-w で window 一覧を開く
 bind C-w choose-tree -Zw
