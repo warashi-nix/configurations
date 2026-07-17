@@ -7,7 +7,7 @@
       cleanup = "zap";
     };
     brews = [
-      "container"
+      # "container"
       "mas"
     ];
     casks = [
