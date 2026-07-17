@@ -39,6 +39,7 @@ in
           "chelly-nix:/nix"
           "go-cache:/home/warashi/.cache/go-build"
           "go-mod:/home/warashi/go/pkg/mod"
+          "${config.home.homeDirectory}/.claude:/home/warashi/.claude"
           "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
           "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
         ];
