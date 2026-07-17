@@ -649,6 +649,22 @@
         "type": "github"
       }
     },
+    "hcl-mode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1728982426,
+        "narHash": "sha256-1j23lOoGM7pML2M0LXGKIVKjCmAtf4/J43l8JpPEfXI=",
+        "owner": "hcl-emacs",
+        "repo": "hcl-mode",
+        "rev": "1da895ed75d28d9f87cbf9b74f075d90ba31c0ed",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hcl-emacs",
+        "repo": "hcl-mode",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -857,6 +873,7 @@
         "f": "f",
         "fish-mode": "fish-mode",
         "ghostel": "ghostel",
+        "hcl-mode": "hcl-mode",
         "inheritenv": "inheritenv",
         "just-ts-mode": "just-ts-mode",
         "justl": "justl",
@@ -880,6 +897,7 @@
         "setup": "setup",
         "shell-maker": "shell-maker",
         "term-title": "term-title",
+        "terraform-mode": "terraform-mode",
         "tramp": "tramp",
         "tramp-rpc": "tramp-rpc",
         "transient": "transient",
@@ -1239,6 +1257,22 @@
       "original": {
         "owner": "CyberShadow",
         "repo": "term-title",
+        "type": "github"
+      }
+    },
+    "terraform-mode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1763244647,
+        "narHash": "sha256-NvMICA4oxw88bN5cfPt+ZNmuDGITR4Uz1/RBZ8QEYg0=",
+        "owner": "hcl-emacs",
+        "repo": "terraform-mode",
+        "rev": "01635df3625c0cec2bb4613a6f920b8569d41009",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hcl-emacs",
+        "repo": "terraform-mode",
         "type": "github"
       }
     },

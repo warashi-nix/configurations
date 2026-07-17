@@ -195,7 +195,7 @@
 
 ** terraform
 #+begin_src emacs-lisp
-(setup terraform-ts-mode
+(setup (:package terraform-mode)
   (:nixpkgs terraform terraform-ls)
   (:match-file "*.tf")
   (:hook eglot-ensure))

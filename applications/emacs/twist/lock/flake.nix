@@ -121,6 +121,12 @@
       repo = "ghostel";
       type = "github";
     };
+    hcl-mode = {
+      flake = false;
+      owner = "hcl-emacs";
+      repo = "hcl-mode";
+      type = "github";
+    };
     inheritenv = {
       flake = false;
       owner = "purcell";
@@ -259,6 +265,12 @@
       repo = "term-title";
       type = "github";
     };
+    terraform-mode = {
+      flake = false;
+      owner = "hcl-emacs";
+      repo = "terraform-mode";
+      type = "github";
+    };
     tramp = {
       flake = false;
       ref = "externals/tramp";
@@ -308,5 +320,5 @@
       type = "github";
     };
   };
-  outputs = { ... }: { };
+  outputs = _: { };
 }
