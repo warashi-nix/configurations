@@ -188,6 +188,7 @@
                     # keep-sorted start
                     age
                     devcontainer
+                    emacs31-nox
                     just
                     nix-output-monitor
                     nvfetcher
