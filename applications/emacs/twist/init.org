@@ -423,6 +423,12 @@
   (add-to-list 'warning-suppress-types '(ghostel)))
 #+end_src
 
+** eshell
+#+begin_src emacs-lisp
+(setup (:package spectreshell)
+  (:after-init spectreshell-eshell-mode))
+#+end_src
+
 ** tramp
 #+begin_src emacs-lisp
 (setup (:package tramp

@@ -407,6 +407,28 @@
         "type": "github"
       }
     },
+    "emacs-spectreshell": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "zon2nix": "zon2nix"
+      },
+      "locked": {
+        "lastModified": 1784415188,
+        "narHash": "sha256-XYrdUgqsguFesadKfBDNMvO1gfMb34GZLWJu/xhVt1c=",
+        "owner": "Warashi",
+        "repo": "emacs-spectreshell",
+        "rev": "90b0ca379f8b54b5cf9f13e425a668ad213bca1a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Warashi",
+        "repo": "emacs-spectreshell",
+        "type": "github"
+      }
+    },
     "emacs-twist": {
       "inputs": {
         "elisp-helpers": "elisp-helpers"
@@ -487,6 +509,22 @@
       "original": {
         "owner": "wwwjfy",
         "repo": "emacs-fish",
+        "type": "github"
+      }
+    },
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "flake-compat",
         "type": "github"
       }
     },
@@ -847,6 +885,9 @@
     },
     "my-emacs": {
       "inputs": {
+        "emacs-spectreshell": [
+          "emacs-spectreshell"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -1150,6 +1191,7 @@
         "devshell": "devshell",
         "direnv-instant": "direnv-instant",
         "disko": "disko",
+        "emacs-spectreshell": "emacs-spectreshell",
         "emacs-twist": "emacs-twist",
         "flake-parts": "flake-parts",
         "git-hooks": "git-hooks",
@@ -1439,6 +1481,27 @@
       "original": {
         "owner": "zkry",
         "repo": "yaml.el",
+        "type": "github"
+      }
+    },
+    "zon2nix": {
+      "inputs": {
+        "nixpkgs": [
+          "emacs-spectreshell",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784117571,
+        "narHash": "sha256-Hvnmnuu0VpHiZl+8z+UkMoxC7JZJvRYBqu2Asb0ZJOE=",
+        "owner": "jcollie",
+        "repo": "zon2nix",
+        "rev": "0ce628fb78309cdb13d098ae9c6fdbf87c75d25b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jcollie",
+        "repo": "zon2nix",
         "type": "github"
       }
     }

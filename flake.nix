@@ -37,6 +37,12 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    emacs-spectreshell = {
+      url = "github:Warashi/emacs-spectreshell";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
     emacs-twist = {
       url = "github:Warashi/twist.nix/darwin-emacs-app";
     };
@@ -67,6 +73,7 @@
         nixpkgs.follows = "nixpkgs";
         org-babel.follows = "org-babel";
         twist.follows = "emacs-twist";
+        emacs-spectreshell.follows = "emacs-spectreshell";
       };
     };
     my-emacs-pkgs = {
