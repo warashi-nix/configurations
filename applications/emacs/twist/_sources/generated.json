@@ -1,7 +1,7 @@
 {
     "epkgs": {
         "cargoLock": null,
-        "date": "2026-07-12",
+        "date": "2026-07-18",
         "extract": null,
         "name": "epkgs",
         "passthru": null,
@@ -13,16 +13,16 @@
             "name": null,
             "owner": "emacsmirror",
             "repo": "epkgs",
-            "rev": "8cf635d43ca0cbc1428be60b8e21d2d61986b152",
-            "sha256": "sha256-vrUN9ycv68oh/EpdXMNHfcLldAK0rIWQY0GDlg+ZCA0=",
+            "rev": "4eb14a950ca2ce0910201abb01c7f2c819a24563",
+            "sha256": "sha256-iVAuMjAnB7H2pJ0meGf87Nu9rNTw4L3KKl3b0+7goAA=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "8cf635d43ca0cbc1428be60b8e21d2d61986b152"
+        "version": "4eb14a950ca2ce0910201abb01c7f2c819a24563"
     },
     "gnu-elpa": {
         "cargoLock": null,
-        "date": "2026-06-27",
+        "date": "2026-07-18",
         "extract": null,
         "name": "gnu-elpa",
         "passthru": null,
@@ -34,12 +34,12 @@
             "name": null,
             "owner": "elpa-mirrors",
             "repo": "elpa",
-            "rev": "fcf738c3547216d700e1f67a2e1830ed2acba981",
-            "sha256": "sha256-xmX4v8LmAU6v0cbNx/oA8bci17JCtEreUCMWuJAFxK8=",
+            "rev": "f4a727bb98979c449729532a4f8375d348276eb3",
+            "sha256": "sha256-wAYisTSWlLcobVM070j4SZYILi2wICkMsSKLags2LWs=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "fcf738c3547216d700e1f67a2e1830ed2acba981"
+        "version": "f4a727bb98979c449729532a4f8375d348276eb3"
     },
     "melpa": {
         "cargoLock": null,
@@ -64,7 +64,7 @@
     },
     "nongnu-elpa": {
         "cargoLock": null,
-        "date": "2026-06-27",
+        "date": "2026-07-18",
         "extract": null,
         "name": "nongnu-elpa",
         "passthru": null,
@@ -76,11 +76,11 @@
             "name": null,
             "owner": "elpa-mirrors",
             "repo": "nongnu",
-            "rev": "2e12d173f9e329f1a37c07a4a84fdbaaff12d245",
-            "sha256": "sha256-4cTfnlfiz8O0ii0GWdHVqw1bJUreeCZY/eVhhq3PQGY=",
+            "rev": "c60c2d7ae50999938338f30a544b412b2153e861",
+            "sha256": "sha256-2LHRz//PTwY5kRvdiSNvWhJueG4T4B4zMdgat5DUoBs=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "2e12d173f9e329f1a37c07a4a84fdbaaff12d245"
+        "version": "c60c2d7ae50999938338f30a544b412b2153e861"
     }
 }
