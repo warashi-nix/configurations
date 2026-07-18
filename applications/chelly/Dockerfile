@@ -1,5 +1,7 @@
 FROM debian:stable
 
+ARG UID GID
+
 # --------------------------------------------------------
 # パッケージインストール
 # --------------------------------------------------------
@@ -27,8 +29,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # --------------------------------------------------------
 # ユーザー作成と権限設定
 # --------------------------------------------------------
-RUN groupadd -g 1000 warashi && \
-    useradd -m -u 501 -g warashi -G sudo -s /bin/bash warashi && \
+RUN useradd -m -u "${UID}" -g "${GID}" -G sudo -s /bin/bash warashi && \
     echo 'warashi ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/warashi && \
     chmod 0440 /etc/sudoers.d/warashi
 
@@ -61,7 +62,7 @@ RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- 
     mkdir -p ~/.config/nix && \
     echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
-COPY --chown=warashi:warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
+COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
 if [ -f flake.nix ]; then

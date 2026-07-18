@@ -31,6 +31,14 @@ in
       description = "Envfile for Chelly.";
       default = [ config.sops.secrets.chelly-dotenv.path ];
     };
+    uid = mkOption {
+      type = types.int;
+      description = "uid for container user.";
+    };
+    gid = mkOption {
+      type = types.int;
+      description = "gid for container user.";
+    };
     settings = mkOption {
       type = types.attrs;
       description = "Settings for Chelly.";
@@ -51,6 +59,14 @@ in
         ];
         env_files = cfg.envfiles;
         runtime_options = [
+          {
+            runtime = "podman";
+            subcommand = "build";
+            args = [
+              "--build-arg=UID=${toString cfg.uid}"
+              "--build-arg=GID=${toString cfg.gid}"
+            ];
+          }
           {
             runtime = "podman";
             subcommand = "run";
