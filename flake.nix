@@ -188,15 +188,16 @@
                     # keep-sorted start
                     age
                     devcontainer
-                    emacs31-nox
                     git
-                    inputs'.git-wit.packages.git-wit
                     just
                     nix-output-monitor
                     nvfetcher
                     sops
                     ssh-to-age
                     # keep-sorted end
+
+                    inputs'.my-emacs.packages.default
+                    inputs'.git-wit.packages.git-wit
                   ]
                   ++ config.pre-commit.settings.enabledPackages;
                 startup = {
