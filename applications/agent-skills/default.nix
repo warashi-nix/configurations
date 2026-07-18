@@ -7,21 +7,19 @@ in
     enable = true;
     sources = {
       # keep-sorted start block=yes
-      mattpocock = {
+      mattpocock-productivity = {
         path = sources.mattpocock-skills.src;
-        subdir = "skills";
-        idPrefix = "mattpocock";
+        subdir = "skills/productivity";
       };
       warashi = {
         path = ./skills;
-        idPrefix = "warashi";
       };
       # keep-sorted end
     };
     skills = {
       enable = [
         # keep-sorted start
-        "mattpocock/productivity/grilling"
+        "grilling"
         # keep-sorted end
       ];
       enableAll = [
