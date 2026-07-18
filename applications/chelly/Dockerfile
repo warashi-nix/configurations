@@ -29,8 +29,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ncurses-term \
     ;
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 # GitHub CLI インストール
 WORKDIR /tmp
 ADD https://api.github.com/repos/cli/cli/releases/latest /tmp/gh-release.json
@@ -52,7 +50,7 @@ RUN set -eu; \
     release_url="https://github.com/cli/cli/releases/download/v${gh_version}"; \
     curl -fsSLO "${release_url}/${archive}"; \
     curl -fsSLo gh_checksums.txt "${release_url}/gh_${gh_version}_checksums.txt"; \
-    grep "  ${archive}\$" gh_checksums.txt | sha256sum --check -; \
+    sha256sum --check --ignore-missing gh_checksums.txt; \
     tar -xzf "${archive}" --strip-components=2 -C /usr/local/bin \
         "gh_${gh_version}_linux_${gh_arch}/bin/gh"; \
     rm -f /tmp/gh-release.json "/tmp/${archive}" /tmp/gh_checksums.txt
@@ -83,13 +81,17 @@ RUN mkdir -p /home/warashi/.config/git && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
 # Claude CLI インストール
-RUN curl -fsSL https://claude.ai/install.sh | bash
+ADD --chmod=0644 https://claude.ai/install.sh /tmp/claude-install.sh
+RUN bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 
 # Copilot CLI インストール
-RUN curl -fsSL https://gh.io/copilot-install | bash
+ADD --chmod=0644 https://gh.io/copilot-install /tmp/copilot-install.sh
+RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
 
 # Nix インストール（single user install）
-RUN curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-channel-add && \
+ADD --chmod=0644 https://nixos.org/nix/install /tmp/nix-install.sh
+RUN sh /tmp/nix-install.sh --no-daemon --no-channel-add && \
+    rm -f /tmp/nix-install.sh && \
     mkdir -p ~/.config/nix && \
     echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
