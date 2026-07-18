@@ -146,7 +146,8 @@
               settings = {
                 src = ./.;
                 hooks = {
-                  actionlint.enable = false;
+                  actionlint.enable = true;
+                  hadolint.enable = true;
                   treefmt.enable = true;
                 };
               };
@@ -155,11 +156,20 @@
             treefmt = {
               projectRootFile = "flake.nix";
               programs = {
-                # keep-sorted start
-                keep-sorted.enable = true;
-                nixfmt.enable = true;
-                pinact.enable = true;
-                shfmt.enable = true;
+                # keep-sorted start block=yes
+                keep-sorted = {
+                  enable = true;
+                };
+                nixfmt = {
+                  enable = true;
+                };
+                pinact = {
+                  enable = true;
+                  update = false;
+                };
+                shfmt = {
+                  enable = true;
+                };
                 # keep-sorted end
               };
               settings = {
@@ -189,6 +199,7 @@
                     age
                     devcontainer
                     git
+                    hadolint
                     just
                     nix-output-monitor
                     nvfetcher
