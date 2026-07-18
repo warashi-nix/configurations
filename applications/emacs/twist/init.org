@@ -304,6 +304,7 @@
                   "C-x b" #'consult-buffer))
 (setup (:package consult-ghq)
   (:global-keymap "C-x C-g" #'consult-ghq-find))
+(setup (:package consult-git-wit))
 #+end_src
 
 ** orderless

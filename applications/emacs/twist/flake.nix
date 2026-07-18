@@ -32,6 +32,11 @@
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
           localPackages = [ "consult-git-wit" ];
+          inputOverrides = {
+            consult-git-wit = _: _: {
+              src = ./packages/consult-git-wit;
+            };
+          };
           extraPackages = [ "setup" ];
           extraSiteStartElisp = ''
             (add-to-list 'treesit-extra-load-path "${
@@ -64,6 +69,7 @@
             inherit (profile.${system})
               emacsPackage
               localPackages
+              inputOverrides
               extraPackages
               extraSiteStartElisp
               initFiles
