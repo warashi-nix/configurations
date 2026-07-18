@@ -19,7 +19,21 @@ in
         home = "/home/${username}";
         isNormalUser = true;
         linger = true;
-        autoSubUidGidRange = true;
+        # autoSubUidGidRange は 65536 個固定で、--userns=keep-id なコンテナ内の
+        # useradd が要求する subuid (100000 + 65536) を収容できないため明示指定する
+        autoSubUidGidRange = false;
+        subUidRanges = [
+          {
+            startUid = 100000;
+            count = 196608;
+          }
+        ];
+        subGidRanges = [
+          {
+            startGid = 100000;
+            count = 196608;
+          }
+        ];
         hashedPasswordFile =
           if config.sops.secrets ? login-password then config.sops.secrets.login-password.path else null;
         extraGroups = [
