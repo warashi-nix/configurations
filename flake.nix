@@ -189,6 +189,8 @@
                     age
                     devcontainer
                     emacs31-nox
+                    git
+                    inputs'.git-wit.packages.git-wit
                     just
                     nix-output-monitor
                     nvfetcher
