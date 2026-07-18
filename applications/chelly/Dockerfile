@@ -11,11 +11,11 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # apt-get update と install を1レイヤーにまとめ、--mount=type=cache を利用
-# あえて --no-install-recommends を使用しない
+# hadolint ignore=DL3008
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     sudo \
     curl \
     git \
@@ -27,7 +27,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ncurses-term \
     ;
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # GitHub CLI インストール
+WORKDIR /tmp
 ADD https://api.github.com/repos/cli/cli/releases/latest /tmp/gh-release.json
 RUN set -eu; \
     if [ "${TARGETOS}" != "linux" ]; then \
@@ -45,7 +48,6 @@ RUN set -eu; \
     gh_version="$(jq -r '.tag_name | ltrimstr("v")' /tmp/gh-release.json)"; \
     archive="gh_${gh_version}_linux_${gh_arch}.tar.gz"; \
     release_url="https://github.com/cli/cli/releases/download/v${gh_version}"; \
-    cd /tmp; \
     curl -fsSLO "${release_url}/${archive}"; \
     curl -fsSLo gh_checksums.txt "${release_url}/gh_${gh_version}_checksums.txt"; \
     grep "  ${archive}\$" gh_checksums.txt | sha256sum --check -; \
@@ -56,7 +58,7 @@ RUN set -eu; \
 # --------------------------------------------------------
 # ユーザー作成と権限設定
 # --------------------------------------------------------
-RUN useradd -m -u "${UID}" -g "${GID}" -G sudo -s /bin/bash warashi && \
+RUN useradd -l -m -u "${UID}" -g "${GID}" -G sudo -s /bin/bash warashi && \
     echo 'warashi ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/warashi && \
     chmod 0440 /etc/sudoers.d/warashi
 
