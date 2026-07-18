@@ -199,7 +199,6 @@
                     age
                     devcontainer
                     git
-                    hadolint
                     just
                     nix-output-monitor
                     nvfetcher
