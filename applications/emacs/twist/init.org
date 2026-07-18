@@ -444,8 +444,7 @@
 ** project.el
 #+begin_src emacs-lisp
 (setup project
-  (:opt project-switch-use-menu nil
-        project-switch-commands '((consult-fd "Find file" ?f)
+  (:opt project-switch-commands '((consult-fd "Find file" ?f)
                                   (consult-project-buffer "Switch buffer" ?b)
                                   (consult-ripgrep "Ripgrep" ?r)
                                   (project-eshell "Eshell" ?e)
