@@ -39,6 +39,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ;
 
 # GitHub CLI インストール
+RUN mkdir -p /tmp && chmod 0777 /tmp
 WORKDIR /tmp
 ADD https://api.github.com/repos/cli/cli/releases/latest /tmp/gh-release.json
 RUN set -eu; \
@@ -90,15 +91,15 @@ RUN mkdir -p /home/warashi/.config/git && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
 # Claude CLI インストール
-ADD --chmod=0644 https://claude.ai/install.sh /tmp/claude-install.sh
+ADD --chmod=0666 https://claude.ai/install.sh /tmp/claude-install.sh
 RUN bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 
 # Copilot CLI インストール
-ADD --chmod=0644 https://gh.io/copilot-install /tmp/copilot-install.sh
+ADD --chmod=0666 https://gh.io/copilot-install /tmp/copilot-install.sh
 RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
 
 # Nix インストール（single user install）
-ADD --chmod=0644 https://nixos.org/nix/install /tmp/nix-install.sh
+ADD --chmod=0666 https://nixos.org/nix/install /tmp/nix-install.sh
 RUN sh /tmp/nix-install.sh --no-daemon --no-channel-add && \
     rm -f /tmp/nix-install.sh && \
     mkdir -p ~/.config/nix && \
