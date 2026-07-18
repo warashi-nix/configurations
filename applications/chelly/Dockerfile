@@ -21,10 +21,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     sudo \
     curl \
     git \
+    less \
+    openssh-client \
     bash \
     jq \
     xz-utils \
     podman-docker \
+    uidmap \
+    passt \
+    slirp4netns \
+    fuse-overlayfs \
+    aardvark-dns \
+    catatonit \
+    nftables \
     locales \
     ncurses-term \
     ;
