@@ -55,6 +55,12 @@
       repo = "consult";
       type = "github";
     };
+    consult-ghq = {
+      flake = false;
+      owner = "tomoya";
+      repo = "consult-ghq";
+      type = "github";
+    };
     copilot = {
       flake = false;
       owner = "copilot-emacs";

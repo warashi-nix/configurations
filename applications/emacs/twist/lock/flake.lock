@@ -144,6 +144,22 @@
         "type": "github"
       }
     },
+    "consult-ghq": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1699707813,
+        "narHash": "sha256-kLF06zQSLb1fZGKZ3XWJoPoSiIR4MzRV8ujpd/v5a/8=",
+        "owner": "tomoya",
+        "repo": "consult-ghq",
+        "rev": "65a99980fb313d473376542cb87464a8a44ff25e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tomoya",
+        "repo": "consult-ghq",
+        "type": "github"
+      }
+    },
     "copilot": {
       "flake": false,
       "locked": {
@@ -653,6 +669,7 @@
         "compat": "compat",
         "cond-let": "cond-let",
         "consult": "consult",
+        "consult-ghq": "consult-ghq",
         "copilot": "copilot",
         "corfu": "corfu",
         "dash": "dash",

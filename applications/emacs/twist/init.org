@@ -302,6 +302,8 @@
   (:global-keymap "M-g M-g" #'consult-goto-line
                   "M-g o" #'consult-outline
                   "C-x b" #'consult-buffer))
+(setup (:package consult-ghq)
+  (:global-keymap "C-x C-g" #'consult-ghq-find))
 #+end_src
 
 ** orderless
