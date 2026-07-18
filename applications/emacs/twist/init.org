@@ -298,13 +298,13 @@
 
 ** consult
 #+begin_src emacs-lisp
-(setup (:package consult)
+(setup (:package consult
+                 consult-ghq
+                 consult-git-wit)
   (:global-keymap "M-g M-g" #'consult-goto-line
                   "M-g o" #'consult-outline
-                  "C-x b" #'consult-buffer))
-(setup (:package consult-ghq)
-  (:global-keymap "C-x C-g" #'consult-ghq-find))
-(setup (:package consult-git-wit))
+                  "C-x b" #'consult-buffer
+                  "<remap> <project-switch-project>" #'consult-ghq-switch-project))
 #+end_src
 
 ** orderless
@@ -431,7 +431,7 @@
     (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
 #+end_src
 
-* recentf
+** recentf
 #+begin_src emacs-lisp
 (setup recentf
   (:opt recentf-max-saved-items 2000
@@ -439,6 +439,18 @@
         recentf-exclude '("/recentf" "COMMIT_EDITMSG" "/.?TAGS" "^/sudo:")
         recentf-auto-save-timer (run-with-idle-timer 30 t 'recentf-save-list))
   (:after-init recentf-mode))
+#+end_src
+
+** project.el
+#+begin_src emacs-lisp
+(setup project
+  (:opt project-switch-use-menu nil
+        project-switch-commands '((consult-fd "Find file" ?f)
+                                  (consult-project-buffer "Switch buffer" ?b)
+                                  (consult-ripgrep "Ripgrep" ?r)
+                                  (project-eshell "Eshell" ?e)
+                                  (project-dired "Dired" ?d)
+                                  (project-compile "Compile" ?c))))
 #+end_src
 
 * misc
