@@ -1,6 +1,7 @@
 FROM debian:stable
 
 ARG UID=1000 GID=1000
+ARG TARGETOS TARGETARCH TARGETVARIANT
 
 # --------------------------------------------------------
 # パッケージインストール
@@ -25,6 +26,32 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     locales \
     ncurses-term \
     ;
+
+# GitHub CLI インストール
+ADD https://api.github.com/repos/cli/cli/releases/latest /tmp/gh-release.json
+RUN set -eu; \
+    if [ "${TARGETOS}" != "linux" ]; then \
+        echo "Unsupported target OS: ${TARGETOS}" >&2; \
+        exit 1; \
+    fi; \
+    case "${TARGETARCH}/${TARGETVARIANT}" in \
+        386/|amd64/|arm64/) gh_arch="${TARGETARCH}" ;; \
+        arm/|arm/v6|arm/v7) gh_arch="armv6" ;; \
+        *) \
+            echo "Unsupported target architecture: ${TARGETARCH}/${TARGETVARIANT}" >&2; \
+            exit 1; \
+            ;; \
+    esac; \
+    gh_version="$(jq -r '.tag_name | ltrimstr("v")' /tmp/gh-release.json)"; \
+    archive="gh_${gh_version}_linux_${gh_arch}.tar.gz"; \
+    release_url="https://github.com/cli/cli/releases/download/v${gh_version}"; \
+    cd /tmp; \
+    curl -fsSLO "${release_url}/${archive}"; \
+    curl -fsSLo gh_checksums.txt "${release_url}/gh_${gh_version}_checksums.txt"; \
+    grep "  ${archive}\$" gh_checksums.txt | sha256sum --check -; \
+    tar -xzf "${archive}" --strip-components=2 -C /usr/local/bin \
+        "gh_${gh_version}_linux_${gh_arch}/bin/gh"; \
+    rm -f /tmp/gh-release.json "/tmp/${archive}" /tmp/gh_checksums.txt
 
 # --------------------------------------------------------
 # ユーザー作成と権限設定
