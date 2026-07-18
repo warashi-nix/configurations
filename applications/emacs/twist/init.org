@@ -447,6 +447,7 @@
   (:opt project-switch-commands '((consult-fd "Find file" ?f)
                                   (consult-project-buffer "Switch buffer" ?b)
                                   (consult-ripgrep "Ripgrep" ?r)
+                                  (consult-git-wit-switch-project "Switch project" ?w)
                                   (project-eshell "Eshell" ?e)
                                   (project-dired "Dired" ?d)
                                   (project-compile "Compile" ?c))))
