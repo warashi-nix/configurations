@@ -1,6 +1,7 @@
 FROM debian:stable
 
-ARG UID=1000 GID=1000
+ARG UID=1000
+ARG GID=1000
 ARG TARGETOS TARGETARCH TARGETVARIANT
 
 # --------------------------------------------------------
