@@ -1,0 +1,2 @@
+(consult-git-wit :fetcher github
+                 :repo "Warashi/consult-git-wit")

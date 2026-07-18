@@ -31,6 +31,7 @@
           emacsPackage = pkgs.emacs31;
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
+          localPackages = [ "consult-git-wit" ];
           extraPackages = [ "setup" ];
           extraSiteStartElisp = ''
             (add-to-list 'treesit-extra-load-path "${
@@ -62,6 +63,7 @@
             inherit pkgs;
             inherit (profile.${system})
               emacsPackage
+              localPackages
               extraPackages
               extraSiteStartElisp
               initFiles
