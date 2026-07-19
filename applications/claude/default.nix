@@ -41,6 +41,9 @@ let
       CLAUDE_CODE_ENABLE_TELEMETRY = "1";
       # keep-sorted end
     };
+    permissions = {
+      defaultMode = "auto";
+    };
     statusLine = {
       type = "command";
       command = ''
