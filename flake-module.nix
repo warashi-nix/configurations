@@ -79,7 +79,7 @@ in
       {
         checks =
           let
-            currentSystemConfigurations = lib.filterAttrs (k: v: v.pkgs.system == system) (
+            currentSystemConfigurations = lib.filterAttrs (k: v: v.pkgs.stdenv.hostPlatform.system == system) (
               (lib.optionalAttrs (flake ? nixosConfigurations) flake.nixosConfigurations)
               // (lib.optionalAttrs (flake ? darwinConfigurations) flake.darwinConfigurations)
             );
