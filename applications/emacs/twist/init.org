@@ -174,6 +174,26 @@
         org-src-preserve-indentation t))
 #+end_src
 
+** brainium
+[[https://github.com/Warashi/brainium][brainium]] (PKM リポジトリ) を対象にした org-node の設定。
+
+ここの変数は、この home-manager を flake inputs として使う非公開マシンの
+custom.el から上書きできるようにする。custom.el は init 冒頭でロードされ、
+eval-after-load のハンドラは登録順 (FIFO) に実行されるため、契約を次のとおりとする。
+
+- init 側: 即時の setopt で設定する。:opt はパッケージロード時に発火し、
+  custom.el の with-eval-after-load より後に走って上書きを潰すため使わない。
+- custom.el 側: 上書きは該当 feature の with-eval-after-load で包んで書く。
+  init 完了後のパッケージロード時に走るため、必ず custom.el が勝つ。
+
+新規ノートの作成先は notes/ (フラット配置) に固定する。ファイル名の slug は
+title 由来のため、日本語 title の場合は英語 kebab-case 規約へ手動リネームで合わせる。
+
+#+begin_src emacs-lisp
+(setopt org-mem-watch-dirs '("~/ghq/github.com/Warashi/brainium/")
+        org-node-file-directory-ask "~/ghq/github.com/Warashi/brainium/notes/")
+#+end_src
+
 ** nix
 #+begin_src emacs-lisp
 (setup (:package nix-ts-mode)
