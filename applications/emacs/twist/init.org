@@ -203,6 +203,12 @@ org-capture は inbox.org へ投入し、refile で整理する (inbox は空が
            "* %?\n%U")))
 #+end_src
 
+TODO 管理は tasks.org に集約する運用のため、agenda 対象はそれのみとする。
+
+#+begin_src emacs-lisp
+(setopt org-agenda-files '("~/ghq/github.com/Warashi/brainium/tasks.org"))
+#+end_src
+
 ** nix
 #+begin_src emacs-lisp
 (setup (:package nix-ts-mode)
