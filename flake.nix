@@ -173,6 +173,18 @@
                 pinact = {
                   enable = true;
                   update = false;
+                  # sandbox 内ではネットワークに出られず GitHub API での検証が必ず失敗するため
+                  verify = false;
+                  settings = {
+                    version = 3;
+                    # v17 のような major のみのタグはフルバージョン解決に GitHub API が必要になるため
+                    ignore_actions = [
+                      {
+                        name = "cachix/cachix-action";
+                        ref = ".*";
+                      }
+                    ];
+                  };
                 };
                 shfmt = {
                   enable = true;
@@ -189,7 +201,11 @@
                   };
                   tombi = {
                     command = pkgs.lib.getExe pkgs.tombi;
-                    options = [ "format" ];
+                    # sandbox 内では schemastore のカタログを取得できないため --offline を付ける
+                    options = [
+                      "format"
+                      "--offline"
+                    ];
                     includes = [ "*.toml" ];
                   };
                   # keep-sorted end
