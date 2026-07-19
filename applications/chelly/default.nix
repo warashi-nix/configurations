@@ -47,6 +47,7 @@ in
           # keep-sorted start
           "${config.home.homeDirectory}/.claude:/home/warashi/.claude"
           "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
+          "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
           "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
           "chelly-nix:/nix"
           "go-cache:/home/warashi/.cache/go-build"
