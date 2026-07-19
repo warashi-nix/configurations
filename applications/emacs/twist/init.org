@@ -362,6 +362,72 @@
     (ellama-session-header-line-global-mode +1)))
 #+end_src
 
+日英・英日の相互翻訳と、理由・言い換え候補つきの校正レビュー。
+組み込みの =ellama-proofread= (C-c e P) は本文を直接置き換えるため、
+講評を別バッファに出す非破壊のコマンドを別途用意する。
+
+#+begin_src emacs-lisp
+;; ellama 未ロード時に let がレキシカル束縛にならないよう special 宣言する
+(defvar ellama-language)
+;; ellama-instant は autoload されていないため宣言しておく
+(declare-function ellama-instant "ellama")
+
+(defvar warashi-ellama-proofread-prompt
+  "あなたは経験豊富な編集者です。与えられた文章を校正してください。
+原文が日本語なら日本語の文章として、英語なら英語の文章として校正します。
+原文の文体・トーン・意図は尊重してください。
+解説はすべて日本語で、次の構成で出力してください。
+
+# 修正後の全文
+
+修正をすべて反映した全文。
+
+# 指摘事項
+
+指摘ごとに以下を示す:
+- 該当箇所: 原文からの抜粋
+- 修正案: 修正後の表現
+- 理由: なぜそう直すべきか
+- 言い換え候補: ニュアンスの異なる表現を2〜3個、使い分けの説明つきで
+
+# 総評
+
+文章全体の良い点と改善の方向性。指摘すべき問題がない場合はその旨を述べる。"
+  "校正レビュー用のシステムプロンプト。")
+
+(defun warashi-ellama--text ()
+  "リージョンが有効ならその内容、なければバッファ全体を返す。"
+  (if (region-active-p)
+      (buffer-substring-no-properties (region-beginning) (region-end))
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+(defun warashi-ellama-translate ()
+  "リージョンまたはバッファ全体を日英・英日で相互翻訳する。
+日本語の文字を含むなら英語へ、含まないなら日本語へ翻訳する。"
+  (interactive)
+  (require 'ellama)
+  (let ((ellama-language (if (string-match-p "\\cj" (warashi-ellama--text))
+                             "English"
+                           "Japanese")))
+    (if (region-active-p)
+        (ellama-translate)
+      (ellama-translate-buffer))))
+
+(defun warashi-ellama-proofread ()
+  "リージョンまたはバッファ全体を校正する。
+修正案とその理由、言い換え候補を別バッファに出力する。"
+  (interactive)
+  (require 'ellama)
+  (ellama-instant (warashi-ellama--text)
+                  :system warashi-ellama-proofread-prompt))
+
+(with-eval-after-load 'ellama-transient
+  (transient-append-suffix 'ellama-transient-main-menu "P"
+    '("r" "Proofread with review" warashi-ellama-proofread))
+  (transient-append-suffix 'ellama-transient-main-menu "d"
+    '("l" "Translate (ja<->en)" warashi-ellama-translate)))
+#+end_src
+
 ** agent-shell
 #+begin_src emacs-lisp
 (setup (:package agent-shell
