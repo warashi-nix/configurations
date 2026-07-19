@@ -159,7 +159,8 @@
 (setup (:package org-node)
   (:global-keymap "C-c o n" org-node-global-prefix-map)
   (:when-loaded
-    (org-node-cache-mode 1)))
+    (org-node-cache-mode 1)
+    (org-node-seq-mode 1)))
 
 (setup (:package org)
   (:also-load org-tempo)
@@ -207,6 +208,41 @@ TODO 管理は tasks.org に集約する運用のため、agenda 対象はそれ
 
 #+begin_src emacs-lisp
 (setopt org-agenda-files '("~/ghq/github.com/Warashi/brainium/tasks.org"))
+#+end_src
+
+journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
+(C-c o n s) で作成・移動する。新規デイリーにはファイルレベルの :ID: が付く。
+
+#+begin_src emacs-lisp
+;; org-node-seq-def-on-filepath-sort-by-basename は使わない。呼び出すと
+;; init 評価時に org-node-seq のロードが必要になるうえ、:creator が
+;; journal/<YYYY>/ の年サブディレクトリ配置を表現できないため、同ヘルパー
+;; 相当の定義を書き下して :creator だけ差し替えている。
+(setopt org-node-seq-defs
+        (let ((dir (file-name-as-directory
+                    (file-truename "~/ghq/github.com/Warashi/brainium/journal/"))))
+          `(("d"
+             :name "Journal"
+             :version 2
+             :classifier (lambda (node)
+                           (when (string-prefix-p ,dir (org-mem-entry-file-truename node))
+                             (let ((path (org-mem-entry-file node)))
+                               (cons (file-name-base path) path))))
+             :whereami (lambda ()
+                         (when buffer-file-name
+                           (let ((file-name (org-mem-file-known-p buffer-file-name)))
+                             (when (and file-name (string-prefix-p ,dir file-name))
+                               (file-name-base file-name)))))
+             :prompter (lambda (key)
+                         (let ((org-node-seq-that-marks-calendar key))
+                           (org-read-date)))
+             :try-goto (lambda (item)
+                         (org-node-seq-try-goto-file (cdr item)))
+             :creator (lambda (sortstr key)
+                        (let ((org-node-creation-fn #'org-node-new-file)
+                              (org-node-file-directory-ask
+                               (file-name-concat ,dir (substring sortstr 0 4))))
+                          (org-node-create sortstr (org-id-new) key)))))))
 #+end_src
 
 ** nix
