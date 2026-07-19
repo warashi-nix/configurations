@@ -194,6 +194,15 @@ title 由来のため、日本語 title の場合は英語 kebab-case 規約へ�
         org-node-file-directory-ask "~/ghq/github.com/Warashi/brainium/notes/")
 #+end_src
 
+org-capture は inbox.org へ投入し、refile で整理する (inbox は空が正常状態)。
+
+#+begin_src emacs-lisp
+(setopt org-capture-templates
+        '(("i" "Inbox" entry
+           (file "~/ghq/github.com/Warashi/brainium/inbox.org")
+           "* %?\n%U")))
+#+end_src
+
 ** nix
 #+begin_src emacs-lisp
 (setup (:package nix-ts-mode)
