@@ -1,0 +1,5 @@
+# actionlint の既知ラベル一覧が更新されるまでの間、新しい GitHub ホストランナーをここで許可する
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+    - ubuntu-26.04-arm
