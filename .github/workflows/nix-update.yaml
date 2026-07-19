@@ -20,7 +20,7 @@ jobs:
           show-progress: false
       - name: List flake inputs
         id: list-flake-inputs
-        run: echo "inputs=$(jq -c '.nodes[.root].inputs | keys' flake.lock)" >> $GITHUB_OUTPUT
+        run: echo "inputs=$(jq -c '.nodes[.root].inputs | keys' flake.lock)" >> "$GITHUB_OUTPUT"
 
   list-nvfetcher:
     runs-on: ubuntu-slim
@@ -34,7 +34,7 @@ jobs:
       - name: List nvfetcher.toml
         id: list-nvfetcher
         run: |
-          echo "dirs=$(find . -name nvfetcher.toml -exec dirname {} \; | sort | jq -cnR '[inputs | select(length>0)]')" >> $GITHUB_OUTPUT
+          echo "dirs=$(find . -name nvfetcher.toml -exec dirname {} \; | sort | jq -cnR '[inputs | select(length>0)]')" >> "$GITHUB_OUTPUT"
 
   update-flake-inputs:
     runs-on: ubuntu-slim
