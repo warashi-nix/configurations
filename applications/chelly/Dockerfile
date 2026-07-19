@@ -68,7 +68,8 @@ RUN set -eu; \
 # --------------------------------------------------------
 # ユーザー作成と権限設定
 # --------------------------------------------------------
-RUN useradd -l -m -u "${UID}" -g "${GID}" -G sudo -s /bin/bash warashi && \
+RUN groupadd -g "${GID}" warashi && \
+    useradd -l -m -u "${UID}" -g warashi -G sudo -s /bin/bash warashi && \
     echo 'warashi ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/warashi && \
     chmod 0440 /etc/sudoers.d/warashi
 
