@@ -21,12 +21,12 @@
 ;; `consult-git-wit-switch' picks a worktree the same way and
 ;; switches to it as a project via `project-switch-project'.
 ;;
-;; `consult-git-wit-project-find' and `consult-git-wit-project-switch'
-;; are variants that resolve the repository from the current project,
-;; so they can be used as entries in `project-switch-commands':
+;; Both commands resolve the repository from `default-directory', or,
+;; when dispatched from `project-switch-commands', from the selected
+;; project, so they can be used as entries there directly:
 ;;
 ;;   (add-to-list 'project-switch-commands
-;;                '(consult-git-wit-project-switch "git-wit worktree" ?w))
+;;                '(consult-git-wit-switch "git-wit worktree" ?w))
 
 ;;; Code:
 
@@ -90,9 +90,20 @@ If TRANSFORM is non-nil, return CANDIDATE itself."
       candidate
     (alist-get 'state (consult-git-wit--worktree candidate))))
 
+(defun consult-git-wit--directory ()
+  "Return the directory to resolve the repository from.
+Commands dispatched from `project-switch-commands' receive the
+selected project via `project-current-directory-override' while
+`default-directory' still points at the dispatching buffer, so
+prefer the overriding project root when it is set."
+  (if project-current-directory-override
+      (file-name-as-directory (project-root (project-current t)))
+    default-directory))
+
 (defun consult-git-wit--read-worktree ()
   "Read a managed worktree of the current repository via Consult."
-  (let* ((worktrees (or (consult-git-wit--list)
+  (let* ((default-directory (consult-git-wit--directory))
+         (worktrees (or (consult-git-wit--list)
                         (user-error "No git-wit managed worktrees")))
          (candidates (seq-map-indexed #'consult-git-wit--candidate worktrees))
          (selected (consult--read candidates
@@ -120,29 +131,6 @@ INITIAL is passed to `consult-find' as the initial input."
   (interactive)
   (let-alist (consult-git-wit--read-worktree)
     (project-switch-project (file-name-as-directory .path))))
-
-(defun consult-git-wit--project-root ()
-  "Return the root directory of the current project.
-`project-current' honors `project-current-directory-override', so
-callers work as members of `project-switch-commands'."
-  (file-name-as-directory (project-root (project-current t))))
-
-;;;###autoload
-(defun consult-git-wit-project-find (&optional initial)
-  "Run `consult-git-wit-find' on the worktrees of the current project.
-INITIAL is passed to `consult-find' as the initial input.
-Usable as an entry in `project-switch-commands'."
-  (interactive)
-  (let ((default-directory (consult-git-wit--project-root)))
-    (consult-git-wit-find initial)))
-
-;;;###autoload
-(defun consult-git-wit-project-switch ()
-  "Run `consult-git-wit-switch' on the worktrees of the current project.
-Usable as an entry in `project-switch-commands'."
-  (interactive)
-  (let ((default-directory (consult-git-wit--project-root)))
-    (consult-git-wit-switch)))
 
 (provide 'consult-git-wit)
 ;;; consult-git-wit.el ends here

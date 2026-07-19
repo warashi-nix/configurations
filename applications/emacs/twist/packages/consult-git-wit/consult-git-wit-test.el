@@ -143,19 +143,38 @@
   (consult-git-wit-test--with-ls "[]" 0
     (should-error (consult-git-wit-switch) :type 'user-error)))
 
-(defmacro consult-git-wit-test--with-project (root &rest body)
-  "Run BODY with the current project stubbed to have ROOT as its root."
+(defmacro consult-git-wit-test--with-project-override (root &rest body)
+  "Run BODY as if dispatched from `project-switch-commands'.
+The selected project is stubbed to have ROOT as its root and is
+announced via `project-current-directory-override', mirroring how
+`project-switch-project' invokes the chosen command."
   (declare (indent 1))
   `(cl-letf (((symbol-function 'project-current)
               (lambda (&rest _) (list 'transient ,root)))
              ((symbol-function 'project-root)
               (lambda (_project) ,root)))
-     ,@body))
+     (let ((project-current-directory-override ,root))
+       ,@body)))
 
-(ert-deftest consult-git-wit-test-project-find-lists-worktrees-in-project-root ()
-  "It lists worktrees from the root of the current project."
+(ert-deftest consult-git-wit-test-find-lists-worktrees-in-default-directory ()
+  "It lists worktrees in `default-directory' when no project override is set."
+  (let (list-dir)
+    (cl-letf (((symbol-function 'consult-git-wit--list)
+               (lambda ()
+                 (setq list-dir default-directory)
+                 '(((id . "id-1") (memo . "m") (path . "/tmp/wit/id-1")))))
+              ((symbol-function 'consult--read)
+               (lambda (candidates &rest _) (car candidates)))
+              ((symbol-function 'consult-find)
+               (lambda (&optional _dir _initial))))
+      (let ((default-directory "/tmp/elsewhere/"))
+        (consult-git-wit-find))
+      (should (equal list-dir "/tmp/elsewhere/")))))
+
+(ert-deftest consult-git-wit-test-find-honors-project-override ()
+  "It lists worktrees from the project selected via `project-switch-commands'."
   (let (list-dir found-dir)
-    (consult-git-wit-test--with-project "/tmp/repo"
+    (consult-git-wit-test--with-project-override "/tmp/repo"
       (cl-letf (((symbol-function 'consult-git-wit--list)
                  (lambda ()
                    (setq list-dir default-directory)
@@ -164,14 +183,14 @@
                  (lambda (candidates &rest _) (car candidates)))
                 ((symbol-function 'consult-find)
                  (lambda (&optional dir _initial) (setq found-dir dir))))
-        (consult-git-wit-project-find)
+        (consult-git-wit-find)
         (should (equal list-dir "/tmp/repo/"))
         (should (equal found-dir "/tmp/wit/id-1/"))))))
 
-(ert-deftest consult-git-wit-test-project-switch-lists-worktrees-in-project-root ()
-  "It lists worktrees from the root of the current project."
+(ert-deftest consult-git-wit-test-switch-honors-project-override ()
+  "It lists worktrees from the project selected via `project-switch-commands'."
   (let (list-dir switched-dir)
-    (consult-git-wit-test--with-project "/tmp/repo"
+    (consult-git-wit-test--with-project-override "/tmp/repo"
       (cl-letf (((symbol-function 'consult-git-wit--list)
                  (lambda ()
                    (setq list-dir default-directory)
@@ -180,7 +199,7 @@
                  (lambda (candidates &rest _) (car candidates)))
                 ((symbol-function 'project-switch-project)
                  (lambda (dir) (setq switched-dir dir))))
-        (consult-git-wit-project-switch)
+        (consult-git-wit-switch)
         (should (equal list-dir "/tmp/repo/"))
         (should (equal switched-dir "/tmp/wit/id-1/"))))))
 
