@@ -1,0 +1,2 @@
+(warashi-init :fetcher github
+              :repo "Warashi/configurations")

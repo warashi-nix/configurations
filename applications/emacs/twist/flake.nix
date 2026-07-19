@@ -23,10 +23,29 @@
             config.allowUnfree = true;
           };
 
-          # define tangleOrgBabelFile here to avoid using overlays.
-          tangleOrgBabelFile =
-            name: path: options:
-            pkgs.writeText name (inputs.org-babel.lib.tangleOrgBabel options (builtins.readFile path));
+          initElisp = inputs.org-babel.lib.tangleOrgBabel { } (builtins.readFile ./init.org);
+          earlyInitElisp = inputs.org-babel.lib.tangleOrgBabel { } (builtins.readFile ./early-init.org);
+
+          # init 本文をローカルパッケージとして byte/native コンパイル (AOT) する。
+          # src が derivation なので、ヘッダ解析や :files 展開に頼ると IFD に
+          # なる。twist が src を読まずに済むよう、派生されるメタデータは
+          # すべてここで与える。
+          orgTangledPackage = name: elisp: packageRequires: {
+            src = pkgs.writeTextDir "${name}.el" ''
+              ${elisp}
+              (provide '${name})
+              ;;; ${name}.el ends here
+            '';
+            files = {
+              "${name}.el" = "${name}.el";
+            };
+            version = "0";
+            author = null;
+            meta = {
+              description = "Warashi's Emacs configuration tangled from org files";
+            };
+            inherit packageRequires;
+          };
         in
         rec {
           emacsPackage = pkgs.emacs31;
@@ -35,6 +54,8 @@
           localPackages = [
             "consult-git-wit"
             "spectreshell"
+            "warashi-init"
+            "warashi-early-init"
           ];
           inputOverrides = {
             consult-git-wit = _: _: {
@@ -58,8 +79,20 @@
                   cp -r ${built}/share/terminfo zig-out/share/terminfo
                 '';
               };
+            warashi-init =
+              _: _:
+              orgTangledPackage "warashi-init" initElisp (
+                # コンパイル時に setup のマクロ展開と各パッケージの解決が
+                # 必要なので、init が使う全パッケージを依存に含める。
+                inputs.nixpkgs.lib.genAttrs ([ "setup" ] ++ (initParser initElisp).elispPackages) (_: "0")
+              );
+            warashi-early-init = _: _: orgTangledPackage "warashi-early-init" earlyInitElisp { };
           };
-          extraPackages = [ "setup" ];
+          extraPackages = [
+            "setup"
+            "warashi-init"
+            "warashi-early-init"
+          ];
           extraSiteStartElisp = ''
             (add-to-list 'treesit-extra-load-path "${
               emacsPackage.pkgs.treesit-grammars.with-grammars (
@@ -71,8 +104,24 @@
             }/lib/")
           '';
           initParser = inputs.twist.lib.parseSetup { inherit (inputs.nixpkgs) lib; } { }; # for setup.el
-          initFiles = [ (tangleOrgBabelFile "init.el" ./init.org { }) ];
-          earlyInitFile = tangleOrgBabelFile "early-init.el" ./early-init.org { };
+          # 実際に読み込ませる init.el / early-init.el は AOT コンパイル済み
+          # パッケージへのローダのみにする。パッケージ探索はローダではなく
+          # タングル済み本文を initReader で解析して従来どおり行う。
+          initFiles = [
+            (pkgs.writeText "init.el" ''
+              ;;; init.el ---  -*- lexical-binding: t -*-
+              ;;; Code:
+              (require 'warashi-init)
+              ;;; init.el ends here
+            '')
+          ];
+          initReader = _: initParser initElisp;
+          earlyInitFile = pkgs.writeText "early-init.el" ''
+            ;;; early-init.el ---  -*- lexical-binding: t -*-
+            ;;; Code:
+            (require 'warashi-early-init)
+            ;;; early-init.el ends here
+          '';
           registries = pkgs.callPackage ./registries.nix { };
           exportManifest = true;
         }
@@ -96,6 +145,7 @@
               extraSiteStartElisp
               initFiles
               initParser
+              initReader
               lockDir
               exportManifest
               ;
