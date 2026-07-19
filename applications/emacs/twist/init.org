@@ -393,7 +393,6 @@
         ghostel-tramp-shell-integration nil
         ghostel-enable-osc52 t
         ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
-  (:global-keymap "C-c s" #'ghostel)
   (:after-init ghostel-compile-global-mode)
   (:after-init ghostel-comint-global-mode)
 
@@ -425,6 +424,8 @@
 
 ** eshell
 #+begin_src emacs-lisp
+(setup eshell
+  (:global-keymap "C-c s" #'eshell))
 (setup (:package spectreshell)
   (:after-init spectreshell-eshell-mode))
 #+end_src
