@@ -18,7 +18,7 @@
 ;; current repository by its memo, then runs `consult-find' inside the
 ;; selected worktree directory.
 ;;
-;; `consult-git-wit-switch-project' picks a worktree the same way and
+;; `consult-git-wit-switch' picks a worktree the same way and
 ;; switches to it as a project via `project-switch-project'.
 ;;
 ;; `consult-git-wit-project-find' and `consult-git-wit-project-switch'
@@ -115,7 +115,7 @@ INITIAL is passed to `consult-find' as the initial input."
     (consult-find (file-name-as-directory .path) initial)))
 
 ;;;###autoload
-(defun consult-git-wit-switch-project ()
+(defun consult-git-wit-switch ()
   "Select a git-wit managed worktree and switch to it as a project."
   (interactive)
   (let-alist (consult-git-wit--read-worktree)
@@ -138,11 +138,11 @@ Usable as an entry in `project-switch-commands'."
 
 ;;;###autoload
 (defun consult-git-wit-project-switch ()
-  "Run `consult-git-wit-switch-project' on the worktrees of the current project.
+  "Run `consult-git-wit-switch' on the worktrees of the current project.
 Usable as an entry in `project-switch-commands'."
   (interactive)
   (let ((default-directory (consult-git-wit--project-root)))
-    (consult-git-wit-switch-project)))
+    (consult-git-wit-switch)))
 
 (provide 'consult-git-wit)
 ;;; consult-git-wit.el ends here

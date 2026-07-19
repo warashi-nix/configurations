@@ -126,7 +126,7 @@
   (consult-git-wit-test--with-ls "[]" 0
     (should-error (consult-git-wit-find) :type 'user-error)))
 
-(ert-deftest consult-git-wit-test-switch-project-switches-to-selected-path ()
+(ert-deftest consult-git-wit-test-switch-switches-to-selected-path ()
   "It switches to the directory of the selected worktree as a project."
   (let (switched-dir)
     (cl-letf (((symbol-function 'consult-git-wit--list)
@@ -135,13 +135,13 @@
                (lambda (candidates &rest _) (car candidates)))
               ((symbol-function 'project-switch-project)
                (lambda (dir) (setq switched-dir dir))))
-      (consult-git-wit-switch-project)
+      (consult-git-wit-switch)
       (should (equal switched-dir "/tmp/wit/id-1/")))))
 
-(ert-deftest consult-git-wit-test-switch-project-errors-when-no-worktrees ()
+(ert-deftest consult-git-wit-test-switch-errors-when-no-worktrees ()
   "It signals a user error when there are no managed worktrees."
   (consult-git-wit-test--with-ls "[]" 0
-    (should-error (consult-git-wit-switch-project) :type 'user-error)))
+    (should-error (consult-git-wit-switch) :type 'user-error)))
 
 (defmacro consult-git-wit-test--with-project (root &rest body)
   "Run BODY with the current project stubbed to have ROOT as its root."
