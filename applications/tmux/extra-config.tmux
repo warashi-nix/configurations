@@ -22,11 +22,11 @@ set -g set-titles-string '#T'
 # terminal-features for xterm-ghostty
 set -as terminal-features ',xterm-ghostty:256:clipboard:ccolour:cstyle:extkeys:focus:hyperlinks:margins:mouse:osc7:overline:progressbar:RGB:strikethrough:sync:title:usstyle'
 
-# C-w で window 一覧を開く
-# window 行には bell (🔔) と Coding Agent (🤖) の状態を表示する
+# C-w で pane 単位まで展開した一覧を開く
+# window 行には bell (🔔)、pane 行には Coding Agent (🤖) の状態を表示する
 # agent はコンテナ内で動いていてプロセス名からは見えないため、
-# コンテナ実行コマンドの pane を探し、agent が設定する pane title を状態として表示する
-bind C-w choose-tree -Zw -F '#{?pane_format,#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,}#{P:#{?#{m/r:^(chelly|podman|docker|nerdctl)$,#{pane_current_command}}, 🤖 "#{pane_title}",}},#{session_windows} windows#{?session_attached, (attached),}}}'
+# コンテナ実行コマンドの pane に対し、agent が設定する pane title を状態として表示する
+bind C-w choose-tree -Z -F '#{?pane_format,#{?#{m/r:^(chelly|podman|docker|nerdctl)$,#{pane_current_command}},🤖 ,}#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,},#{session_windows} windows#{?session_attached, (attached),}}}'
 
 # C-c でwindow作成
 bind C-c new-window
