@@ -28,6 +28,12 @@ bind C-w choose-tree -Zw
 # C-c でwindow作成
 bind C-c new-window
 
+# N / W / A で tn / tw / ta を popup から実行する
+# shell の起動を待たずに済むよう、window ではなく popup を使う
+bind N display-popup -E -w 80% -h 80% -T ' tn ' 'exec fish -c tn'
+bind W display-popup -E -w 80% -h 80% -d "#{pane_current_path}" -T ' tw ' 'exec fish -c tw'
+bind A display-popup -E -w 80% -h 80% -T ' ta ' 'exec fish -c ta'
+
 # C-t で現在のwindowを一番左へ移動
 bind C-t move-window -t 0
 
