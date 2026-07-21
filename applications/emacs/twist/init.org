@@ -114,10 +114,19 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
        exclude)))
   (defun my/exec-path-from-shell-initialize-all ()
     "darwin ではログインシェルの環境変数を全てコピーしてから初期化する。"
-    (static-if (eq system-type 'darwin)
-        (when-let* ((names (ignore-errors (my/exec-path-from-shell-collect-variables))))
-          (setq exec-path-from-shell-variables names)))
-    (exec-path-from-shell-initialize))
+    ;; twist の wrapper が --prefix PATH で足した nix store のパスはログイン
+    ;; シェルの PATH に存在せず、そのまま初期化すると失われるため、
+    ;; 初期化前の PATH を控えておき消えたエントリを前置し直す
+    (let ((wrapper-path (split-string (or (getenv "PATH") "") path-separator t)))
+      (static-if (eq system-type 'darwin)
+          (when-let* ((names (ignore-errors (my/exec-path-from-shell-collect-variables))))
+            (setq exec-path-from-shell-variables names)))
+      (exec-path-from-shell-initialize)
+      (let* ((new-path (split-string (or (getenv "PATH") "") path-separator t))
+             (missing (seq-remove (lambda (dir) (member dir new-path)) wrapper-path)))
+        (when missing
+          (setenv "PATH" (string-join (append missing new-path) path-separator))
+          (setq exec-path (append missing exec-path))))))
   (:after-init my/exec-path-from-shell-initialize-all))
 #+end_src
 
