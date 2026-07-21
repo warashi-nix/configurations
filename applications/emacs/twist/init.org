@@ -92,42 +92,51 @@
 
 * シェル/環境
 ** exec-path-from-shell
-macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-darwin や home-manager が設定する環境変数を受け取れない。darwin ではログインシェルから環境変数名の一覧を取得し、そのすべてを exec-path-from-shell でコピーする。
+macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-darwin や home-manager が設定する環境変数を受け取れない。darwin ではクリーンな環境で起動したログインシェルから環境変数の全量を取得してコピーする。それ以外の環境では従来どおり exec-path-from-shell を使う。
 
 #+begin_src emacs-lisp
 (setup (:package exec-path-from-shell)
   (:opt exec-path-from-shell-variables '("PATH" "MANPATH" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "NIX_SSL_CERT_FILE" "NIX_PATH")
-        exec-path-from-shell-arguments (static-if (eq system-type 'darwin) '("-l") nil))
-  (defun my/exec-path-from-shell-collect-variables ()
-    "ログインシェルに存在する環境変数名の一覧を返す。"
-    (let ((entries (with-temp-buffer
-                     (call-process (or exec-path-from-shell-shell-name
-                                       (getenv "SHELL")
-                                       shell-file-name)
-                                   nil '(t nil) nil "-l" "-c" "env -0")
-                     (split-string (buffer-string) "\0" t)))
-          ;; シェルセッション固有の状態を表す変数までコピーすると GUI Emacs 側の実態と食い違うため除外する
-          (exclude '("_" "SHLVL" "PWD" "OLDPWD" "TERM" "HOME" "USER" "LOGNAME" "SHELL" "TTY")))
-      (seq-difference
-       (seq-filter (lambda (name) (string-match-p "\\`[A-Za-z_][A-Za-z0-9_]*\\'" name))
-                   (mapcar (lambda (entry) (car (split-string entry "="))) entries))
-       exclude)))
-  (defun my/exec-path-from-shell-initialize-all ()
-    "darwin ではログインシェルの環境変数を全てコピーしてから初期化する。"
-    ;; twist の wrapper が --prefix PATH で足した nix store のパスはログイン
-    ;; シェルの PATH に存在せず、そのまま初期化すると失われるため、
-    ;; 初期化前の PATH を控えておき消えたエントリを前置し直す
-    (let ((wrapper-path (split-string (or (getenv "PATH") "") path-separator t)))
-      (static-if (eq system-type 'darwin)
-          (when-let* ((names (ignore-errors (my/exec-path-from-shell-collect-variables))))
-            (setq exec-path-from-shell-variables names)))
-      (exec-path-from-shell-initialize)
+        exec-path-from-shell-arguments nil)
+  (defun my/login-shell-environment-entries ()
+    "クリーンな環境で起動したログインシェルの環境変数を NAME=VALUE のリストで返す。"
+    ;; nix-darwin や home-manager の環境構築は __NIX_DARWIN_SET_ENVIRONMENT_DONE
+    ;; などのガードで二重実行を避けており、Emacs の環境を引き継いだシェルでは
+    ;; スキップされて現在の環境がそのまま返ってくるため、env -i で空の環境から
+    ;; 起動してガードを迂回する
+    (with-temp-buffer
+      (apply #'call-process "/usr/bin/env" nil '(t nil) nil
+             "-i"
+             (append
+              (mapcan (lambda (name)
+                        (when-let* ((value (getenv name)))
+                          (list (concat name "=" value))))
+                      '("HOME" "USER" "LOGNAME" "SHELL"))
+              (list (or (getenv "SHELL") shell-file-name) "-l" "-c" "env -0")))
+      (split-string (buffer-string) "\0" t)))
+  (defun my/import-login-shell-environment ()
+    "ログインシェルの環境変数を全てコピーし、PATH と exec-path を更新する。"
+    ;; シェルセッション固有の状態を表す変数は GUI Emacs 側の実態と食い違うため取り込まない
+    (let ((wrapper-path (split-string (or (getenv "PATH") "") path-separator t))
+          (exclude '("_" "SHLVL" "PWD" "OLDPWD" "TERM" "TTY" "HOME" "USER" "LOGNAME" "SHELL")))
+      (dolist (entry (my/login-shell-environment-entries))
+        (when-let* ((pos (string-search "=" entry))
+                    (name (substring entry 0 pos)))
+          (when (and (string-match-p "\\`[A-Za-z_][A-Za-z0-9_]*\\'" name)
+                     (not (member name exclude)))
+            (setenv name (substring entry (1+ pos))))))
+      ;; twist の wrapper が --prefix PATH で足した nix store のパスはログイン
+      ;; シェル側に存在しないため、コピーで消えたエントリを前置し直す
       (let* ((new-path (split-string (or (getenv "PATH") "") path-separator t))
              (missing (seq-remove (lambda (dir) (member dir new-path)) wrapper-path)))
-        (when missing
-          (setenv "PATH" (string-join (append missing new-path) path-separator))
-          (setq exec-path (append missing exec-path))))))
-  (:after-init my/exec-path-from-shell-initialize-all))
+        (setenv "PATH" (string-join (append missing new-path) path-separator))
+        (setq exec-path (append missing new-path (list exec-directory))))))
+  (defun my/initialize-environment ()
+    "darwin ではログインシェルの環境変数を全てコピーし、それ以外では exec-path-from-shell で初期化する。"
+    (static-if (eq system-type 'darwin)
+        (my/import-login-shell-environment)
+      (exec-path-from-shell-initialize)))
+  (:after-init my/initialize-environment))
 #+end_src
 
 ** twist
