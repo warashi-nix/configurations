@@ -88,6 +88,7 @@ ENV \
 # --------------------------------------------------------
 # Git初期設定
 RUN mkdir -p /home/warashi/.config/git && \
+    git config --global core.untrackedcache false && \
     git config --global user.name 'Shinnosuke Sawada-Dazai' && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
