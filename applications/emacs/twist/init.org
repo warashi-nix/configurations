@@ -92,11 +92,33 @@
 
 * シェル/環境
 ** exec-path-from-shell
+macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-darwin や home-manager が設定する環境変数を受け取れない。darwin ではログインシェルから環境変数名の一覧を取得し、そのすべてを exec-path-from-shell でコピーする。
+
 #+begin_src emacs-lisp
 (setup (:package exec-path-from-shell)
   (:opt exec-path-from-shell-variables '("PATH" "MANPATH" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "NIX_SSL_CERT_FILE" "NIX_PATH")
         exec-path-from-shell-arguments (static-if (eq system-type 'darwin) '("-l") nil))
-  (:after-init exec-path-from-shell-initialize))
+  (defun my/exec-path-from-shell-collect-variables ()
+    "ログインシェルに存在する環境変数名の一覧を返す。"
+    (let ((entries (with-temp-buffer
+                     (call-process (or exec-path-from-shell-shell-name
+                                       (getenv "SHELL")
+                                       shell-file-name)
+                                   nil '(t nil) nil "-l" "-c" "env -0")
+                     (split-string (buffer-string) "\0" t)))
+          ;; シェルセッション固有の状態を表す変数までコピーすると GUI Emacs 側の実態と食い違うため除外する
+          (exclude '("_" "SHLVL" "PWD" "OLDPWD" "TERM" "HOME" "USER" "LOGNAME" "SHELL" "TTY")))
+      (seq-difference
+       (seq-filter (lambda (name) (string-match-p "\\`[A-Za-z_][A-Za-z0-9_]*\\'" name))
+                   (mapcar (lambda (entry) (car (split-string entry "="))) entries))
+       exclude)))
+  (defun my/exec-path-from-shell-initialize-all ()
+    "darwin ではログインシェルの環境変数を全てコピーしてから初期化する。"
+    (static-if (eq system-type 'darwin)
+        (when-let* ((names (ignore-errors (my/exec-path-from-shell-collect-variables))))
+          (setq exec-path-from-shell-variables names)))
+    (exec-path-from-shell-initialize))
+  (:after-init my/exec-path-from-shell-initialize-all))
 #+end_src
 
 ** twist
