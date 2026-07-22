@@ -15,24 +15,52 @@ let
   # ホスト側から読める pane の描画内容で判定する
   agentStateScan = pkgs.writeShellApplication {
     name = "tmux-agent-state-scan";
-    runtimeInputs = [ config.programs.tmux.package ];
+    runtimeInputs = [
+      config.programs.tmux.package
+      pkgs.coreutils
+    ];
     text = ''
-      # Claude Code / Codex / Copilot CLI とも作業中は中断キーの案内を表示し続ける
-      # (Claude Code/Codex: "esc to interrupt"、Copilot: "(Esc to cancel)")
-      # Claude Code の許可ダイアログ(=入力待ち)が小文字の "esc to cancel" を
-      # 表示するため、大文字小文字を無視した判定にはできない
-      busy_pattern='[Ee]sc to interrupt|\(Esc to cancel'
-      tmux list-panes -a -f '#{m/r:${agentCommandPattern},#{pane_current_command}}' -F '#{pane_id}' |
-        while read -r pane_id; do
-          # pipefail 下で grep -q の早期終了が capture-pane を SIGPIPE で
-          # 落とし誤判定になるため、パイプではなく変数に受けてから判定する
-          content="$(tmux capture-pane -p -t "$pane_id")"
-          state=waiting
-          if grep -qE "$busy_pattern" <<<"$content"; then
-            state=busy
+      # 「esc to interrupt」等の中断キー案内の文言では判定しない。
+      # Claude Code の focus mode のように表示設定次第で案内が消える上、
+      # CLI ごと・状態ごとに文言が揺れて追従しきれないため。
+      # 代わりに、各 CLI とも作業中は画面の描画が更新され続けることを
+      # 利用し、capture した内容に変化があるかどうかで判定する
+      mapfile -t panes < <(
+        tmux list-panes -a -f '#{m/r:${agentCommandPattern},#{pane_current_command}}' -F '#{pane_id}'
+      )
+      if [ "''${#panes[@]}" -eq 0 ]; then
+        exit 0
+      fi
+      declare -A before state
+      for pane_id in "''${panes[@]}"; do
+        before[$pane_id]="$(tmux capture-pane -p -t "$pane_id")"
+        state[$pane_id]=waiting
+      done
+      # 1 回の capture 間隔をスピナー周期より長くするだけでは、
+      # prefersReducedMotion 等でスピナーが止まっている場合に取りこぼす。
+      # 作業中なら経過時間表示が 1 秒周期で更新されるため、観測窓を
+      # 1 秒強 (0.2 秒 x 6 回) まで広げて polling し、全 pane の変化を
+      # 検出できた時点で早期終了して choose-tree を開くまでの遅延を抑える
+      for _ in 1 2 3 4 5 6; do
+        sleep 0.2
+        pending=0
+        for pane_id in "''${panes[@]}"; do
+          if [ "''${state[$pane_id]}" = busy ]; then
+            continue
           fi
-          tmux set-option -p -t "$pane_id" @agent_state "$state"
+          if [ "$(tmux capture-pane -p -t "$pane_id")" != "''${before[$pane_id]}" ]; then
+            state[$pane_id]=busy
+          else
+            pending=1
+          fi
         done
+        if [ "$pending" -eq 0 ]; then
+          break
+        fi
+      done
+      for pane_id in "''${panes[@]}"; do
+        tmux set-option -p -t "$pane_id" @agent_state "''${state[$pane_id]}"
+      done
     '';
   };
 in
