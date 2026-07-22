@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     sudo \
     curl \
     git \
+    git-lfs \
     less \
     openssh-client \
     bash \
