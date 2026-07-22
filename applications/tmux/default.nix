@@ -47,8 +47,8 @@ let
       mapfile -t panes < <(
         tmux list-panes -a -f '#{m/r:${agentCommandPattern},#{pane_current_command}}' -F '#{pane_id}'
       )
-      # pane 数に比例して choose-tree を開くまでの遅延が延びないよう、
-      # pane ごとに並行で判定する
+      # 逐次判定だと後ろの pane ほど結果の反映が pane 数に比例して
+      # 遅れるため、pane ごとに並行で判定する
       for pane_id in "''${panes[@]}"; do
         scan_pane "$pane_id" &
       done
@@ -73,9 +73,14 @@ in
 
       # C-w で pane 単位まで展開した一覧を開く
       # window 行には bell (🔔)、pane 行には Coding Agent の状態
-      # (作業中 🤖 / 入力待ち 💬) と pane title を表示する
-      # 入力待ちかどうかは choose-tree を開く直前にスキャンした @agent_state で表す
-      bind C-w run-shell "${lib.getExe agentStateScan}" \; choose-tree -Z -F '#{?pane_format,#{?#{m/r:${agentCommandPattern},#{pane_current_command}},#{?#{==:#{@agent_state},waiting},💬 ,🤖 },}#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,},#{session_windows} windows#{?session_attached, (attached),}}}'
+      # (作業中 🤖 / 入力待ち 💬 / 判定中 ⏳) と pane title を表示する
+      # スキャン完了 (最大 1 秒強) を待ってから一覧を開くと、単に
+      # window/pane を切り替えたいだけのときに待たされてしまうため、
+      # スキャンはバックグラウンドで実行して一覧は即座に開く。
+      # choose-tree は表示中も server 状態の変化で項目の format を
+      # 再評価する (tmux 3.7b で確認) ため、@agent_state の更新は
+      # 開いたままの一覧に判定済みの pane から順に反映される
+      bind C-w run-shell -b "${lib.getExe agentStateScan}" \; choose-tree -Z -F '#{?pane_format,#{?#{m/r:${agentCommandPattern},#{pane_current_command}},#{?#{==:#{@agent_state},waiting},💬 ,#{?#{==:#{@agent_state},busy},🤖 ,⏳ }},}#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,},#{session_windows} windows#{?session_attached, (attached),}}}'
 
       # ターミナルのライト/ダークテーマに追従する
       set-hook -g client-light-theme "source-file ${./modus-operandi.tmux}"
