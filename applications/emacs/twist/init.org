@@ -218,36 +218,56 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 ** brainium
 [[https://github.com/Warashi/brainium][brainium]] (PKM リポジトリ) を対象にした org-node の設定。
 
-ここの変数は、この home-manager を flake inputs として使う非公開マシンの
-custom.el から上書きできるようにする。custom.el は init 冒頭でロードされ、
-eval-after-load のハンドラは登録順 (FIFO) に実行されるため、契約を次のとおりとする。
+同じディレクトリ構造 (notes/ inbox.org tasks.org journal/) の PKM を、この
+home-manager を flake inputs として使う非公開マシンでも使うため、リポジトリの
+場所と追加 capture テンプレートを custom.el から差し替えられるようにする。
+custom.el は init 冒頭でロードされ、defvar は束縛済みの変数を上書きしないため、
+custom.el 側はトップレベルの setq を書くだけでよく、with-eval-after-load は不要。
 
-- init 側: 即時の setopt で設定する。:opt はパッケージロード時に発火し、
-  custom.el の with-eval-after-load より後に走って上書きを潰すため使わない。
-- custom.el 側: 上書きは該当 feature の with-eval-after-load で包んで書く。
-  init 完了後のパッケージロード時に走るため、必ず custom.el が勝つ。
+#+begin_example
+;; 非公開マシンの custom.el の例
+(setq my/pkm-directory "~/path/to/private-pkm/")
+(setq my/pkm-extra-capture-templates
+      `(("w" "Work" entry
+         (file ,(file-name-concat my/pkm-directory "work.org"))
+         "* %?\n%U")))
+#+end_example
+
+#+begin_src emacs-lisp
+(defvar my/pkm-directory "~/ghq/github.com/Warashi/brainium/"
+  "PKM リポジトリのルートディレクトリ。")
+
+(defvar my/pkm-extra-capture-templates nil
+  "PKM 用にマシン固有で追加する `org-capture-templates' のエントリ。")
+#+end_src
+
+以降の設定はすべて my/pkm-directory から導出する。custom.el の値を確実に
+反映するため即時の setopt で設定する。:opt はパッケージロード時まで評価が
+遅延され、custom.el 側で導出値を直接上書きしたい場合に順序が絡むため使わない。
 
 新規ノートの作成先は notes/ (フラット配置) に固定する。ファイル名の slug は
 title 由来のため、日本語 title の場合は英語 kebab-case 規約へ手動リネームで合わせる。
 
 #+begin_src emacs-lisp
-(setopt org-mem-watch-dirs '("~/ghq/github.com/Warashi/brainium/")
-        org-node-file-directory-ask "~/ghq/github.com/Warashi/brainium/notes/")
+(setopt org-mem-watch-dirs (list my/pkm-directory)
+        org-node-file-directory-ask (file-name-concat my/pkm-directory "notes/"))
 #+end_src
 
 org-capture は inbox.org へ投入し、refile で整理する (inbox は空が正常状態)。
+マシン固有のテンプレートは my/pkm-extra-capture-templates で後ろに追加する。
 
 #+begin_src emacs-lisp
 (setopt org-capture-templates
-        '(("i" "Inbox" entry
-           (file "~/ghq/github.com/Warashi/brainium/inbox.org")
-           "* %?\n%U")))
+        `(("i" "Inbox" entry
+           (file ,(file-name-concat my/pkm-directory "inbox.org"))
+           "* %?\n%U")
+          ,@my/pkm-extra-capture-templates))
 #+end_src
 
 TODO 管理は tasks.org に集約する運用のため、agenda 対象はそれのみとする。
 
 #+begin_src emacs-lisp
-(setopt org-agenda-files '("~/ghq/github.com/Warashi/brainium/tasks.org"))
+(setopt org-agenda-files (list (file-name-concat my/pkm-directory "tasks.org")))
 #+end_src
 
 journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
@@ -260,7 +280,7 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 ;; 相当の定義を書き下して :creator だけ差し替えている。
 (setopt org-node-seq-defs
         (let ((dir (file-name-as-directory
-                    (file-truename "~/ghq/github.com/Warashi/brainium/journal/"))))
+                    (file-truename (file-name-concat my/pkm-directory "journal/")))))
           `(("d"
              :name "Journal"
              :version 2
