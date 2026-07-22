@@ -22,12 +22,6 @@ set -g set-titles-string '#T'
 # terminal-features for xterm-ghostty
 set -as terminal-features ',xterm-ghostty:256:clipboard:ccolour:cstyle:extkeys:focus:hyperlinks:margins:mouse:osc7:overline:progressbar:RGB:strikethrough:sync:title:usstyle'
 
-# C-w で pane 単位まで展開した一覧を開く
-# window 行には bell (🔔)、pane 行には Coding Agent (🤖) の状態を表示する
-# agent はコンテナ内で動いていてプロセス名からは見えないため、
-# コンテナ実行コマンドの pane に対し、agent が設定する pane title を状態として表示する
-bind C-w choose-tree -Z -F '#{?pane_format,#{?#{m/r:^\.?(chelly|podman|docker|nerdctl)(-wrapped)?$,#{pane_current_command}},🤖 ,}#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,},#{session_windows} windows#{?session_attached, (attached),}}}'
-
 # C-c でwindow作成
 bind C-c new-window
 
