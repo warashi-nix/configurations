@@ -221,24 +221,30 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 同じディレクトリ構造 (notes/ inbox.org tasks.org journal/) の PKM を、この
 home-manager を flake inputs として使う非公開マシンでも使うため、リポジトリの
 場所と追加 capture テンプレートを custom.el から差し替えられるようにする。
-custom.el は init 冒頭でロードされ、defvar は束縛済みの変数を上書きしないため、
-custom.el 側はトップレベルの setq を書くだけでよく、with-eval-after-load は不要。
+custom.el は init 冒頭でロードされる。defcustom のデフォルト初期化
+(custom-initialize-reset) は、束縛済みの値や customize の saved-value を
+標準値より優先するため、custom.el 側は setopt か custom-set-variables
+(customize UI での保存を含む) で設定するだけでよく、with-eval-after-load は不要。
 
 #+begin_example
 ;; 非公開マシンの custom.el の例
-(setq my/pkm-directory "~/path/to/private-pkm/")
-(setq my/pkm-extra-capture-templates
-      `(("w" "Work" entry
-         (file ,(file-name-concat my/pkm-directory "work.org"))
-         "* %?\n%U")))
+(setopt my/pkm-directory "~/path/to/private-pkm/")
+(setopt my/pkm-extra-capture-templates
+        `(("w" "Work" entry
+           (file ,(file-name-concat my/pkm-directory "work.org"))
+           "* %?\n%U")))
 #+end_example
 
 #+begin_src emacs-lisp
-(defvar my/pkm-directory "~/ghq/github.com/Warashi/brainium/"
-  "PKM リポジトリのルートディレクトリ。")
+(defcustom my/pkm-directory "~/ghq/github.com/Warashi/brainium/"
+  "PKM リポジトリのルートディレクトリ。"
+  :type 'directory
+  :group 'org)
 
-(defvar my/pkm-extra-capture-templates nil
-  "PKM 用にマシン固有で追加する `org-capture-templates' のエントリ。")
+(defcustom my/pkm-extra-capture-templates nil
+  "PKM 用にマシン固有で追加する `org-capture-templates' のエントリ。"
+  :type 'sexp
+  :group 'org)
 #+end_src
 
 以降の設定はすべて my/pkm-directory から導出する。custom.el の値を確実に
