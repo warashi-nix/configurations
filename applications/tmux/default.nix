@@ -24,24 +24,39 @@ let
       # Claude Code の focus mode のように表示設定次第で案内が消える上、
       # CLI ごと・状態ごとに文言が揺れて追従しきれないため。
       # 代わりに、各 CLI とも作業中は画面の描画が更新され続けることを
-      # 利用し、capture した内容に変化があるかどうかで判定する
+      # 利用し、capture した内容の変化で判定する
       #
-      # 1 回の capture 間隔をスピナー周期より長くするだけでは、
-      # prefersReducedMotion 等でスピナーが止まっている場合に取りこぼす。
-      # 作業中なら経過時間表示が 1 秒周期で更新されるため、観測窓を
-      # 1 秒強 (0.2 秒 x 6 回) まで広げて polling し、変化を検出した
-      # 時点で打ち切る
+      # ただし choose-tree の表示に伴う zoom や focus イベントでも
+      # agent は入力待ちのまま画面を再描画しうるため、1 回の変化では
+      # busy とせず、変化が 2 回観測されて初めて busy とする。
+      # 静止判定の 1.2 秒 (0.2 秒 x 6 回) は、prefersReducedMotion で
+      # スピナーが止まっていても 1 秒周期の経過時間表示の更新を
+      # 取りこぼさない長さ。変化のたびに静止のカウントは取り直す
       scan_pane() {
-        local pane_id=$1 before
+        local pane_id=$1 before now changes=0 quiet=0
+        # choose-tree 表示直後の再描画が基準の capture に混ざって
+        # 変化 1 回ぶんを浪費しないよう、少し待ってから基準を取る
+        sleep 0.4
         before="$(tmux capture-pane -p -t "$pane_id")"
-        for _ in 1 2 3 4 5 6; do
+        while :; do
           sleep 0.2
-          if [ "$(tmux capture-pane -p -t "$pane_id")" != "$before" ]; then
-            tmux set-option -p -t "$pane_id" @agent_state busy
-            return
+          now="$(tmux capture-pane -p -t "$pane_id")"
+          if [ "$now" != "$before" ]; then
+            before=$now
+            changes=$((changes + 1))
+            quiet=0
+            if [ "$changes" -ge 2 ]; then
+              tmux set-option -p -t "$pane_id" @agent_state busy
+              return
+            fi
+          else
+            quiet=$((quiet + 1))
+            if [ "$quiet" -ge 6 ]; then
+              tmux set-option -p -t "$pane_id" @agent_state waiting
+              return
+            fi
           fi
         done
-        tmux set-option -p -t "$pane_id" @agent_state waiting
       }
 
       mapfile -t panes < <(
@@ -74,7 +89,7 @@ in
       # C-w で pane 単位まで展開した一覧を開く
       # window 行には bell (🔔)、pane 行には Coding Agent の状態
       # (作業中 🤖 / 入力待ち 💬 / 判定中 ⏳) と pane title を表示する
-      # スキャン完了 (最大 1 秒強) を待ってから一覧を開くと、単に
+      # スキャン完了 (最大 3 秒程度) を待ってから一覧を開くと、単に
       # window/pane を切り替えたいだけのときに待たされてしまうため、
       # スキャンはバックグラウンドで実行して一覧は即座に開く。
       # choose-tree は表示中も server 状態の変化で項目の format を
