@@ -25,42 +25,34 @@ let
       # CLI ごと・状態ごとに文言が揺れて追従しきれないため。
       # 代わりに、各 CLI とも作業中は画面の描画が更新され続けることを
       # 利用し、capture した内容に変化があるかどうかで判定する
-      mapfile -t panes < <(
-        tmux list-panes -a -f '#{m/r:${agentCommandPattern},#{pane_current_command}}' -F '#{pane_id}'
-      )
-      if [ "''${#panes[@]}" -eq 0 ]; then
-        exit 0
-      fi
-      declare -A before state
-      for pane_id in "''${panes[@]}"; do
-        before[$pane_id]="$(tmux capture-pane -p -t "$pane_id")"
-        state[$pane_id]=waiting
-      done
+      #
       # 1 回の capture 間隔をスピナー周期より長くするだけでは、
       # prefersReducedMotion 等でスピナーが止まっている場合に取りこぼす。
       # 作業中なら経過時間表示が 1 秒周期で更新されるため、観測窓を
-      # 1 秒強 (0.2 秒 x 6 回) まで広げて polling し、全 pane の変化を
-      # 検出できた時点で早期終了して choose-tree を開くまでの遅延を抑える
-      for _ in 1 2 3 4 5 6; do
-        sleep 0.2
-        pending=0
-        for pane_id in "''${panes[@]}"; do
-          if [ "''${state[$pane_id]}" = busy ]; then
-            continue
-          fi
-          if [ "$(tmux capture-pane -p -t "$pane_id")" != "''${before[$pane_id]}" ]; then
-            state[$pane_id]=busy
-          else
-            pending=1
+      # 1 秒強 (0.2 秒 x 6 回) まで広げて polling し、変化を検出した
+      # 時点で打ち切る
+      scan_pane() {
+        local pane_id=$1 before
+        before="$(tmux capture-pane -p -t "$pane_id")"
+        for _ in 1 2 3 4 5 6; do
+          sleep 0.2
+          if [ "$(tmux capture-pane -p -t "$pane_id")" != "$before" ]; then
+            tmux set-option -p -t "$pane_id" @agent_state busy
+            return
           fi
         done
-        if [ "$pending" -eq 0 ]; then
-          break
-        fi
-      done
+        tmux set-option -p -t "$pane_id" @agent_state waiting
+      }
+
+      mapfile -t panes < <(
+        tmux list-panes -a -f '#{m/r:${agentCommandPattern},#{pane_current_command}}' -F '#{pane_id}'
+      )
+      # pane 数に比例して choose-tree を開くまでの遅延が延びないよう、
+      # pane ごとに並行で判定する
       for pane_id in "''${panes[@]}"; do
-        tmux set-option -p -t "$pane_id" @agent_state "''${state[$pane_id]}"
+        scan_pane "$pane_id" &
       done
+      wait
     '';
   };
 in
