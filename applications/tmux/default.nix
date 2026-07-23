@@ -34,6 +34,10 @@ let
       # 取りこぼさない長さ。変化のたびに静止のカウントは取り直す
       scan_pane() {
         local pane_id=$1 before now changes=0 quiet=0
+
+        # 前回の状態と混じらないように、最初に初期化する
+        tmux set-option -p -t "$pane_id" @agent_state detecting
+
         # choose-tree 表示直後の再描画が基準の capture に混ざって
         # 変化 1 回ぶんを浪費しないよう、少し待ってから基準を取る
         sleep 0.4
