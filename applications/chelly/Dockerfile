@@ -37,6 +37,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     nftables \
     locales \
     ncurses-term \
+    tzdata \
     ;
 
 # GitHub CLI インストール
