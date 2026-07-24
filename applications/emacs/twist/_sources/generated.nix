@@ -8,15 +8,15 @@
 {
   epkgs = {
     pname = "epkgs";
-    version = "2660489e8e694be9617c06e7c0c1b4a964fae674";
+    version = "715d5d02de0f768b1c4571709bb81d5fdad906f4";
     src = fetchFromGitHub {
       owner = "emacsmirror";
       repo = "epkgs";
-      rev = "2660489e8e694be9617c06e7c0c1b4a964fae674";
+      rev = "715d5d02de0f768b1c4571709bb81d5fdad906f4";
       fetchSubmodules = false;
-      sha256 = "sha256-nB+6EaxyTdsg+GWX45BKOc9U/BDL3qQBfInLktaEC8o=";
+      sha256 = "sha256-b9NC1fhSbofUOjaIXl+rz4nokEosnj8aILqE4OeQfHs=";
     };
-    date = "2026-07-20";
+    date = "2026-07-24";
   };
   gnu-elpa = {
     pname = "gnu-elpa";
