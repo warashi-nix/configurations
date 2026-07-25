@@ -266,7 +266,7 @@ org-capture は inbox.org へ投入し、refile で整理する (inbox は空が
 (setopt org-capture-templates
         `(("i" "Inbox" entry
            (file ,(file-name-concat my/pkm-directory "inbox.org"))
-           "* %?\n:PROPERTIES:\n:CAPTURED: %U\n:END:")
+           "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CAPTURED: %U\n:END:")
           ,@my/pkm-extra-capture-templates))
 #+end_src
 
