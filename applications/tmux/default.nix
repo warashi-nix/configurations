@@ -17,61 +17,45 @@ let
     name = "tmux-agent-state-scan";
     runtimeInputs = [
       config.programs.tmux.package
-      pkgs.coreutils
+      pkgs.gnugrep
     ];
     text = ''
-      # 「esc to interrupt」等の中断キー案内の文言では判定しない。
-      # Claude Code の focus mode のように表示設定次第で案内が消える上、
-      # CLI ごと・状態ごとに文言が揺れて追従しきれないため。
-      # 代わりに、各 CLI とも作業中は画面の描画が更新され続けることを
-      # 利用し、capture した内容の変化で判定する
+      # 描画が更新され続けるかどうかでは判定しない。AskUserQuestion の
+      # 選択 UI は点滅し続けるため入力待ちでも描画が止まらず、逆に
+      # prefersReducedMotion + focus mode では作業中でも描画が数秒
+      # 止まりうるので、更新の有無による判定は両方向に誤るため。
+      # 代わりに、capture した画面にいま何が表示されているかで判定する
       #
-      # ただし choose-tree の表示に伴う zoom や focus イベントでも
-      # agent は入力待ちのまま画面を再描画しうるため、1 回の変化では
-      # busy とせず、変化が 2 回観測されて初めて busy とする。
-      # 静止判定の 1.2 秒 (0.2 秒 x 6 回) は、prefersReducedMotion で
-      # スピナーが止まっていても 1 秒周期の経過時間表示の更新を
-      # 取りこぼさない長さ。変化のたびに静止のカウントは取り直す
+      # - ダイアログ (AskUserQuestion・許可・trust) の表示中は入力待ち。
+      #   各ダイアログは末尾にキー案内 (Claude Code は「Esc to cancel」、
+      #   Copilot CLI は「esc to cancel」) を出し続ける
+      # - 作業中は Claude Code が経過時間つきのスピナー行
+      #   「✻ Xxx… (12s · ↓ 128 tokens · …)」を、Copilot CLI が中断案内
+      #   「esc interrupt」を出し続ける。Claude Code の中断案内
+      #   「esc to interrupt」は focus mode などの表示設定で消えるため、
+      #   中断案内の文言だけには頼らず経過時間表示でも判定する
+      # - どちらも表示されていなければ通常のプロンプト待ち
       scan_pane() {
-        local pane_id=$1 before now changes=0 quiet=0
-
-        # 前回の状態と混じらないように、最初に初期化する
-        tmux set-option -p -t "$pane_id" @agent_state detecting
-
-        # choose-tree 表示直後の再描画が基準の capture に混ざって
-        # 変化 1 回ぶんを浪費しないよう、少し待ってから基準を取る
-        sleep 0.4
-        before="$(tmux capture-pane -p -t "$pane_id")"
-        while :; do
-          sleep 0.2
-          now="$(tmux capture-pane -p -t "$pane_id")"
-          if [ "$now" != "$before" ]; then
-            before=$now
-            changes=$((changes + 1))
-            quiet=0
-            if [ "$changes" -ge 2 ]; then
-              tmux set-option -p -t "$pane_id" @agent_state busy
-              return
-            fi
-          else
-            quiet=$((quiet + 1))
-            if [ "$quiet" -ge 6 ]; then
-              tmux set-option -p -t "$pane_id" @agent_state waiting
-              return
-            fi
-          fi
-        done
+        local pane_id=$1 content state
+        content="$(tmux capture-pane -p -t "$pane_id")"
+        if grep -qiE 'esc to cancel' <<<"$content"; then
+          # ダイアログ表示中は turn の途中でも返事を待っているので、
+          # 作業中の判定より先に拾う
+          state=waiting
+        elif grep -qiE '… \(([0-9]+[hm] )*[0-9]+s|esc (to )?interrupt' <<<"$content"; then
+          state=busy
+        else
+          state=waiting
+        fi
+        tmux set-option -p -t "$pane_id" @agent_state "$state"
       }
 
       mapfile -t panes < <(
         tmux list-panes -a -f '#{m/r:${agentCommandPattern},#{pane_current_command}}' -F '#{pane_id}'
       )
-      # 逐次判定だと後ろの pane ほど結果の反映が pane 数に比例して
-      # 遅れるため、pane ごとに並行で判定する
       for pane_id in "''${panes[@]}"; do
-        scan_pane "$pane_id" &
+        scan_pane "$pane_id"
       done
-      wait
     '';
   };
 in
@@ -92,14 +76,12 @@ in
 
       # C-w で pane 単位まで展開した一覧を開く
       # window 行には bell (🔔)、pane 行には Coding Agent の状態
-      # (作業中 🤖 / 入力待ち 💬 / 判定中 ⏳) と pane title を表示する
-      # スキャン完了 (最大 3 秒程度) を待ってから一覧を開くと、単に
-      # window/pane を切り替えたいだけのときに待たされてしまうため、
-      # スキャンはバックグラウンドで実行して一覧は即座に開く。
-      # choose-tree は表示中も server 状態の変化で項目の format を
-      # 再評価する (tmux 3.7b で確認) ため、@agent_state の更新は
-      # 開いたままの一覧に判定済みの pane から順に反映される
-      bind C-w run-shell -b "${lib.getExe agentStateScan}" \; choose-tree -Z -F '#{?pane_format,#{?#{m/r:${agentCommandPattern},#{pane_current_command}},#{?#{==:#{@agent_state},waiting},💬 ,#{?#{==:#{@agent_state},busy},🤖 ,⏳ }},}#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,},#{session_windows} windows#{?session_attached, (attached),}}}'
+      # (作業中 🤖 / 入力待ち 💬 / 未判定 ⏳) と pane title を表示する
+      # スキャンは capture と grep だけで pane あたり数十 ms なので、
+      # バックグラウンドにせず同期実行してから一覧を開く。一覧を開いた
+      # 時点で全 pane の状態が確定していて、⏳ が出るのは一覧を開いた
+      # まま新しい agent pane が現れたときだけ
+      bind C-w run-shell "${lib.getExe agentStateScan}" \; choose-tree -Z -F '#{?pane_format,#{?#{m/r:${agentCommandPattern},#{pane_current_command}},#{?#{==:#{@agent_state},waiting},💬 ,#{?#{==:#{@agent_state},busy},🤖 ,⏳ }},}#{pane_current_command} "#{pane_title}",#{?window_format,#{window_name}#{window_flags}#{?window_bell_flag, 🔔,},#{session_windows} windows#{?session_attached, (attached),}}}'
 
       # ターミナルのライト/ダークテーマに追従する
       set-hook -g client-light-theme "source-file ${./modus-operandi.tmux}"
