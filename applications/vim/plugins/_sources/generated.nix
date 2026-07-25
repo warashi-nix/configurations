@@ -20,13 +20,13 @@
   };
   skkeleton = {
     pname = "skkeleton";
-    version = "98c8fb5a84ed56d62abe66d409aad2cd14104fb7";
+    version = "d4d09aeba5054e02bdfae8e6a2e51107ed8803e6";
     src = fetchFromGitHub {
       owner = "Warashi";
       repo = "skkeleton";
-      rev = "98c8fb5a84ed56d62abe66d409aad2cd14104fb7";
+      rev = "d4d09aeba5054e02bdfae8e6a2e51107ed8803e6";
       fetchSubmodules = false;
-      sha256 = "sha256-weEVx1nf6/0HP5x/nI7D/U4C0i0alH8b1y005THgp3I=";
+      sha256 = "sha256-kCdPI6sSlgpiSXoNKMcZ2ysJuNDiT1ubVKeZ8Rrint8=";
     };
     date = "2026-07-26";
   };
