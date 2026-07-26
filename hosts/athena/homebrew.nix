@@ -27,6 +27,7 @@
       "font-biz-udmincho"
       "font-biz-udpgothic"
       "font-biz-udpmincho"
+      "gitify"
       "google-chrome"
       "google-drive"
       "google-gemini"
