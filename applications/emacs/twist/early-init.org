@@ -10,37 +10,37 @@
 
 * Decrease GC
 #+begin_src emacs-lisp
-  (setopt gc-cons-threshold (* 1024 1024 1024))
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (setopt gc-cons-threshold (* 16 1024 1024))))
+(setopt gc-cons-threshold (* 1024 1024 1024))
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setopt gc-cons-threshold (* 16 1024 1024))))
 #+end_src
 
 * profiler
 #+begin_src emacs-lisp :tangle no
-  (require 'profiler)
-  (profiler-start 'cpu)
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (message "Emacs initialized in %.3f sec with %d garbage collection(s)"
-                       (float-time (time-subtract after-init-time before-init-time))
-                       gcs-done)
-              (profiler-report)
-              (profiler-stop)))
+(require 'profiler)
+(profiler-start 'cpu)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "Emacs initialized in %.3f sec with %d garbage collection(s)"
+                     (float-time (time-subtract after-init-time before-init-time))
+                     gcs-done)
+            (profiler-report)
+            (profiler-stop)))
 #+end_src
 
 * Toolbar/Menubar
 #+begin_src emacs-lisp
-  (menu-bar-mode -1)
-  (when (fboundp #'tool-bar-mode)
-    (tool-bar-mode -1))
-  (when (fboundp #'scroll-bar-mode)
-    (scroll-bar-mode -1))
+(menu-bar-mode -1)
+(when (fboundp #'tool-bar-mode)
+  (tool-bar-mode -1))
+(when (fboundp #'scroll-bar-mode)
+  (scroll-bar-mode -1))
 #+end_src
 
 * inhibit
 #+begin_src emacs-lisp
-  (setopt inhibit-splash-screen t
+(setopt inhibit-splash-screen t
   	inhibit-startup-buffer-menu t
   	inhibit-startup-message t
   	inhibit-startup-screen t
@@ -49,25 +49,25 @@
 
 * minibuffer
 #+begin_src emacs-lisp
-  (setopt enable-recursive-minibuffers t
-          echo-keystrokes 0.1)
+(setopt enable-recursive-minibuffers t
+        echo-keystrokes 0.1)
 #+end_src
 
 * Suppress auto package loading
 #+begin_src emacs-lisp
-  (setopt package-enable-at-startup nil)
-  (setopt package-quickstart nil)
+(setopt package-enable-at-startup nil)
+(setopt package-quickstart nil)
 #+end_src
 
 * default-frame-alist
 #+begin_src emacs-lisp
-  (add-to-list 'default-frame-alist '(font . "PlemolJP Console NF-18"))
+(add-to-list 'default-frame-alist '(font . "PlemolJP Console NF-18"))
 #+end_src
 
 * Footer
 #+begin_src emacs-lisp
-  (provide 'early-init)
+(provide 'early-init)
 
-  ;; End:
-  ;;; early-init.el ends here
+;; End:
+;;; early-init.el ends here
 #+end_src
