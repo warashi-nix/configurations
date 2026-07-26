@@ -6,6 +6,11 @@
 ;;; Code:
 #+end_src
 
+* language environment
+#+begin_src emacs-lisp
+(set-language-environment 'utf-8)
+#+end_src
+
 * custom-file
 #+begin_src emacs-lisp
 (setopt custom-file (locate-user-emacs-file "custom.el"))
