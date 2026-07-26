@@ -15,10 +15,12 @@ let
     disableClaudeAiConnectors = true;
     disableDeepLinkRegistration = "disable";
     disableRemoteControl = true;
+    effortLevel = "low";
     enableArtifact = false;
     fastMode = false;
     feedbackSurveyRate = 0;
     language = "japanese";
+    model = "sonnet";
     preferredNotifChannel = "terminal_bell";
     prefersReducedMotion = true;
     promptSuggestionEnabled = false;
