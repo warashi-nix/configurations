@@ -95,6 +95,10 @@ augroup END
 
 set autocomplete
 set complete=.,w,b,u,t,i,o,F,Fskkeleton#completefunc
+augroup my-skkeleton-completedone
+  autocmd!
+  autocmd CompleteDone * call skkeleton#complete_done()
+augroup END
 
 # --------------------------------------------------
 #  LSP
