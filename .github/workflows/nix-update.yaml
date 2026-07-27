@@ -40,6 +40,7 @@ jobs:
     runs-on: ubuntu-slim
     needs: list-flake-inputs
     strategy:
+      fail-fast: false
       matrix:
         input: ${{ fromJson(needs.list-flake-inputs.outputs.inputs) }}
     steps:
@@ -90,6 +91,7 @@ jobs:
     runs-on: ubuntu-slim
     needs: list-nvfetcher
     strategy:
+      fail-fast: false
       matrix:
         dir: ${{ fromJson(needs.list-nvfetcher.outputs.dirs) }}
     steps:
