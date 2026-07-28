@@ -41,9 +41,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ;
 
 # GitHub CLI インストール
+# api.github.com は未認証だと同一IPあたり60回/時のrate limitがあり、NAT配下だと
+# 他者と枠を共有して403になるため、rate limitのないリリースページのリダイレクト先
+# (https://github.com/cli/cli/releases/tag/vX.Y.Z) からバージョンを解決する。
+# 一時的に解決できない場合は --build-arg=GH_VERSION=X.Y.Z で固定できる。
+ARG GH_VERSION=""
 RUN mkdir -p /tmp && chmod 0777 /tmp
 WORKDIR /tmp
-ADD https://api.github.com/repos/cli/cli/releases/latest /tmp/gh-release.json
 RUN set -eu; \
     if [ "${TARGETOS}" != "linux" ]; then \
         echo "Unsupported target OS: ${TARGETOS}" >&2; \
@@ -57,7 +61,17 @@ RUN set -eu; \
             exit 1; \
             ;; \
     esac; \
-    gh_version="$(jq -r '.tag_name | ltrimstr("v")' /tmp/gh-release.json)"; \
+    if [ -n "${GH_VERSION}" ]; then \
+        gh_version="${GH_VERSION}"; \
+    else \
+        gh_release_url="$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+            https://github.com/cli/cli/releases/latest)"; \
+        gh_version="${gh_release_url##*/tag/v}"; \
+    fi; \
+    case "${gh_version}" in \
+        [0-9]*) ;; \
+        *) echo "Failed to resolve gh version: ${gh_version}" >&2; exit 1 ;; \
+    esac; \
     archive="gh_${gh_version}_linux_${gh_arch}.tar.gz"; \
     release_url="https://github.com/cli/cli/releases/download/v${gh_version}"; \
     curl -fsSLO "${release_url}/${archive}"; \
@@ -65,7 +79,7 @@ RUN set -eu; \
     sha256sum --check --ignore-missing gh_checksums.txt; \
     tar -xzf "${archive}" --strip-components=2 -C /usr/local/bin \
         "gh_${gh_version}_linux_${gh_arch}/bin/gh"; \
-    rm -f /tmp/gh-release.json "/tmp/${archive}" /tmp/gh_checksums.txt
+    rm -f "/tmp/${archive}" /tmp/gh_checksums.txt
 
 # --------------------------------------------------------
 # ユーザー作成と権限設定
