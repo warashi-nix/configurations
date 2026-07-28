@@ -48,15 +48,6 @@ in
     home.packages = [
       vim-with-deps
     ];
-    services = {
-      skhd = {
-        enable = pkgs.stdenv.isDarwin;
-        config = ''
-          meh - i : open -a Alacritty.app --args --command ${lib.getExe vim-as-ime}
-          hyper - i : open -na Alacritty.app --args --command ${lib.getExe vim-as-ime}
-        '';
-      };
-    };
     xdg = {
       configFile = {
         "vim" = {
