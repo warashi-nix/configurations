@@ -92,7 +92,8 @@
 
 #+begin_src emacs-lisp
 (setup emacs
-  (:global-keymap "C-c c" #'compile))
+  (:global-keymap "C-c c" #'compile
+                  "C-x C-c" #'server-edit))
 #+end_src
 
 * シェル/環境
