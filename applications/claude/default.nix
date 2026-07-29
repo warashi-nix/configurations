@@ -12,6 +12,43 @@ let
   mkDefaultRecursive = mapAttrsRecursive (_path: mkDefault);
   settingsFile = jsonFormat.generate "claude-settings-override.json" cfg.settings;
   memoryFile = pkgs.writeText "claude-memory.md" cfg.memory;
+
+  settingsPath = "${cfg.configDir}/settings.json";
+  extraSources = imap0 (
+    index: source:
+    source
+    // {
+      workPath = "${cfg.configDir}/settings.source-${toString index}.json";
+    }
+  ) cfg.extraSettingsSources;
+
+  # jq のフィルタ結果は評価時に確定しないため、いったん作業ファイルに落としてから固定個数の入力としてマージする
+  prepareExtraSource = source: ''
+    if [ -f ${escapeShellArg source.path} ]; then
+      run ${lib.getExe pkgs.jq} ${escapeShellArg source.filter} ${escapeShellArg source.path} \
+        > ${escapeShellArg source.workPath}
+    ${
+      if source.optional then
+        ''
+          else
+            run echo '{}' > ${escapeShellArg source.workPath}
+          fi
+        ''
+      else
+        ''
+          else
+            errorEcho "claude: settings source ${source.path} not found"
+            exit 1
+          fi
+        ''
+    }'';
+
+  mergeInputs = [
+    settingsPath
+    (toString settingsFile)
+  ]
+  ++ map (source: source.workPath) extraSources;
+  mergeExpr = concatStringsSep " * " (imap0 (index: _: ".[${toString index}]") mergeInputs);
 in
 {
   options.warashi.claude = {
@@ -39,6 +76,33 @@ in
       description = ''
         Contents of $CLAUDE_CONFIG_DIR/CLAUDE.md.
         複数の定義は連結されるため、追記したい場合は mkAfter などを使う。
+      '';
+    };
+    extraSettingsSources = mkOption {
+      type = types.listOf (
+        types.submodule {
+          options = {
+            path = mkOption {
+              type = types.str;
+              description = "Path to a JSON file merged into settings.json.";
+            };
+            filter = mkOption {
+              type = types.str;
+              default = ".";
+              description = "jq filter applied to the source before merging.";
+            };
+            optional = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Skip the source instead of failing when the file does not exist.";
+            };
+          };
+        }
+      );
+      default = [ ];
+      description = ''
+        Additional JSON sources merged into $CLAUDE_CONFIG_DIR/settings.json.
+        既存の settings.json、warashi.claude.settings の順に重ねたあと、このリストの順で上書きされる。
       '';
     };
   };
@@ -182,16 +246,19 @@ in
           ${optionalString (cfg.memory != "") ''
             run ${lib.getExe pkgs.rsync} -a ${memoryFile} ${escapeShellArg "${cfg.configDir}/CLAUDE.md"}
           ''}
-          if [ -f ${escapeShellArg "${cfg.configDir}/settings.json"} ]; then
-            run cp -af ${escapeShellArg "${cfg.configDir}/settings.json"} ${escapeShellArg "${cfg.configDir}/settings.json.backup"}
-            run ${lib.getExe pkgs.jq} -s '.[0] * .[1]' \
-              ${escapeShellArg "${cfg.configDir}/settings.json"} \
-              ${settingsFile} \
-              > ${escapeShellArg "${cfg.configDir}/settings.merged.json"}
-            run mv ${escapeShellArg "${cfg.configDir}/settings.merged.json"} ${escapeShellArg "${cfg.configDir}/settings.json"}
+          if [ -f ${escapeShellArg settingsPath} ]; then
+            run cp -af ${escapeShellArg settingsPath} ${escapeShellArg "${settingsPath}.backup"}
           else
-            run cp -af ${settingsFile} ${escapeShellArg "${cfg.configDir}/settings.json"}
+            run echo '{}' > ${escapeShellArg settingsPath}
           fi
+          ${concatMapStringsSep "\n" prepareExtraSource extraSources}
+          run ${lib.getExe pkgs.jq} -s ${escapeShellArg mergeExpr} \
+            ${concatMapStringsSep " \\\n  " escapeShellArg mergeInputs} \
+            > ${escapeShellArg "${cfg.configDir}/settings.merged.json"}
+          run mv ${escapeShellArg "${cfg.configDir}/settings.merged.json"} ${escapeShellArg settingsPath}
+          ${optionalString (extraSources != [ ]) ''
+            run rm -f ${concatMapStringsSep " " (source: escapeShellArg source.workPath) extraSources}
+          ''}
         '';
       };
     };
