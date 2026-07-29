@@ -1,4 +1,3 @@
-- やりとりは基本的に日本語で行う
 - git commit は意味のある最小の単位で行う
 - git commit の粒度を考慮して作業の順序や粒度を決める
 - commit message は `conventional commits` に従う
