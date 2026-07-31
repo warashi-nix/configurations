@@ -121,6 +121,7 @@ in
         disableClaudeAiConnectors = true;
         disableDeepLinkRegistration = "disable";
         disableRemoteControl = true;
+        outputStyle = "grilling";
         effortLevel = "low";
         enableArtifact = false;
         fastMode = false;
@@ -246,6 +247,10 @@ in
           ${optionalString (cfg.memory != "") ''
             run ${lib.getExe pkgs.rsync} -a ${memoryFile} ${escapeShellArg "${cfg.configDir}/CLAUDE.md"}
           ''}
+
+          run mkdir -p ${lib.escapeShellArg "${cfg.configDir}/output-styles"}
+          run ${lib.getExe pkgs.rsync} -a ${./output-styles}/ ${lib.escapeShellArg "${cfg.configDir}/output-styles/"}
+
           if [ -f ${escapeShellArg settingsPath} ]; then
             run cp -af ${escapeShellArg settingsPath} ${escapeShellArg "${settingsPath}.backup"}
           else
