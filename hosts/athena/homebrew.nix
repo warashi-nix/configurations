@@ -13,6 +13,7 @@
     casks = [
       # keep-sorted start
       "1password"
+      "adobe-acrobat-reader"
       "alfred"
       "alt-tab"
       "amazon-photos"
