@@ -91,9 +91,13 @@
 #+end_src
 
 #+begin_src emacs-lisp
+(static-if (eq system-type 'darwin)
+    (global-set-key "C-x C-c" #'server-edit))
+#+end_src
+
+#+begin_src emacs-lisp
 (setup emacs
-  (:global-keymap "C-c c" #'compile
-                  "C-x C-c" #'server-edit))
+  (:global-keymap "C-c c" #'compile))
 #+end_src
 
 * シェル/環境
