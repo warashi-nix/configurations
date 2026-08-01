@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  config,
+  pkgs,
+  ...
+}:
 let
   system = pkgs.stdenv.hostPlatform.system;
 in
@@ -26,6 +31,7 @@ in
     Service = {
       Environment = [
         "COLORTERM=truecolor"
+        "SSH_AUTH_SOCK=${config.home.homeDirectory}/.ssh/ssh_auth_sock"
       ];
     };
   };
