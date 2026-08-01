@@ -17,9 +17,16 @@ in
 
     enable = true;
     emacsclient.enable = true;
-    serviceIntegration.enable = false;
+    serviceIntegration.enable = pkgs.stdenv.isLinux;
     createInitFile = true;
     createManifestFile = true;
     config = inputs.my-emacs.packages.${system}.default;
+  };
+  systemd.user.services.emacs = {
+    Service = {
+      Environment = [
+        "COLORTERM=truecolor"
+      ];
+    };
   };
 }
