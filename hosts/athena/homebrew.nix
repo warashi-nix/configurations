@@ -34,6 +34,7 @@
       "google-gemini"
       "karabiner-elements"
       "lasso-app"
+      "maccy"
       "orion"
       "raycast"
       "visual-studio-code"
