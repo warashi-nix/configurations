@@ -176,6 +176,16 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
   (:defer 0.1))
 #+end_src
 
+** kkp
+端末の Emacs は xterm.el が要求する modifyOtherKeys モード1 で動くため、TAB や RET のように通常のバイト表現を持つキーは修飾子付きでも素の文字に潰れて =C-<tab>= などが届かない。Ghostty が実装している Kitty Keyboard Protocol を使って全ての修飾キーを曖昧性なく受け取る。
+
+#+begin_src emacs-lisp
+(setup (:package kkp)
+  ;; GUI フレームでは端末のキー入力を経由しないため、global-kkp-mode は
+  ;; 何もせず終わる。TTY 限定のガードは不要。
+  (:after-init global-kkp-mode))
+#+end_src
+
 * 入力・編集
 ** ddskk
 #+begin_src emacs-lisp

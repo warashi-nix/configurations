@@ -151,6 +151,12 @@
       repo = "justl.el";
       type = "github";
     };
+    kkp = {
+      flake = false;
+      owner = "benotn";
+      repo = "kkp";
+      type = "github";
+    };
     llama = {
       flake = false;
       owner = "tarsius";

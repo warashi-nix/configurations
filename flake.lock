@@ -787,6 +787,22 @@
         "type": "github"
       }
     },
+    "kkp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783328329,
+        "narHash": "sha256-33gsb8qumnYikvi6K9kNOlXRd9OJXnxLRR4KK0XjPII=",
+        "owner": "benotn",
+        "repo": "kkp",
+        "rev": "82b7443e10a2ba287467b62e90b6adb6dd93dc99",
+        "type": "github"
+      },
+      "original": {
+        "owner": "benotn",
+        "repo": "kkp",
+        "type": "github"
+      }
+    },
     "llama": {
       "flake": false,
       "locked": {
@@ -935,6 +951,7 @@
         "inheritenv": "inheritenv",
         "just-ts-mode": "just-ts-mode",
         "justl": "justl",
+        "kkp": "kkp",
         "llama": "llama",
         "llm": "llm",
         "magit": "magit",
