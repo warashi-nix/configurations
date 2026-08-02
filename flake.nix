@@ -220,7 +220,6 @@
                   [
                     # keep-sorted start
                     age
-                    devcontainer
                     git
                     just
                     nix-output-monitor
@@ -228,9 +227,6 @@
                     sops
                     ssh-to-age
                     # keep-sorted end
-
-                    inputs'.my-emacs.packages.default
-                    inputs'.git-wit.packages.git-wit
                   ]
                   ++ config.pre-commit.settings.enabledPackages;
                 startup = {
