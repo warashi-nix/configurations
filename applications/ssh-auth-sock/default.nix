@@ -31,7 +31,9 @@ let
         exit 0
       fi
 
-      for candidate in /tmp/ssh-*/agent.*; do
+      # forwarded socket の置き場所は環境によって違うため、片方に決め打ちしない。
+      # 疎通確認で弾くので、候補を広げても誤爆はしない。
+      for candidate in ${lib.escapeShellArg "${config.home.homeDirectory}/.ssh/agent"}/* /tmp/ssh-*/agent.*; do
         [ -O "$candidate" ] || continue
         if alive "$candidate"; then
           ln -sfn "$candidate" "$sock"
