@@ -20,25 +20,25 @@
   };
   gnu-elpa = {
     pname = "gnu-elpa";
-    version = "c4164a03fd315afc2db7341e799715bb6f32cb15";
+    version = "4d46b8b21ec69d7e1cbec7f6378e6ac70707b719";
     src = fetchFromGitHub {
       owner = "elpa-mirrors";
       repo = "elpa";
-      rev = "c4164a03fd315afc2db7341e799715bb6f32cb15";
+      rev = "4d46b8b21ec69d7e1cbec7f6378e6ac70707b719";
       fetchSubmodules = false;
-      sha256 = "sha256-uKTCPGf3lqRhxRKfXPL8yULOlTgsHPPookEruOsz9VU=";
+      sha256 = "sha256-JAB73eI1V0Ed1m3FltAXqVrqeU0vPt7mMlyr/xu5BOw=";
     };
-    date = "2026-07-31";
+    date = "2026-08-02";
   };
   melpa = {
     pname = "melpa";
-    version = "4ef6d1d3728343529c3295b803368de4285552e9";
+    version = "02288397f1214c8d83555c4bb31dd53c5de29218";
     src = fetchFromGitHub {
       owner = "melpa";
       repo = "melpa";
-      rev = "4ef6d1d3728343529c3295b803368de4285552e9";
+      rev = "02288397f1214c8d83555c4bb31dd53c5de29218";
       fetchSubmodules = false;
-      sha256 = "sha256-G6/TvSoLtmkFsJAqA2aB5zqVI5wBBJRiO0wFzo/ca8w=";
+      sha256 = "sha256-GtYYPkOyBnLht5ErpECyMNv0OeVGzx575V8ljJFryA0=";
     };
     date = "2026-08-02";
   };
