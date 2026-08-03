@@ -23,6 +23,9 @@
       keybind = [
         "shift+enter=text:\\n"
 
+        "ctrl+tab=csi:9;5u"
+        "shift+ctrl+tab=csi:9;6u"
+
         "cmd+c=copy_to_clipboard"
         "cmd+v=paste_from_clipboard"
         "ctrl+shift+c=copy_to_clipboard"
