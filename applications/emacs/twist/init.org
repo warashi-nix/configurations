@@ -588,8 +588,12 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 #+begin_src emacs-lisp
 (setup (:package agent-shell
                  agent-shell-tramp)
+  ;; Linux では Emacs が systemd user service で logind セッションを持たず、
+  ;; polkit の inhibit-block-sleep (allow_any = auth_admin_keep) に拒否される。
+  ;; polkit ルールで許可しない理由は、対象がスリープしない headless 機のため。
   (:opt agent-shell-command-prefix '("chelly" "run")
-        agent-shell-preferred-agent-config '(preselect . claude-code))
+        agent-shell-preferred-agent-config '(preselect . claude-code)
+        agent-shell-inhibit-system-sleep (eq system-type 'darwin))
   (:after-init agent-shell-tramp-mode))
 #+end_src
 
