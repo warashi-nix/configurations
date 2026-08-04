@@ -54,7 +54,7 @@ RUN set -eu; \
         exit 1; \
     fi; \
     case "${TARGETARCH}/${TARGETVARIANT}" in \
-        386/|amd64/|arm64/) gh_arch="${TARGETARCH}" ;; \
+        386/|amd64/|arm64/|arm64/v8) gh_arch="${TARGETARCH}" ;; \
         arm/|arm/v6|arm/v7) gh_arch="armv6" ;; \
         *) \
             echo "Unsupported target architecture: ${TARGETARCH}/${TARGETVARIANT}" >&2; \
