@@ -81,6 +81,47 @@ RUN set -eu; \
         "gh_${gh_version}_linux_${gh_arch}/bin/gh"; \
     rm -f "/tmp/${archive}" /tmp/gh_checksums.txt
 
+# Node.js インストール
+# Debian の nodejs/npm パッケージは webpack など大量のビルドツールを引き込むため、
+# npm 同梱の公式 tarball を使う。
+ARG NODE_VERSION=""
+RUN set -eu; \
+    case "${TARGETARCH}/${TARGETVARIANT}" in \
+        amd64/) node_arch="x64" ;; \
+        arm64/|arm64/v8) node_arch="arm64" ;; \
+        arm/v7) node_arch="armv7l" ;; \
+        *) \
+            echo "Unsupported target architecture: ${TARGETARCH}/${TARGETVARIANT}" >&2; \
+            exit 1; \
+            ;; \
+    esac; \
+    if [ -n "${NODE_VERSION}" ]; then \
+        node_version="v${NODE_VERSION#v}"; \
+    else \
+        curl -fsSLo node_index.json https://nodejs.org/dist/index.json; \
+        node_version="$(jq -r 'map(select(.lts != false)) | .[0].version' node_index.json)"; \
+        rm -f /tmp/node_index.json; \
+    fi; \
+    case "${node_version}" in \
+        v[0-9]*) ;; \
+        *) echo "Failed to resolve Node.js version: ${node_version}" >&2; exit 1 ;; \
+    esac; \
+    archive="node-${node_version}-linux-${node_arch}.tar.xz"; \
+    dist_url="https://nodejs.org/dist/${node_version}"; \
+    curl -fsSLO "${dist_url}/${archive}"; \
+    curl -fsSLo node_checksums.txt "${dist_url}/SHASUMS256.txt"; \
+    sha256sum --check --ignore-missing node_checksums.txt; \
+    tar -xJf "${archive}" --strip-components=1 -C /usr/local \
+        --exclude=CHANGELOG.md --exclude=LICENSE --exclude=README.md; \
+    rm -f "/tmp/${archive}" /tmp/node_checksums.txt
+
+# claude-agent-acp (ACP エージェント) インストール
+# /nix は named volume で永続化しており、イメージ側の /nix が変わると volume ごと
+# 破棄されるため、nix profile ではなく npm で /usr/local 配下に入れる。
+ARG CLAUDE_AGENT_ACP_VERSION="latest"
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm install -g "@agentclientprotocol/claude-agent-acp@${CLAUDE_AGENT_ACP_VERSION}"
+
 # --------------------------------------------------------
 # ユーザー作成と権限設定
 # --------------------------------------------------------
