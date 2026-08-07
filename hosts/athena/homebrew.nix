@@ -47,7 +47,6 @@
       DaisyDisk = 411643860;
       GoodLinks = 1474335294;
       LINE = 539883307;
-      Pastebot = 1179623856;
       Reeder = 1529448980;
       Slack = 803453959;
       Things = 904280696;
