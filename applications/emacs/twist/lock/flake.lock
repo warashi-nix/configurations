@@ -496,6 +496,22 @@
         "type": "github"
       }
     },
+    "md-mode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785657466,
+        "narHash": "sha256-Lij2/+qZvUxxiY9v93zH6K1+Nt1449jsKc7uC9LmM6M=",
+        "owner": "yibie",
+        "repo": "md-mode",
+        "rev": "180efaf5e5e5c6c8688df2942e2220ffbe75f95e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yibie",
+        "repo": "md-mode",
+        "type": "github"
+      }
+    },
     "msgpack": {
       "flake": false,
       "locked": {
@@ -707,6 +723,7 @@
         "magit": "magit",
         "magit-section": "magit-section",
         "marginalia": "marginalia",
+        "md-mode": "md-mode",
         "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
         "orderless": "orderless",

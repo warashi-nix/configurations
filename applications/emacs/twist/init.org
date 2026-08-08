@@ -357,7 +357,7 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 
 ** markdown
 #+begin_src emacs-lisp
-(setup markdown-ts-mode
+(setup (:package md-mode)
   (:match-file "*.md"))
 #+end_src
 

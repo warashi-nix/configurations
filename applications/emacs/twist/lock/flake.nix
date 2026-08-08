@@ -187,6 +187,12 @@
       repo = "marginalia";
       type = "github";
     };
+    md-mode = {
+      flake = false;
+      owner = "yibie";
+      repo = "md-mode";
+      type = "github";
+    };
     msgpack = {
       flake = false;
       owner = "xuchunyang";
