@@ -597,6 +597,80 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
   (:after-init agent-shell-tramp-mode))
 #+end_src
 
+model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
+その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
+
+#+begin_src emacs-lisp
+(defconst warashi-agent-shell-claude-variants
+  '((sonnet-xhigh "sonnet"             "xhigh")
+    (opus-low     "opus[1m]"           "low")
+    (opus-medium  "opus[1m]"           "medium")
+    (fable-medium "claude-fable-5[1m]" "medium"))
+  "起動コマンドを生成する (NAME MODEL-ID THOUGHT-LEVEL) のリスト。
+
+MODEL-ID は agent-shell 起動時に \"Available models\" に表示される ID。
+sonnet-xhigh だけ 200k なのは、sonnet に 1M context 版の ID が無いため。")
+
+(defvar warashi-agent-shell-thought-level nil
+  "起動しようとしている shell に適用する thought level (effort)。
+`warashi-agent-shell--start-claude' が動的に束縛する。")
+
+(defun warashi-agent-shell--apply-thought-level ()
+  "`warashi-agent-shell-thought-level' を新しい shell に適用する。"
+  ;; effort は agent-shell の agent config に設定点が無く、session 確立後に
+  ;; ACP の config option として送るしかない。claude-agent-acp は初期 effort を
+  ;; settings ファイルからしか読まないため、_meta 経由では指定できない。
+  (when-let* ((level warashi-agent-shell-thought-level)
+              (buffer (current-buffer)))
+    (agent-shell-subscribe-to
+     :shell-buffer buffer
+     :event 'init-finished
+     :on-event
+     (lambda (_event)
+       (agent-shell--config-option-set-thought-level-id
+        :thought-level-id level
+        :on-failure (lambda (acp-error _raw-message)
+                      (message "Failed to set thought level %s: %s" level acp-error)))))))
+
+(defun warashi-agent-shell--start-claude (model-id thought-level)
+  "MODEL-ID と THOUGHT-LEVEL を指定して Claude agent-shell を起動する。"
+  (require 'agent-shell-anthropic)
+  (let ((config (agent-shell-anthropic-make-claude-code-config))
+        (warashi-agent-shell-thought-level thought-level))
+    ;; :default-model-id は session 確立後に funcall されるので、動的束縛では
+    ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
+    (setcdr (assq :default-model-id config) (lambda () model-id))
+    ;; agent-shell-mode-hook は `agent-shell--dwim' の中から同期的に走るため、
+    ;; 上の動的束縛が生きているうちに thought level を予約できる。
+    (agent-shell--dwim :config config :new-shell t)))
+
+(defmacro warashi-agent-shell-define-claude-variants ()
+  "`warashi-agent-shell-claude-variants' から起動コマンドを定義する。
+NAME ごとに `warashi-agent-shell-claude-NAME' と、eshell から短い名前で
+呼ぶための `eshell/claude-NAME' を生成する。"
+  `(progn
+     ,@(mapcan
+        (pcase-lambda (`(,name ,model-id ,thought-level))
+          (let ((fn (intern (format "warashi-agent-shell-claude-%s" name)))
+                (eshell-fn (intern (format "eshell/claude-%s" name))))
+            (list
+             `(defun ,fn ()
+                ,(format "Claude agent-shell を model %s / effort %s で起動する。"
+                         model-id thought-level)
+                (interactive)
+                (warashi-agent-shell--start-claude ,model-id ,thought-level))
+             `(defun ,eshell-fn (&rest _args)
+                ,(format "eshell から `%s' を起動する。" fn)
+                (,fn)))))
+        warashi-agent-shell-claude-variants)))
+
+(warashi-agent-shell-define-claude-variants)
+
+(setup agent-shell
+  (:with-hook agent-shell-mode-hook
+    (:hook warashi-agent-shell--apply-thought-level)))
+#+end_src
+
 * 開発ツール
 ** magit
 #+begin_src emacs-lisp
