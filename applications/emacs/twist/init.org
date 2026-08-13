@@ -601,19 +601,15 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
 
 #+begin_src emacs-lisp
-(defvar warashi-agent-shell-thought-level nil
-  "起動しようとしている shell に適用する thought level (effort)。
-`warashi-agent-shell--start-claude' が動的に束縛する。")
-
 (defun warashi-agent-shell--apply-thought-level ()
-  "`warashi-agent-shell-thought-level' を新しい shell に適用する。"
+  "agent config に載せた thought level (effort) を新しい shell に適用する。"
   ;; effort は agent-shell の agent config に設定点が無く、session 確立後に
   ;; ACP の config option として送るしかない。claude-agent-acp は初期 effort を
   ;; settings ファイルからしか読まないため、_meta 経由では指定できない。
-  (when-let* ((level warashi-agent-shell-thought-level)
-              (buffer (current-buffer)))
+  (when-let* ((config (alist-get :agent-config (agent-shell--state)))
+              (level (alist-get :warashi-thought-level config)))
     (agent-shell-subscribe-to
-     :shell-buffer buffer
+     :shell-buffer (current-buffer)
      :event 'init-finished
      :on-event
      (lambda (_event)
@@ -625,13 +621,14 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 (defun warashi-agent-shell--start-claude (model-id thought-level)
   "MODEL-ID と THOUGHT-LEVEL を指定して Claude agent-shell を起動する。"
   (require 'agent-shell-anthropic)
-  (let ((config (agent-shell-anthropic-make-claude-code-config))
-        (warashi-agent-shell-thought-level thought-level))
+  (let ((config (agent-shell-anthropic-make-claude-code-config)))
     ;; :default-model-id は session 確立後に funcall されるので、動的束縛では
     ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
     (setcdr (assq :default-model-id config) (lambda () model-id))
-    ;; agent-shell-mode-hook は `agent-shell--dwim' の中から同期的に走るため、
-    ;; 上の動的束縛が生きているうちに thought level を予約できる。
+    ;; thought level を動的束縛で渡さないのは、`agent-shell-mode-hook' が
+    ;; `agent-shell--dwim' の動的エクステント内で走るとは限らないため。
+    ;; config は state の :agent-config に保存されるので、そこから読ませる。
+    (push (cons :warashi-thought-level thought-level) config)
     (agent-shell--dwim :config config :new-shell t)))
 
 (defmacro warashi-agent-shell-define-claude-variants (&rest variants)
