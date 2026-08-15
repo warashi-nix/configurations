@@ -439,11 +439,11 @@
         "zon2nix": "zon2nix"
       },
       "locked": {
-        "lastModified": 1784415188,
-        "narHash": "sha256-XYrdUgqsguFesadKfBDNMvO1gfMb34GZLWJu/xhVt1c=",
+        "lastModified": 1786775007,
+        "narHash": "sha256-JnnAZX0o2cGx4A46RFcfMdD4qHm9vhcYGwFVtha8H5o=",
         "owner": "Warashi",
         "repo": "emacs-spectreshell",
-        "rev": "90b0ca379f8b54b5cf9f13e425a668ad213bca1a",
+        "rev": "22ef2597d5377218e4181277d99ec12be66000a0",
         "type": "github"
       },
       "original": {
