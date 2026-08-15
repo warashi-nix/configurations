@@ -35,11 +35,11 @@
     "agent-shell": {
       "flake": false,
       "locked": {
-        "lastModified": 1786617961,
-        "narHash": "sha256-DfGM2JTd9W0Wg/b248omQgZV2DFN/qPQqRRSbZMiS5A=",
+        "lastModified": 1786743446,
+        "narHash": "sha256-5/IzIjb9qfkW5nGx1LesJaJZsNKeAM9ttQYRkyMuRyc=",
         "owner": "xenodium",
         "repo": "agent-shell",
-        "rev": "dcf8688d53a72c7867b47793485877fc539811ab",
+        "rev": "6929073c9a4b0898ac62f160e1c0779f19461df8",
         "type": "github"
       },
       "original": {
@@ -323,11 +323,11 @@
     "ghostel": {
       "flake": false,
       "locked": {
-        "lastModified": 1786617603,
-        "narHash": "sha256-CdjWcHjUWtns8ujF7UefCQDDnmsYVmvohv3XKSlD4ec=",
+        "lastModified": 1786745059,
+        "narHash": "sha256-Hdy18Soe1+3WtWGnCJgoY4w84LEROdYq1JXb39PgmhY=",
         "owner": "dakra",
         "repo": "ghostel",
-        "rev": "5be34cbbfd18c3e39fffc46bbc824d42bbe35f9b",
+        "rev": "dd72e1f4ae891345a1f76ed98c5cbd71c18e808e",
         "type": "github"
       },
       "original": {
@@ -451,11 +451,11 @@
     "magit": {
       "flake": false,
       "locked": {
-        "lastModified": 1786159389,
-        "narHash": "sha256-UTsH87q7cLJ4FZNPsKWhlnxyS39yViascG4VSFkjJCw=",
+        "lastModified": 1786741730,
+        "narHash": "sha256-bu2SlSbmAj0WT4NfzGzvv8CkiWyyMvSb3CaaMkkZQ3M=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "b1742562074e794348bdc56da838ac9d3ae40364",
+        "rev": "c138f0acefbf09efb582c596691fa54d73784ec8",
         "type": "github"
       },
       "original": {
@@ -467,11 +467,11 @@
     "magit-section": {
       "flake": false,
       "locked": {
-        "lastModified": 1786159389,
-        "narHash": "sha256-UTsH87q7cLJ4FZNPsKWhlnxyS39yViascG4VSFkjJCw=",
+        "lastModified": 1786741730,
+        "narHash": "sha256-bu2SlSbmAj0WT4NfzGzvv8CkiWyyMvSb3CaaMkkZQ3M=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "b1742562074e794348bdc56da838ac9d3ae40364",
+        "rev": "c138f0acefbf09efb582c596691fa54d73784ec8",
         "type": "github"
       },
       "original": {
@@ -499,11 +499,11 @@
     "md-mode": {
       "flake": false,
       "locked": {
-        "lastModified": 1786609887,
-        "narHash": "sha256-i4THyQWb0KqIKyleJkR9/aBYBkf7zxx5wuLyAoFNR9g=",
+        "lastModified": 1786626500,
+        "narHash": "sha256-x7bKaY06us3jVwPip52MaKzBYx2ijDjMLQpb6FV8XHU=",
         "owner": "yibie",
         "repo": "md-mode",
-        "rev": "bef2832086fc73679106f432aa9961109dbf041d",
+        "rev": "8525a72f7f1b6a3812d7f2d79bd1b460d5d48846",
         "type": "github"
       },
       "original": {
@@ -531,11 +531,11 @@
     "nix-ts-mode": {
       "flake": false,
       "locked": {
-        "lastModified": 1786019827,
-        "narHash": "sha256-0AaWDrEwLfROLRuBD+X7VwwlUgGvV4jPNQsk9zg1vn0=",
+        "lastModified": 1786638012,
+        "narHash": "sha256-a0fFqOv758zahLvYXDgcL9+VM19SyvV4zmdFPHWiTXE=",
         "owner": "nix-community",
         "repo": "nix-ts-mode",
-        "rev": "2063acd6e34a320a82df39180a0593e0e00d9366",
+        "rev": "09c89886a22b8e37ac0de9210ff5b2b79c520fd7",
         "type": "github"
       },
       "original": {
@@ -563,11 +563,11 @@
     "org": {
       "flake": false,
       "locked": {
-        "lastModified": 1786177084,
-        "narHash": "sha256-SDT2V18q9OanjwR/9o0q/EadEO/kipJtvtg/c/z8kyA=",
+        "lastModified": 1786770526,
+        "narHash": "sha256-PwPNL7i1H1DTOBrvnw1NkLOgFoTCBeCIS2yjRtNCwuU=",
         "ref": "bugfix",
-        "rev": "7bd41df72730b7fc848851d2686fc0b2e0c8bc26",
-        "revCount": 28665,
+        "rev": "7427df2d96d264734e1ba2a943545faa1c8c763f",
+        "revCount": 28666,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
       },
@@ -850,11 +850,11 @@
     "tramp-rpc": {
       "flake": false,
       "locked": {
-        "lastModified": 1786465197,
-        "narHash": "sha256-8nMRbmPjn1182NuIXVe/3aYu0U+sNHVOnXPMwTZaIaU=",
+        "lastModified": 1786637449,
+        "narHash": "sha256-N5wlfbZSpY4K/INWdCUFFWlo5Q2tSMasyTRYKGdCjVw=",
         "owner": "ArthurHeymans",
         "repo": "emacs-tramp-rpc",
-        "rev": "e1d4632d576ecf2472c321de1e713b776ea2b78f",
+        "rev": "8cc1dcc665d4f963df240020b6229c59229dd710",
         "type": "github"
       },
       "original": {
