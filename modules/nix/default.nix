@@ -40,19 +40,19 @@ in
       };
 
       settings = {
-        auto-optimise-store = pkgs.stdenv.isLinux;
+        auto-optimise-store = pkgs.stdenv.hostPlatform.isLinux;
         experimental-features = [
           "flakes"
           "nix-command"
           "pipe-operators"
         ];
-        sandbox = if pkgs.stdenv.isDarwin then "relaxed" else true;
+        sandbox = if pkgs.stdenv.hostPlatform.isDarwin then "relaxed" else true;
         trusted-users = (
           [
             "root"
             "@wheel"
           ]
-          ++ optional pkgs.stdenv.isDarwin "@admin"
+          ++ optional pkgs.stdenv.hostPlatform.isDarwin "@admin"
         );
         use-xdg-base-directories = true;
         warn-dirty = false;

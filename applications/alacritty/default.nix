@@ -28,7 +28,7 @@ in
           y = 5;
         };
       }
-      // (lib.optionalAttrs pkgs.stdenv.isDarwin {
+      // (lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         option_as_alt = "Both";
       });
       scrolling = {

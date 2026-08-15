@@ -8,7 +8,10 @@
   programs.git = {
     enable = true;
     package =
-      if pkgs.stdenv.isDarwin then pkgs.git.override { osxkeychainSupport = false; } else pkgs.git;
+      if pkgs.stdenv.hostPlatform.isDarwin then
+        pkgs.git.override { osxkeychainSupport = false; }
+      else
+        pkgs.git;
     includes = [
       { path = "~/.config/git/local"; }
     ];
@@ -51,7 +54,7 @@
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/w9P7ws2J3mqoYBFbqcnIPw2idc8NYsoEF/Z3p87DL";
       signByDefault = true;
     }
-    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
     };
     maintenance = {

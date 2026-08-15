@@ -22,7 +22,7 @@ in
 
     enable = true;
     emacsclient.enable = true;
-    serviceIntegration.enable = pkgs.stdenv.isLinux;
+    serviceIntegration.enable = pkgs.stdenv.hostPlatform.isLinux;
     createInitFile = true;
     createManifestFile = true;
     config = inputs.my-emacs.packages.${system}.default;

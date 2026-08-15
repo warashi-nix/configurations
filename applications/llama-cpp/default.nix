@@ -44,7 +44,7 @@ let
 in
 {
   home = {
-    activation = lib.mkIf pkgs.stdenv.isDarwin {
+    activation = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
       llama-server-state-directory = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run mkdir -p ${lib.escapeShellArg state-directory}
       '';
@@ -54,7 +54,7 @@ in
     ];
   };
 
-  launchd.agents.llama-server = lib.mkIf pkgs.stdenv.isDarwin {
+  launchd.agents.llama-server = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     enable = true;
     config = {
       EnvironmentVariables = {

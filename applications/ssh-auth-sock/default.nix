@@ -46,7 +46,7 @@ let
     '';
   };
 in
-lib.mkIf pkgs.stdenv.isLinux {
+lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
   systemd.user.services.ssh-auth-sock-relink = {
     Unit = {
       Description = "Relink ssh_auth_sock to a live SSH agent socket";

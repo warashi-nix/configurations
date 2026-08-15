@@ -21,7 +21,7 @@ in
   options.warashi.darwin = {
     enable = mkOption {
       type = types.bool;
-      default = pkgs.stdenv.isDarwin;
+      default = pkgs.stdenv.hostPlatform.isDarwin;
       description = "Enable Darwin support.";
     };
   };
