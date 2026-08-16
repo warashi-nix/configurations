@@ -8,14 +8,14 @@
 {
   mattpocock-skills = {
     pname = "mattpocock-skills";
-    version = "8b78b531ab965735c5dc74f6f7a219e1e37326df";
+    version = "068b6e0c62393147daf03530149cdce209c93da8";
     src = fetchFromGitHub {
       owner = "mattpocock";
       repo = "skills";
-      rev = "8b78b531ab965735c5dc74f6f7a219e1e37326df";
+      rev = "068b6e0c62393147daf03530149cdce209c93da8";
       fetchSubmodules = false;
-      sha256 = "sha256-jsXcMkhu15MxR0zXnLLJeni0q0Aew2UxUSojl6zmOvg=";
+      sha256 = "sha256-QYJScM5FqsN+QsHHo5oJx/1e7YqGxdod/Iv6kpnQZ+o=";
     };
-    date = "2026-08-13";
+    date = "2026-08-15";
   };
 }
