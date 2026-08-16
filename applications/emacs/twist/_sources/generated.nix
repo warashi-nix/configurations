@@ -32,15 +32,15 @@
   };
   melpa = {
     pname = "melpa";
-    version = "19992d9cb8ecb3013e386c3dd70d5fabe0126e3c";
+    version = "6afc5e5a90df19a3f5d1abd41a37aba1f846d374";
     src = fetchFromGitHub {
       owner = "melpa";
       repo = "melpa";
-      rev = "19992d9cb8ecb3013e386c3dd70d5fabe0126e3c";
+      rev = "6afc5e5a90df19a3f5d1abd41a37aba1f846d374";
       fetchSubmodules = false;
-      sha256 = "sha256-Rq+MfFdVQpfqoEjLOfjZoUU9UI4hh19GlaQ+2a59jJU=";
+      sha256 = "sha256-WflI6VF/izB4QpbGmu2PCQJ0LvCZYskMUbQvbzrRzTo=";
     };
-    date = "2026-08-15";
+    date = "2026-08-16";
   };
   nongnu-elpa = {
     pname = "nongnu-elpa";
