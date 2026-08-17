@@ -8,15 +8,15 @@
 {
   epkgs = {
     pname = "epkgs";
-    version = "3bd407d6591a82800bd5347e24dee4f706b1f57b";
+    version = "37fff1e42ebd8b099b6406c7d19375d9254fd35f";
     src = fetchFromGitHub {
       owner = "emacsmirror";
       repo = "epkgs";
-      rev = "3bd407d6591a82800bd5347e24dee4f706b1f57b";
+      rev = "37fff1e42ebd8b099b6406c7d19375d9254fd35f";
       fetchSubmodules = false;
-      sha256 = "sha256-sCzh807gqQmJfeSJi5NkIM/QeLhKxieJYBr4AlEro1w=";
+      sha256 = "sha256-toffSRR1083q6al+VV5bhSaM3OnHk2r4lmrB/C78fwM=";
     };
-    date = "2026-08-15";
+    date = "2026-08-17";
   };
   gnu-elpa = {
     pname = "gnu-elpa";
@@ -32,13 +32,13 @@
   };
   melpa = {
     pname = "melpa";
-    version = "6afc5e5a90df19a3f5d1abd41a37aba1f846d374";
+    version = "fa4a6c0d3e91acdf258317e325ad037a472887ec";
     src = fetchFromGitHub {
       owner = "melpa";
       repo = "melpa";
-      rev = "6afc5e5a90df19a3f5d1abd41a37aba1f846d374";
+      rev = "fa4a6c0d3e91acdf258317e325ad037a472887ec";
       fetchSubmodules = false;
-      sha256 = "sha256-WflI6VF/izB4QpbGmu2PCQJ0LvCZYskMUbQvbzrRzTo=";
+      sha256 = "sha256-Iwct3PoJ6hhwZJbGdqJZBQlMNBtCxfUkujdPqxKGvfU=";
     };
     date = "2026-08-16";
   };
