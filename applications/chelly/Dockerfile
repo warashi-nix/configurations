@@ -133,6 +133,16 @@ RUN \
     echo 'warashi ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/warashi && \
     chmod 0440 /etc/sudoers.d/warashi
 
+# rootless podman を入れ子で動かすための subuid/subgid 範囲を明示する。
+# useradd はこの範囲を自動では作らず、無いと podman が single mapping にフォールバックして
+# 複数 UID を使うイメージが壊れる。100000 起点なのは ARG UID/GID にどんな値が来ても
+# 重ならないようにするため。
+RUN echo 'warashi:100000:65536' > /etc/subuid && \
+    echo 'warashi:100000:65536' > /etc/subgid
+
+# podman-docker が docker 実行のたびに出す案内メッセージを抑止する
+RUN mkdir -p /etc/containers && touch /etc/containers/nodocker
+
 USER warashi
 ENV USER=warashi
 WORKDIR /home/warashi
