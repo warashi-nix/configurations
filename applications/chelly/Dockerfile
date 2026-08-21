@@ -228,13 +228,19 @@ RUN mkdir -p ~/.config/nix && \
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
-# /nix は named volume なので、イメージを再ビルドしても volume 側には古い nix しか
-# 無い。インストーラは store に無いパスだけを追加して profile を張り直す冪等な動作
-# なので、nix が使えないときだけ実行すれば volume のキャッシュを保ったまま追随できる。
-# 出力を stderr へ寄せているのは、stdout でプロトコルを話す ACP エージェントを
-# 壊さないため。
-if ! nix --version >/dev/null 2>&1; then
-  /opt/nix-installer/install --no-daemon --no-channel-add --no-modify-profile >&2 || exit 1
+# nix の profile 実体は home 側にあってコンテナごとに消えるため、インストーラは実質
+# 毎回走る。store は /nix の named volume に残っているので、追加されるのは差分だけ。
+# flock で直列化しているのは、volume を共有する複数コンテナが同時に起動したときに
+# 同じ store へ並行に書き込ませないため。判定をロックの外に出すと、待たされた側が
+# 古い判定結果のまま走ってしまうので、判定ごとロック内に入れている。
+# 出力を溜めて失敗時だけ stderr へ流すのは、成功時に進捗表示で画面を汚さず、かつ
+# stdout でプロトコルを話す ACP エージェントへ何も漏らさないため。
+if ! chelly_nix_install_log="$(flock /nix/.chelly-install.lock sh -c '
+    nix --version >/dev/null 2>&1 ||
+      /opt/nix-installer/install --no-daemon --no-channel-add --no-modify-profile
+  ' 2>&1)"; then
+  printf '%s\n' "${chelly_nix_install_log}" >&2
+  exit 1
 fi
 
 if [ -f flake.nix ]; then
