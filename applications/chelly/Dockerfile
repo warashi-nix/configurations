@@ -116,8 +116,9 @@ RUN set -eu; \
     rm -f "/tmp/${archive}" /tmp/node_checksums.txt
 
 # claude-agent-acp (ACP エージェント) インストール
-# /nix は named volume で永続化しており、イメージ側の /nix が変わると volume ごと
-# 破棄されるため、nix profile ではなく npm で /usr/local 配下に入れる。
+# /nix は named volume で覆われるためイメージ側の /nix は実行時に見えない。
+# nix profile に入れてもイメージ再ビルド時に volume 側と食い違うため、npm で
+# /usr/local 配下に入れる。
 ARG CLAUDE_AGENT_ACP_VERSION="latest"
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm install -g "@agentclientprotocol/claude-agent-acp@${CLAUDE_AGENT_ACP_VERSION}"
@@ -142,6 +143,56 @@ RUN echo 'warashi:100000:65536' > /etc/subuid && \
 
 # podman-docker が docker 実行のたびに出す案内メッセージを抑止する
 RUN mkdir -p /etc/containers && touch /etc/containers/nodocker
+
+# --------------------------------------------------------
+# Nix インストーラの同梱
+# --------------------------------------------------------
+# /nix は named volume で永続化されるため、実行時にはイメージ側の /nix が隠れる。
+# ビルド時に nix を /nix へ入れると、profile の実体 (~/.local/state/nix 配下にあり
+# イメージレイヤーに残る) が新しい store path を指す一方で volume には古い store しか
+# 無い状態になり nix が消えるため、イメージにはインストーラだけを置き、実際の導入は
+# entrypoint が volume に対して行う。
+# ADD で取得しているのは、install スクリプトの更新でレイヤーキャッシュを失効させ、
+# 再ビルド時に nix のバージョンを追随させるため。
+ADD --chmod=0666 https://nixos.org/nix/install /tmp/nix-install.sh
+RUN set -eu; \
+    case "${TARGETARCH}/${TARGETVARIANT}" in \
+        386/) nix_system="i686-linux" ;; \
+        amd64/) nix_system="x86_64-linux" ;; \
+        arm64/|arm64/v8) nix_system="aarch64-linux" ;; \
+        arm/v6) nix_system="armv6l-linux" ;; \
+        arm/|arm/v7) nix_system="armv7l-linux" ;; \
+        *) \
+            echo "Unsupported target architecture: ${TARGETARCH}/${TARGETVARIANT}" >&2; \
+            exit 1; \
+            ;; \
+    esac; \
+    nix_release="$(awk -v target="${nix_system}" \
+        '/hash=/ { hash = $0 } \
+         index($0, "-" target ".tar.xz") { \
+             sub(/.*hash=/, "", hash); archive = $0; sub(/.*\//, "", archive); \
+             print hash, archive; exit \
+         }' /tmp/nix-install.sh)"; \
+    nix_hash="${nix_release% *}"; \
+    archive="${nix_release#* }"; \
+    case "${nix_hash}/${archive}" in \
+        [0-9a-f][0-9a-f]*/nix-[0-9]*.tar.xz) ;; \
+        *) echo "Failed to resolve Nix release for ${nix_system}" >&2; exit 1 ;; \
+    esac; \
+    nix_version="${archive#nix-}"; \
+    nix_version="${nix_version%"-${nix_system}.tar.xz"}"; \
+    curl -fsSLo "/tmp/${archive}" \
+        "https://releases.nixos.org/nix/nix-${nix_version}/${archive}"; \
+    echo "${nix_hash}  /tmp/${archive}" > /tmp/nix_checksums.txt; \
+    sha256sum --check /tmp/nix_checksums.txt; \
+    mkdir -p /opt/nix-installer; \
+    tar -xJf "/tmp/${archive}" --strip-components=1 -C /opt/nix-installer; \
+    chown -R "${UID}:${GID}" /opt/nix-installer; \
+    rm -f "/tmp/${archive}" /tmp/nix_checksums.txt /tmp/nix-install.sh
+
+# 空の /nix を warashi 所有で用意する。新規 volume はマウント先の所有者を引き継ぐため、
+# これが無いと root 所有の volume ができてインストーラが書き込めない。
+RUN mkdir -p /nix && chmod 0755 /nix && chown "${UID}:${GID}" /nix
 
 USER warashi
 ENV USER=warashi
@@ -170,15 +221,21 @@ RUN bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 ADD --chmod=0666 https://gh.io/copilot-install /tmp/copilot-install.sh
 RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
 
-# Nix インストール（single user install）
-ADD --chmod=0666 https://nixos.org/nix/install /tmp/nix-install.sh
-RUN sh /tmp/nix-install.sh --no-daemon --no-channel-add && \
-    rm -f /tmp/nix-install.sh && \
-    mkdir -p ~/.config/nix && \
+# Nix 設定（インストール自体は entrypoint が volume 側の /nix に対して行う）
+RUN mkdir -p ~/.config/nix && \
     echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
+
+# /nix は named volume なので、イメージを再ビルドしても volume 側には古い nix しか
+# 無い。インストーラは store に無いパスだけを追加して profile を張り直す冪等な動作
+# なので、nix が使えないときだけ実行すれば volume のキャッシュを保ったまま追随できる。
+# 出力を stderr へ寄せているのは、stdout でプロトコルを話す ACP エージェントを
+# 壊さないため。
+if ! nix --version >/dev/null 2>&1; then
+  /opt/nix-installer/install --no-daemon --no-channel-add --no-modify-profile >&2 || exit 1
+fi
 
 if [ -f flake.nix ]; then
   if [ "$#" -eq 0 ]; then
