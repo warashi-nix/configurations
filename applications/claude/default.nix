@@ -121,13 +121,13 @@ in
         disableClaudeAiConnectors = true;
         disableDeepLinkRegistration = "disable";
         disableRemoteControl = true;
-        outputStyle = "grilling";
         effortLevel = "low";
         enableArtifact = false;
         fastMode = false;
         feedbackSurveyRate = 0;
         language = "japanese";
         model = "sonnet";
+        outputStyle = "grilling";
         preferredNotifChannel = "terminal_bell";
         prefersReducedMotion = true;
         promptSuggestionEnabled = false;
