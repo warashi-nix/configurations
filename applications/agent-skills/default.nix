@@ -29,7 +29,7 @@ in
     targets = {
       # keep-sorted start block=yes
       claude = {
-        enable = true;
+        enable = false;
         structure = "copy-tree";
       };
       copilot = {
