@@ -805,31 +805,39 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
  (fable-medium "claude-fable-5[1m]" "medium"))
 #+end_src
 
-session の累積コストを mode-line に常設する。ターン終了時のボックス
-(=agent-shell-show-usage-at-turn-end=) ではなく mode-line にするのは、
-走らせている最中に膨らみを察知したいため。
+session の累積コストを context usage indicator の隣に常設する。ターン終了時の
+ボックス (=agent-shell-show-usage-at-turn-end=) ではなく常設にするのは、走らせて
+いる最中に膨らみを察知したいため。
 
 #+begin_src emacs-lisp
 (defun warashi-agent-shell--cost-indicator ()
-  "session の累積コストを mode-line 用の文字列で返す。"
+  "session の累積コストを表示用の文字列で返す。"
   ;; state を読むのに内部関数を使うのは、usage を取得する公開 API が無いため。
-  ;; mode-line を丸ごと差し替えず misc-info に足すのは、上流が
-  ;; `agent-shell--mode-line-format' を変えても壊れないようにするため。
   (when-let* ((usage (map-elt (agent-shell--state) :usage))
               (amount (map-elt usage :cost-amount))
               ((> amount 0)))
-    (format " ➤ %s%.2f" (or (map-elt usage :cost-currency) "$") amount)))
+    (let ((currency (map-elt usage :cost-currency)))
+      ;; USD を $ に畳むのは、幅の限られる header で 2 文字を惜しむため。
+      (format "%s%.2f" (if (member currency '(nil "USD")) "$" currency) amount))))
 
-(defun warashi-agent-shell--setup-cost-indicator ()
-  "`warashi-agent-shell--cost-indicator' を mode-line に追加する。"
-  (setq-local mode-line-misc-info
-              (append mode-line-misc-info
-                      '((:eval (warashi-agent-shell--cost-indicator))))))
+(defun warashi-agent-shell--append-cost-indicator (indicator)
+  "context usage INDICATOR の後ろに cost を足す。"
+  ;; mode-line ではなく context indicator に相乗りするのは、tty では
+  ;; `agent-shell-header-style' が text になり、`agent-shell--mode-line-format'
+  ;; が nil を返して情報が header-line 側にしか出ないため。
+  ;; indicator が nil のときに cost だけ返さないのは、context 未取得の段階で
+  ;; header に単独の数字が現れると何の値か分からないため。
+  (if-let* ((indicator)
+            (cost (warashi-agent-shell--cost-indicator)))
+      (concat indicator " " cost)
+    indicator))
 
 (setup agent-shell
   (:with-hook agent-shell-mode-hook
-    (:hook warashi-agent-shell--apply-thought-level
-           warashi-agent-shell--setup-cost-indicator)))
+    (:hook warashi-agent-shell--apply-thought-level))
+  (:when-loaded
+    (advice-add 'agent-shell--context-usage-indicator :filter-return
+                #'warashi-agent-shell--append-cost-indicator)))
 #+end_src
 
 * 開発ツール
