@@ -205,7 +205,12 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 
 #+begin_src emacs-lisp
 (setup (:package nskk nskk-corfu-henkan)
-  (:opt nskk-dict-system-dictionary-files (list (locate-user-emacs-file "nskk/SKK-JISYO.L"))
+  ;; xdg が張った symlink ではなく store の実体を渡す。nskk の辞書読み込み
+  ;; は対象と全親ディレクトリが書き込み不可であることを要求する
+  ;; (stable-direct-source-p)。symlink 側の親は ~/.config なので必ず落ちる。
+  ;; 実体なら親が /nix/store と / だけになって通る。辞書が更新されたときに
+  ;; store path が変わってキャッシュが正しく無効化される利点もある。
+  (:opt nskk-dict-system-dictionary-files (list (file-truename (locate-user-emacs-file "nskk/SKK-JISYO.L")))
         nskk-dict-user-dictionary-file (locate-user-emacs-file "nskk/jisyo")
         nskk-search-learning-file (locate-user-emacs-file "nskk/learning.dat")
         nskk-study-file (locate-user-emacs-file "nskk/study.dat")
