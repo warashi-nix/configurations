@@ -336,6 +336,94 @@ nskk の nskk-cursor-update は set-cursor-color を呼ぶだけで TUI では�
   (add-hook 'kill-emacs-hook #'my/nskk-tty-cursor-reset-all))
 #+end_src
 
+*** PoC: input-method-function でキーを先に受け取る
+=nskk-mode-map= は打鍵の取り込みを =<remap> <self-insert-command>= 一本に頼って
+いるが、remap は「そのキーが解決したコマンド」に引かれるため、major mode が印字
+可能キーを直接バインドしていると nskk まで届かない。agent-shell の =n= がその例
+で、=konnkai= が =こnnかい= になる。dired や magit でも同種の衝突が起きうる。
+
+=input-method-function= はキーマップ探索より手前で呼ばれるので、ここで文字を
+nskk 専用の合成イベントに差し替えてしまえば、どの major mode とも衝突しない。
+quail のように自前の read ループは持たない。ループを持つとコマンドが走らなくな
+り、=post-command-hook= に依存する corfu と capf が死ぬため。合成イベントを
+=nskk-mode-map= 側で本来のハンドラに橋渡しする形なら、=this-command= が
+=nskk-self-insert= のまま残るので corfu 連携はそのまま動く。
+
+PoC として測りたいのは以下。=C-x C-j= 経路 (=current-input-method= は nil のま
+ま) で発火するか、prefix key (=C-x n=) が壊れないか、=read-char= や
+=y-or-n-p=、isearch、keyboard macro での挙動。=C-\= 経路との比較のために
+=japanese-nskk= も登録しておく。
+
+#+begin_src emacs-lisp
+(defconst warashi-nskk-im--event-prefix "warashi-nskk-key-")
+
+(defun warashi-nskk-im--event (char)
+  "CHAR に対応する合成イベントのシンボルを返す。"
+  (intern (concat warashi-nskk-im--event-prefix (number-to-string char))))
+
+(defun warashi-nskk-im--event-char (event)
+  "合成イベント EVENT の元の文字を返す。合成イベントでなければ nil。"
+  (when (symbolp event)
+    (let ((name (symbol-name event)))
+      (when (string-prefix-p warashi-nskk-im--event-prefix name)
+        (string-to-number (substring name (length warashi-nskk-im--event-prefix)))))))
+
+(defun warashi-nskk-im--consumes-typing-p ()
+  "現在のバッファで nskk が打鍵を消費するなら non-nil。
+ascii と latin だけが `input-route/2' で `insert-direct' を返す。"
+  (and (bound-and-true-p nskk-mode)
+       (bound-and-true-p nskk-current-state)
+       (not (eq (nskk-prolog-query-value
+                 `(input-route ,(nskk-state-get-mode) ,'\?action) '\?action)
+                'insert-direct))))
+
+(defun warashi-nskk-im--dispatch ()
+  "合成イベントを `nskk-mode-map' 本来のハンドラへ橋渡しする。"
+  (interactive)
+  (when-let* ((char (warashi-nskk-im--event-char last-command-event)))
+    (let ((cmd (or (keymap-lookup nskk-mode-map (single-key-description char))
+                   #'nskk-self-insert))
+          (last-command-event char))
+      ;; corfu-auto は corfu-auto-commands を this-command で照合するので、
+      ;; 橋渡し役ではなく実際に走るコマンド名を残す。
+      (setq this-command cmd)
+      (call-interactively cmd))))
+
+(defun warashi-nskk-im-translate (key)
+  "KEY を nskk 専用の合成イベントに差し替える。
+nskk が打鍵を消費しないモード (ascii/latin) では KEY をそのまま返し、
+major mode の単キーコマンドを潰さない。"
+  (if (and (integerp key) (<= 32 key) (<= key 126)
+           (warashi-nskk-im--consumes-typing-p))
+      (list (warashi-nskk-im--event key))
+    (list key)))
+
+(defun warashi-nskk-im-setup ()
+  "現在のバッファで合成イベント経路を有効にする。"
+  (setq-local input-method-function #'warashi-nskk-im-translate))
+
+(defun warashi-nskk-im-activate (&optional _name)
+  "`japanese-nskk' 入力メソッドとして nskk を有効にする。"
+  (setq deactivate-current-input-method-function #'warashi-nskk-im-deactivate)
+  (nskk-mode 1))
+
+(defun warashi-nskk-im-deactivate ()
+  "`japanese-nskk' 入力メソッドを無効にする。"
+  (nskk-mode -1))
+
+(with-eval-after-load 'nskk
+  ;; 合成イベントは他のどのマップにも存在しないので、nskk-mode-map に直接
+  ;; 置いても既存のキーとは衝突しない。
+  (dotimes (i 95)
+    (keymap-set nskk-mode-map
+                (key-description (vector (warashi-nskk-im--event (+ 32 i))))
+                #'warashi-nskk-im--dispatch))
+  (add-hook 'nskk-mode-hook #'warashi-nskk-im-setup)
+  (register-input-method
+   "japanese-nskk" "Japanese" #'warashi-nskk-im-activate ""
+   "SKK (nskk) via input-method-function"))
+#+end_src
+
 ** ddskk
 nskk が壊れたときの退路として残してある。C-\ で入る。
 
