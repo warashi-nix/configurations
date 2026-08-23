@@ -53,6 +53,7 @@
           extraRecipeDir = ./recipes;
           localPackages = [
             "consult-git-wit"
+            "nskk-corfu-henkan"
             "spectreshell"
             "warashi-init"
             "warashi-early-init"
@@ -60,6 +61,9 @@
           inputOverrides = {
             consult-git-wit = _: _: {
               src = ./packages/consult-git-wit;
+            };
+            nskk-corfu-henkan = _: _: {
+              src = ./packages/nskk-corfu-henkan;
             };
             spectreshell =
               _: _:
