@@ -1,0 +1,3 @@
+(nskk :fetcher github
+      :repo "takeokunn/nskk.el"
+      :files ("src/*.el"))
