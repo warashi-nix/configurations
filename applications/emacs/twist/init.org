@@ -247,6 +247,46 @@ handler は =/= や =/nix= にもマッチするので、tramp が読み込ま�
   (advice-add fn :around #'my/nskk-read-without-file-handlers))
 #+end_src
 
+*** マーカーを変更フックから隠さない
+nskk は ▽ ▼ の挿入を inhibit-modification-hooks で隠す
+(=nskk-henkan.el:600= の =nskk--insert-marker= ほか)。隠れた挿入でバッファ
+の位置がずれるため、次の通常の挿入で track-changes の整合検査が落ちる。
+=K= で ▽ が入った時点では無事で、続く =a= で かな が入った瞬間に死ぬ。
+
+実害は copilot。after-change-functions でエラーが出ると Emacs はその関数
+を hook から外すので、日本語を一文字打ったバッファでは以後 copilot が差分
+を追わなくなる。copilot-mode は有効に見えたままなので気付けない。track-
+changes の登録はバッファローカルなので他のバッファは巻き込まないが、日本
+語を打つバッファから順に効かなくなる。eglot は Emacs 31 では track-changes
+を使っていないので影響しない。
+
+マーカーを普通に挿入すれば整合は保たれる。undo にマーカーが入るので
+=C-x u= で ▼かんじ → ▽かんじ → ▽かん と打鍵を遡るようになるが、打った
+手順を巻き戻しているだけで実害は無い。
+
+#+begin_src emacs-lisp
+(defun my/nskk-insert-marker (marker)
+  (insert marker))
+
+(defun my/nskk-delete-marker-at (pos marker-regexp)
+  (save-excursion
+    (goto-char pos)
+    (when (looking-at marker-regexp)
+      (delete-char (length (match-string 0))))))
+
+(defun my/nskk-replace-marker-at (pos old-regexp new-marker)
+  (save-excursion
+    (goto-char pos)
+    (when (looking-at old-regexp)
+      (delete-char (length (match-string 0)))
+      (insert new-marker))))
+
+(with-eval-after-load 'nskk
+  (advice-add 'nskk--insert-marker :override #'my/nskk-insert-marker)
+  (advice-add 'nskk--delete-marker-at :override #'my/nskk-delete-marker-at)
+  (advice-add 'nskk--replace-marker-at :override #'my/nskk-replace-marker-at))
+#+end_src
+
 *** TUI のカーソル色
 nskk の nskk-cursor-update は set-cursor-color を呼ぶだけで TUI では何も
 起きないため、OSC 12 で端末にカーソル色を通知する。
