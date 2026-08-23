@@ -878,6 +878,38 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
   (:after-init agent-shell-tramp-mode))
 #+end_src
 
+*** 単キーコマンドに入力メソッドを奪わせない
+=agent-shell-mode-map= は =n= =p= =r= =+= =-= =0= を素のキーで握っており、プロン
+プト上ではそれぞれのコマンドが =self-insert-command= を直接呼ぶ
+(=agent-shell.el= の =agent-shell-next-item= ほか)。直接呼び出しは
+=nskk-mode-map= の =<remap> <self-insert-command>= を通らないので、=n= が生の
+ASCII のまま入り、続く =o= だけが nskk を通って =nお= になる。=konnkai= のように
+=n= を含む読みが軒並み壊れる。
+
+ddskk が無事なのは =skk-j-mode-map= に印字可能 ASCII を直接バインドしていて、
+minor-mode map が major-mode map より先に引かれるため。nskk は remap 一本なので
+=n= が先に =agent-shell-next-item= に解決され、以後 =[remap
+agent-shell-next-item]= しか探されない。
+
+#+begin_src emacs-lisp
+(defun warashi-agent-shell--self-insert-via-remap (fn &rest args)
+  ;; remap が無いときは素通しする。入力メソッドを使っていない状態での挙動を
+  ;; 変えないため。
+  (if-let* ((_ (agent-shell--typing-at-prompt-p))
+            (remapped (command-remapping #'self-insert-command)))
+      (call-interactively remapped)
+    (apply fn args)))
+
+(with-eval-after-load 'agent-shell
+  (dolist (fn '(agent-shell-next-item
+                agent-shell-previous-item
+                agent-shell-quote-region
+                agent-shell-image-scale-increase
+                agent-shell-image-scale-decrease
+                agent-shell-image-scale-reset))
+    (advice-add fn :around #'warashi-agent-shell--self-insert-via-remap)))
+#+end_src
+
 model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
 その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
 
