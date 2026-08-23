@@ -357,6 +357,12 @@ nskk-completion-at-point と同じにしてあるので、▽ 中は必ずこち
     (list text-start
           (point)
           #'nskk-corfu-henkan--table
+          ;; corfu-auto-prefix の既定 3 では ▽かん で popup が出ない。SKK の
+          ;; 読みは 1〜2 文字で確定することが多く、3 文字を待つ設定では変換
+          ;; 候補がほとんど出てこない。corfu-auto-prefix を下げるとこの capf
+          ;; 以外まで 1 文字で発火するので、prefix 長の検査だけを外す
+          ;; (corfu.el:386 は長さが t なら無条件に通す)。
+          :company-prefix-length t
           :annotation-function #'nskk-corfu-henkan--annotation
           :exit-function #'nskk-corfu-henkan--exit)))
 

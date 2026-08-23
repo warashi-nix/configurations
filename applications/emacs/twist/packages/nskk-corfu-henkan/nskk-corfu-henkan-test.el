@@ -184,6 +184,13 @@ execute-kbd-macro は batch でイベントキューを汚すので、nskk の E
            (candidates (all-completions "か" (nth 2 (nskk-corfu-henkan-at-point)))))
       (should (equal candidates '("感" "缶"))))))
 
+(ert-deftest nskk-corfu-henkan-test-bypasses-auto-prefix-length ()
+  "corfu の最小 prefix 長の検査を外す。SKK の読みは 1〜2 文字で確定する。"
+  (nskk-corfu-henkan-test--with-buffer
+    (nskk-corfu-henkan-test--type "K a n")
+    (should (eq t (plist-get (nthcdr 3 (nskk-corfu-henkan-at-point))
+                             :company-prefix-length)))))
+
 (ert-deftest nskk-corfu-henkan-test-short-reading-skips-prefix-match ()
   "読みが 1 文字のうちは前方一致を引かない。実辞書では 1 万件近く該当する。"
   (nskk-corfu-henkan-test--with-buffer
