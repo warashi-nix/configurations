@@ -373,6 +373,7 @@ self-insert-command しか見ていないが、nskk は remap で nskk-self-inse
     (dolist (cmd '(nskk-self-insert nskk-handle-backspace))
       (add-to-list 'corfu-auto-commands cmd))))
 
+;;;###autoload
 (defun nskk-corfu-henkan-setup ()
   "現在のバッファで変換候補の capf を有効にする。
 nskk-mode を有効にした後に呼ぶこと。"
