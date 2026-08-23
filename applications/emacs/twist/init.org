@@ -228,6 +228,25 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
     (:hook nskk-corfu-henkan-setup)))
 #+end_src
 
+*** 辞書読み込みとファイル名ハンドラ
+nskk の辞書読み込みは、対象と全親ディレクトリにファイル名ハンドラが付い
+ていないことを要求する (local-unhandled-file-p)。tramp の completion
+handler は =/= や =/nix= にもマッチするので、tramp が読み込まれているだ
+けで辞書も学習データも読めなくなる。しかも例外にはならず黙って ja-dic に
+落ちるため、送りあり候補が出ないことでしか気付けない。
+
+#+begin_src emacs-lisp
+(defun my/nskk-read-without-file-handlers (fn &rest args)
+  ;; 読み込みの間だけ外す。ハンドラを恒久的に触ると tramp 越しの編集が壊れる。
+  (let ((file-name-handler-alist nil))
+    (apply fn args)))
+
+(dolist (fn '(nskk-dict-initialize
+              nskk-search-load-learning-data
+              nskk-study-load))
+  (advice-add fn :around #'my/nskk-read-without-file-handlers))
+#+end_src
+
 *** TUI のカーソル色
 nskk の nskk-cursor-update は set-cursor-color を呼ぶだけで TUI では何も
 起きないため、OSC 12 で端末にカーソル色を通知する。
