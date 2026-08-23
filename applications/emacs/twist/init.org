@@ -97,7 +97,8 @@
 
 #+begin_src emacs-lisp
 (setup emacs
-  (:global-keymap "C-c c" #'compile))
+  (:global-keymap "C-c c" #'compile)
+  (:after-init #'xterm-mouse-mode))
 #+end_src
 
 * シェル/環境
