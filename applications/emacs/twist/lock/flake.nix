@@ -205,6 +205,12 @@
       repo = "nix-ts-mode";
       type = "github";
     };
+    nskk = {
+      flake = false;
+      owner = "takeokunn";
+      repo = "nskk.el";
+      type = "github";
+    };
     orderless = {
       flake = false;
       owner = "oantolin";

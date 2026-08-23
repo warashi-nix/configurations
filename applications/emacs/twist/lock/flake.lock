@@ -544,6 +544,22 @@
         "type": "github"
       }
     },
+    "nskk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785042085,
+        "narHash": "sha256-665mEbf77Dx4iBUOHE7Ai0uIHSax56wBMrEKB4mN5yQ=",
+        "owner": "takeokunn",
+        "repo": "nskk.el",
+        "rev": "43968686b05bb135072e0922a299d133515f6d68",
+        "type": "github"
+      },
+      "original": {
+        "owner": "takeokunn",
+        "repo": "nskk.el",
+        "type": "github"
+      }
+    },
     "orderless": {
       "flake": false,
       "locked": {
@@ -726,6 +742,7 @@
         "md-mode": "md-mode",
         "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
+        "nskk": "nskk",
         "orderless": "orderless",
         "org": "org",
         "org-mem": "org-mem",
