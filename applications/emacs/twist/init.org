@@ -199,7 +199,82 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 #+end_src
 
 * 入力・編集
+** nskk
+変換候補を corfu に出したいので ddskk ではなく nskk を使う。候補を capf
+として返す nskk-corfu-henkan がそれを担う。
+
+#+begin_src emacs-lisp
+(setup (:package nskk nskk-corfu-henkan)
+  (:opt nskk-dict-system-dictionary-files (list (locate-user-emacs-file "nskk/SKK-JISYO.L"))
+        nskk-dict-user-dictionary-file (locate-user-emacs-file "nskk/jisyo")
+        nskk-search-learning-file (locate-user-emacs-file "nskk/learning.dat")
+        nskk-study-file (locate-user-emacs-file "nskk/study.dat")
+        ;; 見出しの前方一致 (▽にほ で 日本 を出す) は nskk--dcomp-search-prefix
+        ;; が prolog の trie しか引かないので、辞書をローカルに読ませないと
+        ;; 効かない。skkserv は exact 引きのフォールバックとしてだけ残す。
+        nskk-server-enable t
+        nskk-server-host "localhost"
+        nskk-server-portnum 1178
+        ;; 註釈が積まれるのは nskk-show-annotation が non-nil のときの辞書
+        ;; 読み込み時だけ。後から t にしても引けない。
+        nskk-show-annotation t)
+  (:global-keymap "C-x C-j" #'nskk-mode)
+  (:with-hook nskk-mode-hook
+    (:hook nskk-corfu-henkan-setup)))
+#+end_src
+
+*** TUI のカーソル色
+nskk の nskk-cursor-update は set-cursor-color を呼ぶだけで TUI では何も
+起きないため、OSC 12 で端末にカーソル色を通知する。
+
+#+begin_src emacs-lisp
+(defun my/nskk-tty-cursor-color ()
+  (and (bound-and-true-p nskk-mode)
+       (bound-and-true-p nskk-current-state)
+       (fboundp 'nskk--cursor-with-color)
+       (nskk--cursor-with-color (nskk-state-mode nskk-current-state))))
+
+(defun my/nskk-tty-cursor-spec (color)
+  ;; 端末は X11 の色名を解釈できないので rgb: 表記に変換する
+  (let ((values (and color (tty-color-standard-values color))))
+    (when values
+      (apply #'format "rgb:%04x/%04x/%04x" values))))
+
+(defun my/nskk-tty-cursor-apply ()
+  (when (eq (framep (selected-frame)) t)
+    (let* ((terminal (frame-terminal))
+           (spec (my/nskk-tty-cursor-spec (my/nskk-tty-cursor-color))))
+      (unless (equal spec (terminal-parameter terminal 'my/nskk-tty-cursor-spec))
+        (set-terminal-parameter terminal 'my/nskk-tty-cursor-spec spec)
+        (send-string-to-terminal
+         (if spec (format "\e]12;%s\a" spec) "\e]112\a")
+         terminal)))))
+
+(defun my/nskk-tty-cursor-apply-safe ()
+  (condition-case nil
+      (my/nskk-tty-cursor-apply)
+    (error nil)))
+
+(defun my/nskk-tty-cursor-reset-all ()
+  (dolist (terminal (terminal-list))
+    (when (and (eq (terminal-live-p terminal) t)
+               (terminal-parameter terminal 'my/nskk-tty-cursor-spec))
+      (set-terminal-parameter terminal 'my/nskk-tty-cursor-spec nil)
+      (ignore-errors (send-string-to-terminal "\e]112\a" terminal)))))
+
+(defun my/nskk-tty-cursor-reset-terminal (terminal)
+  (when (terminal-parameter terminal 'my/nskk-tty-cursor-spec)
+    (ignore-errors (send-string-to-terminal "\e]112\a" terminal))))
+
+(setup emacs
+  (add-hook 'delete-terminal-functions #'my/nskk-tty-cursor-reset-terminal)
+  (add-hook 'post-command-hook #'my/nskk-tty-cursor-apply-safe)
+  (add-hook 'kill-emacs-hook #'my/nskk-tty-cursor-reset-all))
+#+end_src
+
 ** ddskk
+nskk が壊れたときの退路として残してある。C-\ で入る。
+
 #+begin_src emacs-lisp
 (setup (:package ddskk)
   (setopt default-input-method "japanese-skk")
