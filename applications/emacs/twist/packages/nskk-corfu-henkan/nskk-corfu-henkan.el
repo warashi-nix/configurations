@@ -28,6 +28,14 @@
 (require 'nskk-annotation)
 (require 'nskk-prolog)
 
+;; corfu は require しない。この capf 自体は corfu が無くても動き、テスト
+;; も corfu 抜きで回すため。キーと発火条件の辻褄合わせだけ featurep で
+;; 見て行う。
+(declare-function corfu-next "corfu")
+(declare-function corfu-previous "corfu")
+(defvar corfu-map)
+(defvar corfu-auto-commands)
+
 (defvar nskk-corfu-henkan-prefix-limit 20
   "前方一致で辞書を引く見出しの数の上限。
 見出し 1 つにつき辞書引きが 1 回走り、それが打鍵ごとに起きる。実辞書で
