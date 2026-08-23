@@ -35,11 +35,11 @@
     "agent-shell": {
       "flake": false,
       "locked": {
-        "lastModified": 1787345221,
-        "narHash": "sha256-mLuV43gY6BY17re3mUhA/Pigj0KgqJ2lpjWHtWjk3dg=",
+        "lastModified": 1787426211,
+        "narHash": "sha256-wYjiROU03HG1Qpw3//9h7/f4GNTi43rA0T1+b7EpsNo=",
         "owner": "xenodium",
         "repo": "agent-shell",
-        "rev": "0baa3537be2fa17f7b60fe67a994dc6486ae2ec9",
+        "rev": "d7e152ca13cac10334aa41344314e97d89d592b7",
         "type": "github"
       },
       "original": {
@@ -435,11 +435,11 @@
     "llm": {
       "flake": false,
       "locked": {
-        "lastModified": 1787092477,
-        "narHash": "sha256-W7MLyTR7TSe3rWBtoAhm1HdgvJRWIrcS1ztGS43Qx9U=",
+        "lastModified": 1787432815,
+        "narHash": "sha256-mkshj4LXpt6RcaqBQI+i3lluRBNki+VT7AhAo9chVzY=",
         "owner": "ahyatt",
         "repo": "llm",
-        "rev": "4566f266949b2165cc7eaf25f3195198c0f28edb",
+        "rev": "90e67fc4dfe3fae5b00e7cf6bb68137ac8c441a1",
         "type": "github"
       },
       "original": {
@@ -451,11 +451,11 @@
     "magit": {
       "flake": false,
       "locked": {
-        "lastModified": 1787346942,
-        "narHash": "sha256-dmyK6yMRpsnugs8zbQQDjRZZaY6ZLQ7DiTxwQ3NDTc4=",
+        "lastModified": 1787399895,
+        "narHash": "sha256-PPX9Gt8Uv0A5o//FS81PaegZLOOBzLlVfopQ3SBX4cE=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "7ade2f49abd34395ddd51dde68510c3016523ba1",
+        "rev": "137f137dccb37097ae9caa31018cafa071ff4ec1",
         "type": "github"
       },
       "original": {
@@ -467,11 +467,11 @@
     "magit-section": {
       "flake": false,
       "locked": {
-        "lastModified": 1787346942,
-        "narHash": "sha256-dmyK6yMRpsnugs8zbQQDjRZZaY6ZLQ7DiTxwQ3NDTc4=",
+        "lastModified": 1787399895,
+        "narHash": "sha256-PPX9Gt8Uv0A5o//FS81PaegZLOOBzLlVfopQ3SBX4cE=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "7ade2f49abd34395ddd51dde68510c3016523ba1",
+        "rev": "137f137dccb37097ae9caa31018cafa071ff4ec1",
         "type": "github"
       },
       "original": {
@@ -563,11 +563,11 @@
     "org": {
       "flake": false,
       "locked": {
-        "lastModified": 1786770526,
-        "narHash": "sha256-PwPNL7i1H1DTOBrvnw1NkLOgFoTCBeCIS2yjRtNCwuU=",
+        "lastModified": 1787398398,
+        "narHash": "sha256-bdEsWxS8yU2Yl5l0/8AAYqs7o4Gf1rBZjn1z4CskD+o=",
         "ref": "bugfix",
-        "rev": "7427df2d96d264734e1ba2a943545faa1c8c763f",
-        "revCount": 28666,
+        "rev": "33c157f2c9017c218a06ea2883f04f2de528c727",
+        "revCount": 28667,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
       },
