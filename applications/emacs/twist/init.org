@@ -97,8 +97,7 @@
 
 #+begin_src emacs-lisp
 (setup emacs
-  (:global-keymap "C-c c" #'compile)
-  (:after-init #'xterm-mouse-mode))
+  (:global-keymap "C-c c" #'compile))
 #+end_src
 
 * シェル/環境
@@ -185,6 +184,18 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
   ;; GUI フレームでは端末のキー入力を経由しないため、global-kkp-mode は
   ;; 何もせず終わる。TTY 限定のガードは不要。
   (:after-init global-kkp-mode))
+#+end_src
+
+** xt-mouse
+端末の Emacs は既定でマウスイベントを受け取らない。ウィンドウの分割線ドラッグやスクロールを端末でも使えるようにする。
+
+#+begin_src emacs-lisp
+(setup xt-mouse
+  ;; xterm-mouse-mode の autoload が効かない環境があるため require する。
+  (:require xt-mouse)
+  ;; after-init-hook では emacsclient -nw で後から作った TTY のマウス報告
+  ;; 初期化が走らないので、端末ごとに呼ばれる tty-setup-hook を使う。
+  (add-hook 'tty-setup-hook #'xterm-mouse-mode))
 #+end_src
 
 * 入力・編集
