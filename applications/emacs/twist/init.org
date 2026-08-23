@@ -389,12 +389,28 @@ ascii と latin だけが `input-route/2' で `insert-direct' を返す。"
       (setq this-command cmd)
       (call-interactively cmd))))
 
+(defun warashi-nskk-im--defer-p (key)
+  "KEY を差し替えずにそのまま流すべきなら non-nil。
+`quail-input-method' 冒頭の判定を写したもの。read-only な領域では
+major mode の単キーコマンド (agent-shell の出力領域の n など) を残す。
+transient map が KEY を握っているときに差し替えると、C-u 5 の 5 が
+`universal-argument-map' に届かず前置引数が壊れる。"
+  (or (and (or buffer-read-only
+               (and (get-char-property (point) 'read-only)
+                    (get-char-property (point) 'front-sticky)))
+           (not (or inhibit-read-only
+                    (get-char-property (point) 'inhibit-read-only))))
+      (and overriding-terminal-local-map
+           (lookup-key overriding-terminal-local-map (vector key)))
+      overriding-local-map))
+
 (defun warashi-nskk-im-translate (key)
   "KEY を nskk 専用の合成イベントに差し替える。
 nskk が打鍵を消費しないモード (ascii/latin) では KEY をそのまま返し、
 major mode の単キーコマンドを潰さない。"
   (if (and (integerp key) (<= 32 key) (<= key 126)
-           (warashi-nskk-im--consumes-typing-p))
+           (warashi-nskk-im--consumes-typing-p)
+           (not (warashi-nskk-im--defer-p key)))
       (list (warashi-nskk-im--event key))
     (list key)))
 
