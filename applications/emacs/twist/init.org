@@ -226,7 +226,6 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
         ;; カーソル色は my/nskk-cursor-apply が一手に握る。nskk 本体に任せ
         ;; るとバッファを移っても色が更新されない
         nskk-use-color-cursor nil)
-  (:global-keymap "C-x C-j" #'nskk-mode)
   (:with-hook nskk-mode-hook
     (:hook nskk-corfu-henkan-setup)))
 #+end_src
@@ -528,11 +527,15 @@ major mode の単キーコマンドを潰さない。"
 (defun warashi-nskk-im-activate (&optional _name)
   "`japanese-nskk' 入力メソッドとして nskk を有効にする。"
   (setq deactivate-current-input-method-function #'warashi-nskk-im-deactivate)
-  (nskk-mode 1))
+  (nskk-global-mode 1))
 
 (defun warashi-nskk-im-deactivate ()
   "`japanese-nskk' 入力メソッドを無効にする。"
-  (nskk-mode -1))
+  (nskk-global-mode -1))
+
+(register-input-method
+   "japanese-nskk" "Japanese" #'warashi-nskk-im-activate ""
+   "SKK (nskk) via input-method-function")
 
 (with-eval-after-load 'nskk
   ;; 合成イベントは他のどのマップにも存在しないので、nskk-mode-map に直接
@@ -541,10 +544,7 @@ major mode の単キーコマンドを潰さない。"
     (keymap-set nskk-mode-map
                 (key-description (vector (warashi-nskk-im--event (+ 32 i))))
                 #'warashi-nskk-im--dispatch))
-  (add-hook 'nskk-mode-hook #'warashi-nskk-im-setup)
-  (register-input-method
-   "japanese-nskk" "Japanese" #'warashi-nskk-im-activate ""
-   "SKK (nskk) via input-method-function"))
+  (add-hook 'nskk-mode-hook #'warashi-nskk-im-setup))
 #+end_src
 
 ** ddskk
