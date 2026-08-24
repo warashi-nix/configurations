@@ -1289,6 +1289,152 @@ session の累積コストを context usage indicator の隣に常設する。�
                 #'warashi-agent-shell--append-cost-indicator)))
 #+end_src
 
+*** 一覧サイドバー
+複数の shell を並行で回していると、どれが permission 待ちで止まっているかを見失
+う。=agent-shell-switch-buffer= は同じ情報を出せるが、呼んだ瞬間しか見えないので
+気づきの装置にはならない。side window に常駐させ、要操作の shell を先頭に集める。
+
+#+begin_src emacs-lisp
+(defconst warashi-agent-shell-list-buffer-name "*agent shells*"
+  "サイドバーに表示する buffer 名。")
+
+(defconst warashi-agent-shell-list-display-action
+  '(display-buffer-in-side-window
+    (side . right)
+    (window-width . 40)
+    ;; C-x 1 で消えると気づきの装置として当てにできないので残す。
+    (window-parameters . ((no-delete-other-windows . t))))
+  "サイドバーの表示先。")
+
+(defun warashi-agent-shell-list--attention (shell-buffer)
+  "SHELL-BUFFER の要操作度を返す。小さいほど先に並ぶ。"
+  (pcase (agent-shell-status :shell-buffer shell-buffer)
+    ('blocked 0)
+    (_ 2)))
+
+(defun warashi-agent-shell-list--title (shell-buffer)
+  "SHELL-BUFFER の session title を 1 行で返す。"
+  ;; state を内部変数から読むのは、title を取得する公開 API が無いため。
+  (string-trim
+   (car (split-string
+         (or (map-nested-elt (buffer-local-value 'agent-shell--state shell-buffer)
+                             '(:session :title))
+             "")
+         "\n"))))
+
+(defun warashi-agent-shell-list--entry (shell-buffer)
+  "SHELL-BUFFER の `tabulated-list-entries' 用の行を返す。"
+  (let ((status (agent-shell-status :shell-buffer shell-buffer)))
+    (list shell-buffer
+          (vector (if (eq status 'blocked) "!" " ")
+                  (propertize (buffer-name shell-buffer)
+                              'face 'agent-shell-buffer-name)
+                  (propertize (symbol-name status)
+                              'face (pcase status
+                                      ('busy 'agent-shell-warning)
+                                      ('blocked 'agent-shell-error)
+                                      (_ 'agent-shell-success)))
+                  (propertize (warashi-agent-shell-list--title shell-buffer)
+                              'face 'agent-shell-session-title)))))
+
+(defun warashi-agent-shell-list--refresh ()
+  "サイドバーが見えていれば描き直す。"
+  ;; 見えていないときに走らせないのは、agent が走っている間ずっと event が飛ぶため。
+  (when-let* ((buffer (get-buffer warashi-agent-shell-list-buffer-name))
+              ((get-buffer-window buffer t)))
+    (with-current-buffer buffer
+      (setq tabulated-list-entries
+            (mapcar #'warashi-agent-shell-list--entry
+                    (seq-sort-by #'warashi-agent-shell-list--attention #'<
+                                 (agent-shell-buffers))))
+      (tabulated-list-print t t))))
+
+(defun warashi-agent-shell-list-refresh ()
+  "サイドバーを描き直す。"
+  (interactive)
+  (warashi-agent-shell-list--refresh))
+
+(defun warashi-agent-shell-list-switch ()
+  "point の行の agent-shell に切り替える。"
+  (interactive)
+  (let* ((shell-buffer (or (tabulated-list-get-id)
+                           (user-error "No shell at point")))
+         (target (or (when agent-shell-prefer-viewport-interaction
+                       (agent-shell-viewport--buffer :shell-buffer shell-buffer
+                                                     :existing-only t))
+                     shell-buffer)))
+    ;; side window のまま switch-to-buffer すると幅 40 の枠に shell が入るので、
+    ;; side window でない window を選び直してから切り替える。
+    (when-let* ((window (seq-find (lambda (window)
+                                    (not (window-parameter window 'window-side)))
+                                  (window-list))))
+      (select-window window))
+    (switch-to-buffer target)))
+
+(defvar-keymap warashi-agent-shell-list-mode-map
+  :doc "`warashi-agent-shell-list-mode' のキーマップ。"
+  "RET" #'warashi-agent-shell-list-switch
+  "g" #'warashi-agent-shell-list-refresh
+  "q" #'quit-window)
+
+(define-derived-mode warashi-agent-shell-list-mode tabulated-list-mode "Agent Shells"
+  "agent-shell の一覧を表示する major mode。"
+  (setq tabulated-list-format [("!" 1 nil)
+                               ("shell" 20 nil)
+                               ("status" 7 nil)
+                               ("title" 0 nil)]
+        tabulated-list-padding 0)
+  (tabulated-list-init-header))
+
+(defun warashi-agent-shell-list--buffer ()
+  "サイドバーの buffer を返す。無ければ作る。"
+  (or (get-buffer warashi-agent-shell-list-buffer-name)
+      (with-current-buffer (get-buffer-create warashi-agent-shell-list-buffer-name)
+        (warashi-agent-shell-list-mode)
+        (current-buffer))))
+
+(defun warashi-agent-shell-list-toggle ()
+  "agent-shell の一覧サイドバーを開閉する。"
+  (interactive)
+  (require 'agent-shell)
+  (if-let* ((window (get-buffer-window warashi-agent-shell-list-buffer-name t)))
+      (delete-window window)
+    (display-buffer (warashi-agent-shell-list--buffer)
+                    warashi-agent-shell-list-display-action)
+    (warashi-agent-shell-list--refresh)))
+#+end_src
+
+状態が変わった shell 自身から描き直させる。定期タイマーで revert しないのは、
+agent が走っている間ずっと再描画が走り、編集中の画面がちらつくため。
+
+#+begin_src emacs-lisp
+(defconst warashi-agent-shell-list--events
+  '(init-finished prompt-ready input-submitted
+    permission-request permission-response
+    turn-complete session-title-changed error clean-up)
+  "サイドバーを描き直す agent-shell の event。")
+;; agent-message-chunk を入れないのは、1 ターンに何度も飛ぶ割に一覧の見た目が
+;; 変わらないため。
+
+(defun warashi-agent-shell-list--on-event (_event)
+  "shell の状態が変わったのでサイドバーを描き直す。"
+  ;; その場で描き直さないのは、clean-up が kill-buffer の途中で飛び、
+  ;; 死にかけの buffer が一覧に残るため。
+  (run-at-time 0 nil #'warashi-agent-shell-list--refresh))
+
+(defun warashi-agent-shell-list--subscribe ()
+  "この shell の状態変化をサイドバーに伝える。"
+  (dolist (event warashi-agent-shell-list--events)
+    (agent-shell-subscribe-to
+     :shell-buffer (current-buffer)
+     :event event
+     :on-event #'warashi-agent-shell-list--on-event)))
+
+(setup agent-shell
+  (:with-hook agent-shell-mode-hook
+    (:hook warashi-agent-shell-list--subscribe)))
+#+end_src
+
 * 開発ツール
 ** magit
 #+begin_src emacs-lisp
