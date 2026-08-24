@@ -1315,12 +1315,28 @@ session の累積コストを context usage indicator の隣に常設する。�
         ((buffer-local-value 'warashi-agent-shell--unread shell-buffer) 1)
         (t 2)))
 
-(defun warashi-agent-shell-list--mark (shell-buffer)
-  "SHELL-BUFFER の要操作マークを返す。"
+(defun warashi-agent-shell-list--indicator (shell-buffer)
+  "SHELL-BUFFER の状態を表す 1 文字を返す。"
+  ;; status を単語で出さないのは、幅 40 の side window では 7 桁が shell 名と
+  ;; title を削るため。要操作 (! と *) と待てばよい busy が区別できれば足りる。
   (pcase (warashi-agent-shell-list--attention shell-buffer)
-    (0 "!")
-    (1 "*")
-    (_ " ")))
+    (0 (propertize "!" 'face 'agent-shell-error))
+    (1 (propertize "*" 'face 'agent-shell-warning))
+    (_ (if (eq (agent-shell-status :shell-buffer shell-buffer) 'busy)
+           (propertize "…" 'face 'shadow)
+         " "))))
+
+(defun warashi-agent-shell-list--name (shell-buffer)
+  "SHELL-BUFFER の名前から agent 名の prefix を落として返す。"
+  ;; "Claude Agent @ " だけで 15 桁あり、残るのがプロジェクト名の頭数文字に
+  ;; なってしまう。どの shell か見分けられるのは prefix の後ろの部分。
+  (let ((name (buffer-name shell-buffer)))
+    (if-let* ((agent-name (map-nested-elt
+                           (buffer-local-value 'agent-shell--state shell-buffer)
+                           '(:agent-config :buffer-name)))
+              (prefix (agent-shell--buffer-name-prefix agent-name)))
+        (string-remove-prefix prefix name)
+      name)))
 
 (defun warashi-agent-shell-list--title (shell-buffer)
   "SHELL-BUFFER の session title を 1 行で返す。"
@@ -1332,20 +1348,37 @@ session の累積コストを context usage indicator の隣に常設する。�
              "")
          "\n"))))
 
-(defun warashi-agent-shell-list--entry (shell-buffer)
-  "SHELL-BUFFER の `tabulated-list-entries' 用の行を返す。"
-  (let ((status (agent-shell-status :shell-buffer shell-buffer)))
-    (list shell-buffer
-          (vector (warashi-agent-shell-list--mark shell-buffer)
-                  (propertize (buffer-name shell-buffer)
-                              'face 'agent-shell-buffer-name)
-                  (propertize (symbol-name status)
-                              'face (pcase status
-                                      ('busy 'agent-shell-warning)
-                                      ('blocked 'agent-shell-error)
-                                      (_ 'agent-shell-success)))
-                  (propertize (warashi-agent-shell-list--title shell-buffer)
-                              'face 'agent-shell-session-title)))))
+(defun warashi-agent-shell-list--insert (shell-buffer)
+  "SHELL-BUFFER の行を 2 行で挿入する。"
+  ;; 1 行に詰めないのは、shell 名と title は用途が違い (どれか特定する /
+  ;; 何をやらせていたか思い出す)、どちらを削っても片方の用が足りなくなるため。
+  (let ((start (point)))
+    (insert (warashi-agent-shell-list--indicator shell-buffer)
+            " "
+            (propertize (warashi-agent-shell-list--name shell-buffer)
+                        'face 'agent-shell-buffer-name)
+            "\n  "
+            (propertize (warashi-agent-shell-list--title shell-buffer)
+                        'face 'agent-shell-session-title)
+            "\n")
+    (put-text-property start (point) 'warashi-agent-shell-list-buffer shell-buffer)))
+
+(defun warashi-agent-shell-list--buffer-at-point ()
+  "point の行が指す shell buffer を返す。"
+  (get-text-property (point) 'warashi-agent-shell-list-buffer))
+
+(defun warashi-agent-shell-list--position (shell-buffer)
+  "SHELL-BUFFER の行の先頭位置を返す。無ければ nil。"
+  (save-excursion
+    (goto-char (point-min))
+    (catch 'found
+      (while (not (eobp))
+        (when (eq (warashi-agent-shell-list--buffer-at-point) shell-buffer)
+          (throw 'found (point)))
+        (goto-char (or (next-single-property-change
+                        (point) 'warashi-agent-shell-list-buffer)
+                       (point-max))))
+      nil)))
 
 (defun warashi-agent-shell-list--refresh ()
   "サイドバーが見えていれば描き直す。"
@@ -1353,21 +1386,59 @@ session の累積コストを context usage indicator の隣に常設する。�
   (when-let* ((buffer (get-buffer warashi-agent-shell-list-buffer-name))
               ((get-buffer-window buffer t)))
     (with-current-buffer buffer
-      (setq tabulated-list-entries
-            (mapcar #'warashi-agent-shell-list--entry
-                    (seq-sort-by #'warashi-agent-shell-list--attention #'<
-                                 (agent-shell-buffers))))
-      (tabulated-list-print t t))))
+      (let ((inhibit-read-only t)
+            (previous (warashi-agent-shell-list--buffer-at-point)))
+        (erase-buffer)
+        (mapc #'warashi-agent-shell-list--insert
+              (seq-sort-by #'warashi-agent-shell-list--attention #'<
+                           (agent-shell-buffers)))
+        ;; 描き直しで point が飛ぶと、選ぼうとしていた shell を見失う。
+        (let ((position (or (and previous
+                                 (warashi-agent-shell-list--position previous))
+                            (point-min))))
+          (goto-char position)
+          (dolist (window (get-buffer-window-list buffer nil t))
+            (set-window-point window position)))))))
 
 (defun warashi-agent-shell-list-refresh ()
   "サイドバーを描き直す。"
   (interactive)
   (warashi-agent-shell-list--refresh))
 
+(defun warashi-agent-shell-list-next (&optional count)
+  "COUNT 個先の shell に point を移す。"
+  (interactive "p")
+  (dotimes (_ (or count 1))
+    (when-let* ((position (next-single-property-change
+                           (point) 'warashi-agent-shell-list-buffer)))
+      (goto-char position))))
+
+(defun warashi-agent-shell-list--entry-start ()
+  "point が居る shell の行の先頭位置を返す。"
+  (if (or (bobp)
+          (not (eq (warashi-agent-shell-list--buffer-at-point)
+                   (get-text-property (1- (point))
+                                      'warashi-agent-shell-list-buffer))))
+      (point)
+    (or (previous-single-property-change (point) 'warashi-agent-shell-list-buffer)
+        (point-min))))
+
+(defun warashi-agent-shell-list-previous (&optional count)
+  "COUNT 個前の shell に point を移す。"
+  (interactive "p")
+  (dotimes (_ (or count 1))
+    ;; 先に今いる shell の先頭へ戻すのは、2 行目に point があるときに 1 回で
+    ;; 2 つ戻ってしまうため。
+    (goto-char (warashi-agent-shell-list--entry-start))
+    (unless (bobp)
+      (goto-char (or (previous-single-property-change
+                      (point) 'warashi-agent-shell-list-buffer)
+                     (point-min))))))
+
 (defun warashi-agent-shell-list-switch ()
   "point の行の agent-shell に切り替える。"
   (interactive)
-  (let* ((shell-buffer (or (tabulated-list-get-id)
+  (let* ((shell-buffer (or (warashi-agent-shell-list--buffer-at-point)
                            (user-error "No shell at point")))
          (target (or (when agent-shell-prefer-viewport-interaction
                        (agent-shell-viewport--buffer :shell-buffer shell-buffer
@@ -1384,17 +1455,16 @@ session の累積コストを context usage indicator の隣に常設する。�
 (defvar-keymap warashi-agent-shell-list-mode-map
   :doc "`warashi-agent-shell-list-mode' のキーマップ。"
   "RET" #'warashi-agent-shell-list-switch
+  "n" #'warashi-agent-shell-list-next
+  "p" #'warashi-agent-shell-list-previous
   "g" #'warashi-agent-shell-list-refresh
   "q" #'quit-window)
 
-(define-derived-mode warashi-agent-shell-list-mode tabulated-list-mode "Agent Shells"
+(define-derived-mode warashi-agent-shell-list-mode special-mode "Agent Shells"
   "agent-shell の一覧を表示する major mode。"
-  (setq tabulated-list-format [("!" 1 nil)
-                               ("shell" 20 nil)
-                               ("status" 7 nil)
-                               ("title" 0 nil)]
-        tabulated-list-padding 0)
-  (tabulated-list-init-header))
+  ;; 折り返さないのは、幅 40 に収まらない title が 2 行に伸びて、shell 1 つが
+  ;; 何行になるか分からなくなるため。
+  (setq truncate-lines t))
 
 (defun warashi-agent-shell-list--buffer ()
   "サイドバーの buffer を返す。無ければ作る。"
