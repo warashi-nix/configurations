@@ -290,6 +290,35 @@ changes の登録はバッファローカルなので他のバッファは巻き
   (advice-add 'nskk--replace-marker-at :override #'my/nskk-replace-marker-at))
 #+end_src
 
+*** ▼ 変換中のセミコロンで次の見出しを始める
+=;= の sticky shift は、▼ 変換中 (=nskk--sticky-shift-dispatch= の Arm 2)
+だけ self-insert に落ちる。=;shokai= SPC =;kougi= SPC と打つと、二つ目の
+=;= がそのまま挿入されて =初回;こうぎ= になる。大文字での =;shokai= SPC
+=Kougi= は =nskk-self-insert= の implicit kakutei を通って 初回講義 になる
+ので、=;= だけがこの経路から外れている。
+
+▼ の =;= も大文字と同じ「確定してから次の見出しを開く」に合流させる。確
+定するかどうかは自前で判定せず =nskk--implicit-kakutei-needed-p= に委ねる
+ので、送り仮名の途中や候補一覧が出ている間は従来どおり本体の処理に流れる。
+
+#+begin_src emacs-lisp
+(defun my/nskk-sticky-shift-restart-henkan (fn)
+  ;; sticky が pending のときは横取りしない。;; の取り消し (Arm 1) を先に
+  ;; 通さないと、二重セミコロンでリテラルの ; が出せなくなる。
+  (if (and (not nskk--sticky-shift-pending)
+           (nskk--implicit-kakutei-needed-p))
+      (progn
+        (nskk-commit-current)
+        (nskk--setup-henkan-start-marker ?\;)
+        (setq nskk--sticky-shift-pending 'immediate)
+        t)
+    (funcall fn)))
+
+(with-eval-after-load 'nskk
+  (advice-add 'nskk--sticky-shift-dispatch :around
+              #'my/nskk-sticky-shift-restart-henkan))
+#+end_src
+
 *** カーソル色をバッファに追従させる
 nskk の nskk-cursor-update は状態が変わったときにしか呼ばれず、色はフレー
 ム単位で持たれる。かなモードのバッファから別のバッファへ移っても誰も更新
