@@ -205,6 +205,8 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 
 #+begin_src emacs-lisp
 (setup (:package nskk nskk-corfu-henkan)
+  ;; with-eval-after-load を通さないために setopt で書く
+  (setopt default-input-method "japanese-nskk")
   ;; xdg が張った symlink ではなく store の実体を渡す。nskk の辞書読み込み
   ;; は対象と全親ディレクトリが書き込み不可であることを要求する
   ;; (stable-direct-source-p)。symlink 側の親は ~/.config なので必ず落ちる。
@@ -614,11 +616,10 @@ nskk 自身のハンドラが「知らないコマンド」扱いになって確
 #+end_src
 
 ** ddskk
-nskk が壊れたときの退路として残してある。C-\ で入る。
+nskk が壊れたときの退路として残してある。C-u C-\ で入る。
 
 #+begin_src emacs-lisp
 (setup (:package ddskk)
-  (setopt default-input-method "japanese-skk")
   (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
