@@ -1429,6 +1429,8 @@ agent が走っている間ずっと再描画が走り、編集中の画面が�
   "サイドバーを描き直す agent-shell の event。")
 ;; agent-message-chunk を入れないのは、1 ターンに何度も飛ぶ割に一覧の見た目が
 ;; 変わらないため。
+;; 閉じるのを自動化しないのは、見えていた欄が勝手に消えると気づきの装置として
+;; 当てにできなくなるため。
 
 (defun warashi-agent-shell-list--on-event (_event)
   "shell の状態が変わったのでサイドバーを描き直す。"
@@ -1482,9 +1484,19 @@ agent が走っている間ずっと再描画が走り、編集中の画面が�
    :event 'turn-complete
    :on-event #'warashi-agent-shell-list--mark-unread))
 
+(defun warashi-agent-shell-list--auto-open ()
+  "最初の shell が作られたときにサイドバーを開く。"
+  ;; 2 つ目以降で開き直さないのは、手動で閉じた一覧を勝手に戻さないため。
+  (unless (or (get-buffer-window warashi-agent-shell-list-buffer-name t)
+              (seq-remove (lambda (buffer) (eq buffer (current-buffer)))
+                          (agent-shell-buffers)))
+    (warashi-agent-shell-list-toggle)))
+
 (setup agent-shell
+  (:global-keymap "C-c a" #'warashi-agent-shell-list-toggle)
   (:with-hook agent-shell-mode-hook
-    (:hook warashi-agent-shell-list--subscribe)))
+    (:hook warashi-agent-shell-list--subscribe
+           warashi-agent-shell-list--auto-open)))
 #+end_src
 
 * 開発ツール
