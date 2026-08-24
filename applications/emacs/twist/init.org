@@ -250,6 +250,39 @@ handler は =/= や =/nix= にもマッチするので、tramp が読み込ま�
   (advice-add fn :around #'my/nskk-read-without-file-handlers))
 #+end_src
 
+*** 辞書の先読み
+初回の =C-x C-j= は =nskk-dict-initialize= を同期で呼ぶ。SKK-JISYO.L
+(17.5 万件) の読み込みは =dict-cache.eld= が効いていても数秒かかり、その
+間 Emacs は固まる。daemon を上げ直すたびに最初の日本語入力で必ず踏む。
+
+起動後のアイドルで一度 nskk-mode を通しておけば、初期化はすべて冪等ガー
+ドに当たって以後の =C-x C-j= は即座に返る。
+
+#+begin_src emacs-lisp
+(defun my/nskk-preload-schedule ()
+  (run-with-idle-timer 1 nil #'my/nskk-preload))
+
+(defun my/nskk-preload ()
+  ;; nskk-dict-initialize だけを先に呼ぶのでは駄目。辞書 fact が載った
+  ;; prolog データベースに対して kana/converter の初期化が走ることになり、
+  ;; 初回 nskk-mode は先読み無しの倍以上に伸びる。nskk-mode を一度通して
+  ;; 本番と同じ順序で温める。
+  (unless (eq 'done
+              (while-no-input
+                (require 'nskk)
+                (with-temp-buffer
+                  (nskk-mode 1)
+                  (nskk-mode -1))
+                'done))
+    ;; 中断されたら次のアイドルでやり直す。ここで再スケジュールしないと、
+    ;; 一度の打鍵で先読みが永久に諦められて元の重さに戻る。学習データの
+    ;; 読み込み中に中断された場合だけは nskk--learning-loaded が先に立つ
+    ;; ので retry では読み直されないが、当たる窓はミリ秒なので目を瞑る。
+    (my/nskk-preload-schedule)))
+
+(add-hook 'emacs-startup-hook #'my/nskk-preload-schedule)
+#+end_src
+
 *** マーカーを変更フックから隠さない
 nskk は ▽ ▼ の挿入を inhibit-modification-hooks で隠す
 (=nskk-henkan.el:600= の =nskk--insert-marker= ほか)。隠れた挿入でバッファ
