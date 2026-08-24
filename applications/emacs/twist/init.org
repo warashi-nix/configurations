@@ -1306,11 +1306,21 @@ session の累積コストを context usage indicator の隣に常設する。�
     (window-parameters . ((no-delete-other-windows . t))))
   "サイドバーの表示先。")
 
+(defvar-local warashi-agent-shell--unread nil
+  "ターンが終わったあと、まだ見に行っていない shell なら non-nil。")
+
 (defun warashi-agent-shell-list--attention (shell-buffer)
   "SHELL-BUFFER の要操作度を返す。小さいほど先に並ぶ。"
-  (pcase (agent-shell-status :shell-buffer shell-buffer)
-    ('blocked 0)
-    (_ 2)))
+  (cond ((eq (agent-shell-status :shell-buffer shell-buffer) 'blocked) 0)
+        ((buffer-local-value 'warashi-agent-shell--unread shell-buffer) 1)
+        (t 2)))
+
+(defun warashi-agent-shell-list--mark (shell-buffer)
+  "SHELL-BUFFER の要操作マークを返す。"
+  (pcase (warashi-agent-shell-list--attention shell-buffer)
+    (0 "!")
+    (1 "*")
+    (_ " ")))
 
 (defun warashi-agent-shell-list--title (shell-buffer)
   "SHELL-BUFFER の session title を 1 行で返す。"
@@ -1326,7 +1336,7 @@ session の累積コストを context usage indicator の隣に常設する。�
   "SHELL-BUFFER の `tabulated-list-entries' 用の行を返す。"
   (let ((status (agent-shell-status :shell-buffer shell-buffer)))
     (list shell-buffer
-          (vector (if (eq status 'blocked) "!" " ")
+          (vector (warashi-agent-shell-list--mark shell-buffer)
                   (propertize (buffer-name shell-buffer)
                               'face 'agent-shell-buffer-name)
                   (propertize (symbol-name status)
@@ -1407,6 +1417,10 @@ session の累積コストを context usage indicator の隣に常設する。�
 状態が変わった shell 自身から描き直させる。定期タイマーで revert しないのは、
 agent が走っている間ずっと再描画が走り、編集中の画面がちらつくため。
 
+=agent-shell-status= は返事待ちも入力前も一律に =ready= としか言わないので、
+「ターンが終わったのに放置している shell」は自前で覚える。並行で回していて実際に
+取りこぼすのは permission よりこちらのため。
+
 #+begin_src emacs-lisp
 (defconst warashi-agent-shell-list--events
   '(init-finished prompt-ready input-submitted
@@ -1422,13 +1436,51 @@ agent が走っている間ずっと再描画が走り、編集中の画面が�
   ;; 死にかけの buffer が一覧に残るため。
   (run-at-time 0 nil #'warashi-agent-shell-list--refresh))
 
+(defun warashi-agent-shell-list--shell-buffer (buffer)
+  "BUFFER が指している shell buffer を返す。shell でなければ nil。"
+  (with-current-buffer buffer
+    (cond ((derived-mode-p 'agent-shell-mode)
+           buffer)
+          ((derived-mode-p '(agent-shell-viewport-view-mode
+                             agent-shell-viewport-edit-mode))
+           (agent-shell-viewport--shell-buffer buffer)))))
+
+(defun warashi-agent-shell-list--selected-shell-buffer ()
+  "いま選択している window が指す shell buffer を返す。"
+  (warashi-agent-shell-list--shell-buffer (window-buffer (selected-window))))
+
+(defun warashi-agent-shell-list--mark-unread (_event)
+  "ターンが終わった shell に未読の印を付ける。"
+  ;; 見ている最中の shell に印を付けないのは、その場で読んだ返事が要操作として
+  ;; 一覧の先頭に居座るため。
+  (unless (eq (warashi-agent-shell-list--selected-shell-buffer) (current-buffer))
+    (setq warashi-agent-shell--unread t)))
+
+(defun warashi-agent-shell-list--mark-read (&optional _window-or-frame)
+  "切り替えた先の shell の未読を落とす。"
+  (when-let* ((shell-buffer (warashi-agent-shell-list--selected-shell-buffer))
+              ((buffer-local-value 'warashi-agent-shell--unread shell-buffer)))
+    (with-current-buffer shell-buffer
+      (setq warashi-agent-shell--unread nil))
+    (warashi-agent-shell-list--refresh)))
+
+;; window の変化を見るのは、shell を訪れたことを知る hook が agent-shell 側に
+;; 無いため。同じ window で buffer だけ替わる場合は selection-change が飛ばない
+;; ので、buffer-change の方も要る。
+(add-hook 'window-selection-change-functions #'warashi-agent-shell-list--mark-read)
+(add-hook 'window-buffer-change-functions #'warashi-agent-shell-list--mark-read)
+
 (defun warashi-agent-shell-list--subscribe ()
   "この shell の状態変化をサイドバーに伝える。"
   (dolist (event warashi-agent-shell-list--events)
     (agent-shell-subscribe-to
      :shell-buffer (current-buffer)
      :event event
-     :on-event #'warashi-agent-shell-list--on-event)))
+     :on-event #'warashi-agent-shell-list--on-event))
+  (agent-shell-subscribe-to
+   :shell-buffer (current-buffer)
+   :event 'turn-complete
+   :on-event #'warashi-agent-shell-list--mark-unread))
 
 (setup agent-shell
   (:with-hook agent-shell-mode-hook
