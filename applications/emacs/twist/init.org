@@ -346,12 +346,16 @@ nskk--cursor-color-restore は、フレーム上に nskk バッファがひと�
        terminal))))
 
 (defun my/nskk-cursor-apply ()
-  (let ((color (my/nskk-cursor-color)))
+  ;; カレントバッファではなく選択ウィンドウのバッファを見る。カーソルが実
+  ;; 際に居るのはそこで、window の変化 hook から呼ばれるときは current
+  ;; buffer が一致している保証がない
+  (let ((color (with-current-buffer (window-buffer (selected-window))
+                 (my/nskk-cursor-color))))
     (cond
      ((display-graphic-p) (my/nskk-cursor-apply-gui color))
      ((eq (framep (selected-frame)) t) (my/nskk-cursor-apply-tty color)))))
 
-(defun my/nskk-cursor-apply-safe ()
+(defun my/nskk-cursor-apply-safe (&rest _)
   (condition-case nil
       (my/nskk-cursor-apply)
     (error nil)))
@@ -370,6 +374,10 @@ nskk--cursor-color-restore は、フレーム上に nskk バッファがひと�
 (setup emacs
   (add-hook 'delete-terminal-functions #'my/nskk-cursor-tty-reset-terminal)
   (add-hook 'post-command-hook #'my/nskk-cursor-apply-safe)
+  ;; post-command-hook はコマンド経由の切り替えしか拾わない。プロセス出力
+  ;; などコマンド外で display-buffer が走る経路をこの 2 つで塞ぐ
+  (add-hook 'window-buffer-change-functions #'my/nskk-cursor-apply-safe)
+  (add-hook 'window-selection-change-functions #'my/nskk-cursor-apply-safe)
   (add-hook 'kill-emacs-hook #'my/nskk-cursor-tty-reset-all))
 #+end_src
 
