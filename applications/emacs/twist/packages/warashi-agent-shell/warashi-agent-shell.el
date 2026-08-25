@@ -9,7 +9,7 @@
 
 ;;; Commentary:
 
-;; agent-shell に足している三つのこと。
+;; agent-shell に足している四つのこと。
 ;;
 ;; - 単キーコマンドに入力メソッドを奪わせない。`agent-shell-mode-map' は n p r
 ;;   + - 0 を素のキーで握っており、プロンプト上ではそれぞれのコマンドが
@@ -18,15 +18,19 @@
 ;; - model と effort を固定した起動コマンド。effort は agent config に設定点が
 ;;   無く、session 確立後に ACP の config option として送るしかない。
 ;; - session の累積コストを context usage indicator の隣に常設する。
+;; - buffer 名の project 部分を git-wit の memo にする。worktree の
+;;   ディレクトリ名は ID 由来で、並べたときにどの作業か読み取れない。
 ;;
-;; 利用側で `warashi-agent-shell-install-self-insert-advice' と
-;; `warashi-agent-shell-install-cost-indicator' を agent-shell のロード後に呼び、
+;; 利用側で `warashi-agent-shell-install-self-insert-advice'、
+;; `warashi-agent-shell-install-cost-indicator'、
+;; `warashi-agent-shell-install-git-wit-memo-name' を agent-shell のロード後に呼び、
 ;; `warashi-agent-shell--apply-thought-level' を `agent-shell-mode-hook' に登録
 ;; する。起動コマンドは `warashi-agent-shell-define-claude-variants' で作る。
 
 ;;; Code:
 
 (require 'map)
+(require 'seq)
 ;; agent-shell を実行時に require しないのは、起動コマンドを呼ぶまで agent-shell
 ;; を読む必要が無いため。compile 時だけ読ませる。
 (eval-when-compile (require 'agent-shell))
@@ -138,6 +142,88 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
   "context usage indicator に cost を相乗りさせる。"
   (advice-add 'agent-shell--context-usage-indicator :filter-return
               #'warashi-agent-shell--append-cost-indicator))
+
+;;;; git-wit の memo を buffer 名に出す
+
+(defvar warashi-agent-shell-git-wit-program "git-wit"
+  "git-wit の実行ファイル名かパス。")
+
+(defvar warashi-agent-shell--git-wit-memo-cache (make-hash-table :test #'equal)
+  "ディレクトリごとに解決済みの memo。値が nil なら memo 無し。")
+
+(defun warashi-agent-shell--git-wit-list (directory)
+  "DIRECTORY で git-wit の worktree 一覧を引き、JSON 文字列で返す。"
+  ;; call-process ではなく process-file なのは、DIRECTORY がリモートのときに
+  ;; 手元の git-wit を叩くと、無関係な worktree 一覧と突き合わせて別の作業の
+  ;; memo を付けてしまうため。
+  (with-temp-buffer
+    (let* ((default-directory directory)
+           (status (ignore-errors
+                     (process-file warashi-agent-shell-git-wit-program
+                                   nil t nil "ls" "--json"))))
+      (when (eql status 0)
+        (buffer-string)))))
+
+(defun warashi-agent-shell--git-wit-memo-in (json directory)
+  "JSON に載った worktree のうち、DIRECTORY のものの memo を返す。
+JSON は `warashi-agent-shell--git-wit-list' の戻り値。DIRECTORY は
+リモート接頭辞を落としたパス。"
+  (when-let* (((stringp json))
+              (worktrees (ignore-errors
+                           (json-parse-string json
+                                              :object-type 'alist
+                                              :null-object nil
+                                              :false-object nil)))
+              ;; 配列以外は git-wit の出力として扱わない。alist を舐めると
+              ;; 要素が cons になり `alist-get' が型エラーになる。
+              ((vectorp worktrees))
+              (target (file-name-as-directory directory))
+              (found (seq-find
+                      (lambda (worktree)
+                        (when-let* ((path (alist-get 'path worktree)))
+                          (equal target (file-name-as-directory path))))
+                      worktrees))
+              (memo (alist-get 'memo found))
+              ((not (string-empty-p memo))))
+    memo))
+
+(defun warashi-agent-shell--worktree-directory ()
+  "memo を引く対象のディレクトリを返す。"
+  ;; リモートで `file-truename' を呼ぶと接続が起きるので、symlink の解決は
+  ;; ローカルのときだけにする。
+  (when default-directory
+    (if (file-remote-p default-directory)
+        (expand-file-name default-directory)
+      (ignore-errors (file-truename default-directory)))))
+
+(defun warashi-agent-shell--git-wit-memo ()
+  "`default-directory' の worktree に付いた git-wit の memo を返す。"
+  (when-let* ((directory (warashi-agent-shell--worktree-directory)))
+    (let ((cached (gethash directory warashi-agent-shell--git-wit-memo-cache
+                           'missing)))
+      ;; 引き直さないのは、header が再描画のたびに project 名を引くため。
+      ;; memo を書き換えたときに追随しないのは、この常時呼ばれる経路で
+      ;; process を起こす頻度と釣り合わないため。
+      (if (not (eq cached 'missing))
+          cached
+        (puthash directory
+                 (warashi-agent-shell--git-wit-memo-in
+                  (warashi-agent-shell--git-wit-list directory)
+                  (file-local-name directory))
+                 warashi-agent-shell--git-wit-memo-cache)))))
+
+(defun warashi-agent-shell--project-name-with-memo (name)
+  "project 名 NAME を git-wit の memo で置き換える。"
+  (or (warashi-agent-shell--git-wit-memo) name))
+
+(defun warashi-agent-shell-install-git-wit-memo-name ()
+  "buffer 名の project 部分を git-wit の memo にする。"
+  ;; `agent-shell-buffer-name-format' に関数を渡さないのは、そうすると
+  ;; `agent-shell--buffer-name-prefix' が nil を返す仕様で、prefix を剥がして
+  ;; 表示する `agent-shell-switch-buffer' と `warashi-agent-shell-list' が
+  ;; どちらも劣化するため。project 名だけ差し替えれば分解可能性が残る。
+  (advice-add 'agent-shell--project-name :filter-return
+              #'warashi-agent-shell--project-name-with-memo))
 
 (provide 'warashi-agent-shell)
 ;;; warashi-agent-shell.el ends here

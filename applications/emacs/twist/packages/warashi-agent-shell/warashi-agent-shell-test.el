@@ -176,5 +176,91 @@
   (warashi-agent-shell-test--with-state nil
     (should (equal "80%" (warashi-agent-shell--append-cost-indicator "80%")))))
 
+;;;; git-wit の memo を buffer 名に出す
+
+(defconst warashi-agent-shell-test--git-wit-json
+  "[{\"id\":\"a1b2\",\"memo\":\"nskk の remap を直す\",\"path\":\"/home/me/wt/a1b2\"},
+    {\"id\":\"c3d4\",\"memo\":\"\",\"path\":\"/home/me/wt/c3d4\"},
+    {\"id\":\"e5f6\",\"path\":\"/home/me/wt/e5f6\"}]"
+  "git-wit ls --json の出力を模した fixture。")
+
+(defvar warashi-agent-shell-test--git-wit-calls nil
+  "`warashi-agent-shell--git-wit-list' が呼ばれたディレクトリ。")
+
+(defmacro warashi-agent-shell-test--with-git-wit (json &rest body)
+  "git-wit が JSON を返す状況で BODY を実行する。
+呼ばれたディレクトリは `warashi-agent-shell-test--git-wit-calls' に積む。"
+  (declare (indent 1))
+  `(let ((warashi-agent-shell-test--git-wit-calls nil))
+     (clrhash warashi-agent-shell--git-wit-memo-cache)
+     (cl-letf (((symbol-function 'warashi-agent-shell--git-wit-list)
+                (lambda (directory)
+                  (push directory warashi-agent-shell-test--git-wit-calls)
+                  ,json)))
+       ,@body)))
+
+(ert-deftest warashi-agent-shell-test-git-wit-memo-in ()
+  "パスの一致する worktree の memo を返す。末尾のスラッシュは問わない。"
+  (should (equal "nskk の remap を直す"
+                 (warashi-agent-shell--git-wit-memo-in
+                  warashi-agent-shell-test--git-wit-json "/home/me/wt/a1b2/")))
+  (should (equal "nskk の remap を直す"
+                 (warashi-agent-shell--git-wit-memo-in
+                  warashi-agent-shell-test--git-wit-json "/home/me/wt/a1b2"))))
+
+(ert-deftest warashi-agent-shell-test-git-wit-memo-in-unmanaged ()
+  "git-wit の管理外のディレクトリでは memo を返さない。"
+  (should-not (warashi-agent-shell--git-wit-memo-in
+               warashi-agent-shell-test--git-wit-json "/home/me/src/other"))
+  ;; worktree の中の子ディレクトリを前方一致で拾わない。
+  (should-not (warashi-agent-shell--git-wit-memo-in
+               warashi-agent-shell-test--git-wit-json "/home/me/wt/a1b2/sub")))
+
+(ert-deftest warashi-agent-shell-test-git-wit-memo-in-blank ()
+  "memo が空文字や未設定なら memo 無しとして扱う。"
+  (should-not (warashi-agent-shell--git-wit-memo-in
+               warashi-agent-shell-test--git-wit-json "/home/me/wt/c3d4"))
+  (should-not (warashi-agent-shell--git-wit-memo-in
+               warashi-agent-shell-test--git-wit-json "/home/me/wt/e5f6")))
+
+(ert-deftest warashi-agent-shell-test-git-wit-memo-in-broken ()
+  "git-wit を呼べなかったときと壊れた出力では memo 無しに落ちる。"
+  (should-not (warashi-agent-shell--git-wit-memo-in nil "/home/me/wt/a1b2"))
+  (should-not (warashi-agent-shell--git-wit-memo-in "" "/home/me/wt/a1b2"))
+  (should-not (warashi-agent-shell--git-wit-memo-in "not json" "/home/me/wt/a1b2"))
+  (should-not (warashi-agent-shell--git-wit-memo-in
+               "{\"memo\":\"x\"}" "/home/me/wt/a1b2")))
+
+(ert-deftest warashi-agent-shell-test-git-wit-memo-remote ()
+  "リモートでは接続先で git-wit を走らせ、パスはローカル部分で突き合わせる。"
+  (warashi-agent-shell-test--with-git-wit warashi-agent-shell-test--git-wit-json
+    (let ((default-directory "/ssh:host:/home/me/wt/a1b2/"))
+      (should (equal "nskk の remap を直す" (warashi-agent-shell--git-wit-memo)))
+      (should (equal '("/ssh:host:/home/me/wt/a1b2/")
+                     warashi-agent-shell-test--git-wit-calls)))))
+
+(ert-deftest warashi-agent-shell-test-git-wit-memo-cached ()
+  "同じディレクトリでは git-wit を一度しか呼ばない。
+header は再描画のたびに project 名を引くので、都度 process を起こさない。"
+  (warashi-agent-shell-test--with-git-wit warashi-agent-shell-test--git-wit-json
+    (let ((default-directory "/ssh:host:/home/me/wt/a1b2/"))
+      (warashi-agent-shell--git-wit-memo)
+      (warashi-agent-shell--git-wit-memo))
+    ;; memo が無かったディレクトリも引き直さない。
+    (let ((default-directory "/ssh:host:/home/me/wt/c3d4/"))
+      (warashi-agent-shell--git-wit-memo)
+      (warashi-agent-shell--git-wit-memo))
+    (should (equal 2 (length warashi-agent-shell-test--git-wit-calls)))))
+
+(ert-deftest warashi-agent-shell-test-project-name-with-memo ()
+  "memo があれば project 名を memo に差し替え、無ければそのまま返す。"
+  (warashi-agent-shell-test--with-git-wit warashi-agent-shell-test--git-wit-json
+    (let ((default-directory "/ssh:host:/home/me/wt/a1b2/"))
+      (should (equal "nskk の remap を直す"
+                     (warashi-agent-shell--project-name-with-memo "a1b2"))))
+    (let ((default-directory "/ssh:host:/home/me/src/other/"))
+      (should (equal "other"
+                     (warashi-agent-shell--project-name-with-memo "other"))))))
+
 (provide 'warashi-agent-shell-test)
 ;;; warashi-agent-shell-test.el ends here
