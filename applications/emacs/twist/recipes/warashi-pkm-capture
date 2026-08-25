@@ -1,0 +1,2 @@
+(warashi-pkm-capture :fetcher github
+                     :repo "Warashi/configurations")

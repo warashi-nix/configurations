@@ -61,6 +61,7 @@
             "warashi-nskk-im"
             "warashi-nskk-marker"
             "warashi-nskk-sticky"
+            "warashi-pkm-capture"
             "warashi-nskk-map"
             "warashi-init"
             "warashi-early-init"
@@ -110,6 +111,9 @@
               };
             warashi-nskk-sticky = _: _: {
               src = ./packages/warashi-nskk-sticky;
+            };
+            warashi-pkm-capture = _: _: {
+              src = ./packages/warashi-pkm-capture;
             };
             warashi-init =
               _: _:
