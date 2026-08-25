@@ -59,6 +59,7 @@
             "warashi-agent-shell-list"
             "warashi-nskk-cursor"
             "warashi-nskk-im"
+            "warashi-nskk-marker"
             "warashi-nskk-map"
             "warashi-init"
             "warashi-early-init"
@@ -81,6 +82,9 @@
             };
             warashi-nskk-im = _: _: {
               src = ./packages/warashi-nskk-im;
+            };
+            warashi-nskk-marker = _: _: {
+              src = ./packages/warashi-nskk-marker;
             };
             warashi-nskk-map = _: _: {
               src = ./packages/warashi-nskk-map;

@@ -301,27 +301,15 @@ changes の登録はバッファローカルなので他のバッファは巻き
 =C-x u= で ▼かんじ → ▽かんじ → ▽かん と打鍵を遡るようになるが、打った
 手順を巻き戻しているだけで実害は無い。
 
+実装は =warashi-nskk-marker= に置く。マーカーが変更フックに見えているかどうかは
+バッファを見ても分からず、copilot が黙って効かなくなる形でしか出ないので、ert で
+固定する。
+
 #+begin_src emacs-lisp
-(defun my/nskk-insert-marker (marker)
-  (insert marker))
-
-(defun my/nskk-delete-marker-at (pos marker-regexp)
-  (save-excursion
-    (goto-char pos)
-    (when (looking-at marker-regexp)
-      (delete-char (length (match-string 0))))))
-
-(defun my/nskk-replace-marker-at (pos old-regexp new-marker)
-  (save-excursion
-    (goto-char pos)
-    (when (looking-at old-regexp)
-      (delete-char (length (match-string 0)))
-      (insert new-marker))))
-
-(with-eval-after-load 'nskk
-  (advice-add 'nskk--insert-marker :override #'my/nskk-insert-marker)
-  (advice-add 'nskk--delete-marker-at :override #'my/nskk-delete-marker-at)
-  (advice-add 'nskk--replace-marker-at :override #'my/nskk-replace-marker-at))
+(setup (:package warashi-nskk-marker)
+  (with-eval-after-load 'nskk
+    (require 'warashi-nskk-marker)
+    (warashi-nskk-marker-install-advice)))
 #+end_src
 
 *** ▼ 変換中のセミコロンで次の見出しを始める
