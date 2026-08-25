@@ -111,7 +111,7 @@
   outputs =
     { self, flake-parts, ... }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } (
-      { flake-parts-lib, ... }:
+      { flake-parts-lib, ... }@topLevel:
       let
         inherit (flake-parts-lib) importApply;
         flakeModules.default = importApply ./flake-module.nix { localFlake = self; };
@@ -139,6 +139,8 @@
 
         perSystem =
           {
+            lib,
+            system,
             inputs',
             config,
             pkgs,
@@ -148,7 +150,13 @@
             # Emacs のローカルパッケージの ert テスト。定義は
             # applications/emacs/twist/flake.nix 側にあり、ここでは CI と
             # `nix flake check` から見える位置へ引き上げるだけ。
-            checks = inputs'.my-emacs.checks;
+            #
+            # host が居る system に絞るのは、テストを走らせるのに twist の env
+            # 一式が要るため。host の無い system では誰も使わない env を
+            # 毎日ビルドし直すことになる割に、elisp のテスト結果は変わらない。
+            checks = lib.optionalAttrs (lib.any (host: host.system == system) (
+              lib.attrValues topLevel.config.hosts
+            )) inputs'.my-emacs.checks;
             apps = inputs'.my-emacs.packages.default.makeApps {
               lockDirName = "applications/emacs/twist/lock";
             };
