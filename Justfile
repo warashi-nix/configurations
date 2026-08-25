@@ -28,6 +28,21 @@ emacs-lock:
 emacs-update:
   cd ./applications/emacs/twist/lock && nix flake update && cd - && nix flake update my-emacs-pkgs
 
+# Emacs ローカルパッケージの ert を手元の Emacs で回す
+# nix build を挟まないのは、1 ファイル直すたびの往復を短く保つため。
+# CI との一致は .#checks 側が担保する。
+test-emacs PACKAGE='':
+  #!/usr/bin/env bash
+  set -euo pipefail
+  cd "{{ justfile_directory() }}/applications/emacs/twist/packages"
+  status=0
+  for dir in {{ if PACKAGE == "" { "*" } else { PACKAGE } }}; do
+    [ -f "$dir/$dir-test.el" ] || continue
+    echo "==> $dir"
+    ( cd "$dir" && "${EMACS:-emacs}" -Q --batch -L . -l "$dir-test.el" -f ert-run-tests-batch-and-exit ) || status=1
+  done
+  exit $status
+
 # マシンを指定しての build
 build-for HOST:
   just {{ if os() == "macos" { "_darwin-rebuild-for" } else { "_nixos-rebuild-for" } }} {{HOST}}
