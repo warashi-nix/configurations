@@ -31,6 +31,15 @@ echo "Building for OS: $OS, Architecture: $ARCH, Target: $TARGET, Target System:
 
 BUILD_TARGETS=(".#devShells.${TARGET_SYSTEM}.default")
 
+# checks を別スクリプトに分けないのは、CI が検証する対象のリストが二箇所に
+# 分かれると片方が参照されないまま腐るため。単一の nix build に混ぜれば
+# --keep-going がビルド失敗とテスト失敗を一度に出す。
+CHECKS=$(nix eval ".#checks.${TARGET_SYSTEM}" --apply builtins.attrNames --json | jq -r '.[]')
+
+for check in $CHECKS; do
+  BUILD_TARGETS+=(".#checks.${TARGET_SYSTEM}.${check}")
+done
+
 HOSTS=$(nix eval ".#${TARGET}" --apply builtins.attrNames --json | jq -r '.[]')
 
 for host in $HOSTS; do
