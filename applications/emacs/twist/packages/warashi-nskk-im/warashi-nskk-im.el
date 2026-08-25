@@ -30,7 +30,10 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'nskk)
+;; nskk を実行時に require しないのは、この経路が startup 時から
+;; input-method-function に居座る一方、日本語を打たない日もあるため。compile 時
+;; だけ読ませ、load は nskk-mode が入るまで遅らせる。
+(eval-when-compile (require 'nskk))
 
 (defconst warashi-nskk-im--event-prefix "warashi-nskk-key-")
 
