@@ -225,6 +225,10 @@ RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
 RUN mkdir -p ~/.config/nix && \
     echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
+# shell.nix から unfree パッケージを使えるようにする
+RUN mkdir -p ~/.config/nixpkgs && \
+    echo "{ allowUnfree = true; }" > ~/.config/nixpkgs/config.nix
+
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
