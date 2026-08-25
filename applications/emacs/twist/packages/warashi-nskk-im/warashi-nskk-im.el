@@ -51,8 +51,12 @@
   "合成イベント EVENT の元の文字を返す。合成イベントでなければ nil。"
   (when (symbolp event)
     (let ((name (symbol-name event)))
-      (when (string-prefix-p warashi-nskk-im--event-prefix name)
-        (string-to-number (substring name (length warashi-nskk-im--event-prefix)))))))
+      ;; 数字であることまで見るのは、string-to-number が数字でない綴りに対して
+      ;; 0 を返し、char 0 の合成イベントと区別できなくなるため。
+      (when (string-match (concat "\\`" (regexp-quote warashi-nskk-im--event-prefix)
+                                  "\\([0-9]+\\)\\'")
+                          name)
+        (string-to-number (match-string 1 name))))))
 
 (defun warashi-nskk-im--consumes-typing-p ()
   "現在のバッファで nskk が打鍵を消費するなら non-nil。

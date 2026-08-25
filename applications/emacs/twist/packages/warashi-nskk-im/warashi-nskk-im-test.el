@@ -44,7 +44,9 @@
   (should-not (warashi-nskk-im--event-char ?a))
   (should-not (warashi-nskk-im--event-char 'return))
   (should-not (warashi-nskk-im--event-char [?a]))
-  (should-not (warashi-nskk-im--event-char nil)))
+  (should-not (warashi-nskk-im--event-char nil))
+  ;; 接頭辞だけ合っていても、数字でなければ文字は取り出せない。
+  (should-not (warashi-nskk-im--event-char 'warashi-nskk-key-foo)))
 
 ;;;; 差し替えを見送る条件
 
