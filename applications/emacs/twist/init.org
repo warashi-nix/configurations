@@ -906,6 +906,15 @@ session の累積コストを context usage indicator の隣に常設する。�
     (warashi-agent-shell-install-cost-indicator)))
 #+end_src
 
+git-wit の worktree で起動した shell は buffer 名の project 部分を memo にする。
+worktree のディレクトリ名は ID 由来で、一覧に並べてもどの作業か読み取れないため。
+
+#+begin_src emacs-lisp
+(setup agent-shell
+  (:when-loaded
+    (warashi-agent-shell-install-git-wit-memo-name)))
+#+end_src
+
 *** 一覧サイドバー
 複数の shell を並行で回していると、どれが permission 待ちで止まっているかを見失
 う。=agent-shell-switch-buffer= は同じ情報を出せるが、呼んだ瞬間しか見えないので
