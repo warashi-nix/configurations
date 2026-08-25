@@ -955,6 +955,12 @@ git-wit の worktree で起動した shell は buffer 名の project 部分を =
                             'append)))
 #+end_src
 
+** compile
+#+begin_src emacs-lisp
+(setup compile
+  (:opt compilation-scroll-output t))
+#+end_src
+
 ** ghostel
 #+begin_src emacs-lisp
 (setup (:package ghostel)
