@@ -35,11 +35,16 @@ test-emacs PACKAGE='':
   #!/usr/bin/env bash
   set -euo pipefail
   cd "{{ justfile_directory() }}/applications/emacs/twist/packages"
+  # 兄弟パッケージも load-path に入れる。パッケージ間に依存があるとき
+  # (warashi-nskk-map -> warashi-nskk-im)、env 側の古い複製ではなく手元の
+  # ソースを読ませるため。
+  load_path=()
+  for pkg in */; do load_path+=(-L "$PWD/${pkg%/}"); done
   status=0
   for dir in {{ if PACKAGE == "" { "*" } else { PACKAGE } }}; do
     [ -f "$dir/$dir-test.el" ] || continue
     echo "==> $dir"
-    ( cd "$dir" && "${EMACS:-emacs}" -Q --batch -L . -l "$dir-test.el" -f ert-run-tests-batch-and-exit ) || status=1
+    ( cd "$dir" && "${EMACS:-emacs}" -Q --batch -L . "${load_path[@]}" -l "$dir-test.el" -f ert-run-tests-batch-and-exit ) || status=1
   done
   exit $status
 
