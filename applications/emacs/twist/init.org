@@ -323,22 +323,15 @@ changes の登録はバッファローカルなので他のバッファは巻き
 定するかどうかは自前で判定せず =nskk--implicit-kakutei-needed-p= に委ねる
 ので、送り仮名の途中や候補一覧が出ている間は従来どおり本体の処理に流れる。
 
-#+begin_src emacs-lisp
-(defun my/nskk-sticky-shift-restart-henkan (fn)
-  ;; sticky が pending のときは横取りしない。;; の取り消し (Arm 1) を先に
-  ;; 通さないと、二重セミコロンでリテラルの ; が出せなくなる。
-  (if (and (not nskk--sticky-shift-pending)
-           (nskk--implicit-kakutei-needed-p))
-      (progn
-        (nskk-commit-current)
-        (nskk--setup-henkan-start-marker ?\;)
-        (setq nskk--sticky-shift-pending 'immediate)
-        t)
-    (funcall fn)))
+実装は =warashi-nskk-sticky= に置く。横取りする条件を間違えても例外にはならず、
+=;;= でリテラルの =;= が出せなくなる、という別の打鍵が壊れる形で出るので、どちら
+の分岐も ert で固定する。
 
-(with-eval-after-load 'nskk
-  (advice-add 'nskk--sticky-shift-dispatch :around
-              #'my/nskk-sticky-shift-restart-henkan))
+#+begin_src emacs-lisp
+(setup (:package warashi-nskk-sticky)
+  (with-eval-after-load 'nskk
+    (require 'warashi-nskk-sticky)
+    (warashi-nskk-sticky-install-advice)))
 #+end_src
 
 *** カーソル色をバッファに追従させる

@@ -1,0 +1,2 @@
+(warashi-nskk-sticky :fetcher github
+                     :repo "Warashi/configurations")

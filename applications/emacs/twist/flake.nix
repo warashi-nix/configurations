@@ -60,6 +60,7 @@
             "warashi-nskk-cursor"
             "warashi-nskk-im"
             "warashi-nskk-marker"
+            "warashi-nskk-sticky"
             "warashi-nskk-map"
             "warashi-init"
             "warashi-early-init"
@@ -107,6 +108,9 @@
                   cp -r ${built}/share/terminfo zig-out/share/terminfo
                 '';
               };
+            warashi-nskk-sticky = _: _: {
+              src = ./packages/warashi-nskk-sticky;
+            };
             warashi-init =
               _: _:
               orgTangledPackage "warashi-init" initElisp (
