@@ -57,6 +57,7 @@
             "spectreshell"
             "warashi-agent-shell"
             "warashi-agent-shell-list"
+            "warashi-nskk-cursor"
             "warashi-nskk-im"
             "warashi-nskk-map"
             "warashi-init"
@@ -74,6 +75,9 @@
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;
+            };
+            warashi-nskk-cursor = _: _: {
+              src = ./packages/warashi-nskk-cursor;
             };
             warashi-nskk-im = _: _: {
               src = ./packages/warashi-nskk-im;
