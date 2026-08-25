@@ -56,6 +56,7 @@
             "nskk-corfu-henkan"
             "spectreshell"
             "warashi-agent-shell-list"
+            "warashi-nskk-im"
             "warashi-init"
             "warashi-early-init"
           ];
@@ -68,6 +69,9 @@
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;
+            };
+            warashi-nskk-im = _: _: {
+              src = ./packages/warashi-nskk-im;
             };
             spectreshell =
               _: _:

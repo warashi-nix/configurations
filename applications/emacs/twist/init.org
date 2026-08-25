@@ -462,83 +462,24 @@ PoC として測りたいのは以下。=C-x C-j= 経路 (=current-input-method=
 =y-or-n-p=、isearch、keyboard macro での挙動。=C-\= 経路との比較のために
 =japanese-nskk= も登録しておく。
 
+実装をここに置かず =warashi-nskk-im= に切り出しているのは、差し替えを見送る条件
+と橋渡しの挙動を ert で固定したいため。init.org の中身は tangle されて初めてロー
+ドされるので、テストから =require= できない。
+
 #+begin_src emacs-lisp
-(defconst warashi-nskk-im--event-prefix "warashi-nskk-key-")
-
-(defun warashi-nskk-im--event (char)
-  "CHAR に対応する合成イベントのシンボルを返す。"
-  (intern (concat warashi-nskk-im--event-prefix (number-to-string char))))
-
-(defun warashi-nskk-im--event-char (event)
-  "合成イベント EVENT の元の文字を返す。合成イベントでなければ nil。"
-  (when (symbolp event)
-    (let ((name (symbol-name event)))
-      (when (string-prefix-p warashi-nskk-im--event-prefix name)
-        (string-to-number (substring name (length warashi-nskk-im--event-prefix)))))))
-
-(defun warashi-nskk-im--consumes-typing-p ()
-  "現在のバッファで nskk が打鍵を消費するなら non-nil。
-ascii と latin だけが `input-route/2' で `insert-direct' を返す。"
-  (and (bound-and-true-p nskk-mode)
-       (bound-and-true-p nskk-current-state)
-       (not (eq (nskk-prolog-query-value
-                 `(input-route ,(nskk-state-get-mode) ,'\?action) '\?action)
-                'insert-direct))))
-
-(defun warashi-nskk-im--dispatch ()
-  "合成イベントを `nskk-mode-map' 本来のハンドラへ橋渡しする。"
-  (interactive)
-  (when-let* ((char (warashi-nskk-im--event-char last-command-event)))
-    (let ((cmd (or (keymap-lookup nskk-mode-map (single-key-description char))
-                   #'nskk-self-insert))
-          (last-command-event char))
-      ;; corfu-auto は corfu-auto-commands を this-command で照合するので、
-      ;; 橋渡し役ではなく実際に走るコマンド名を残す。
-      (setq this-command cmd)
-      (call-interactively cmd))))
-
-(defun warashi-nskk-im--defer-p (key)
-  "KEY を差し替えずにそのまま流すべきなら non-nil。
-`quail-input-method' 冒頭の判定を写したもの。read-only な領域では
-major mode の単キーコマンド (agent-shell の出力領域の n など) を残す。
-transient map が KEY を握っているときに差し替えると、C-u 5 の 5 が
-`universal-argument-map' に届かず前置引数が壊れる。"
-  (or (and (or buffer-read-only
-               (and (get-char-property (point) 'read-only)
-                    (get-char-property (point) 'front-sticky)))
-           (not (or inhibit-read-only
-                    (get-char-property (point) 'inhibit-read-only))))
-      (and overriding-terminal-local-map
-           (lookup-key overriding-terminal-local-map (vector key)))
-      overriding-local-map))
-
-(defun warashi-nskk-im-translate (key)
-  "KEY を nskk 専用の合成イベントに差し替える。
-nskk が打鍵を消費しないモード (ascii/latin) では KEY をそのまま返し、
-major mode の単キーコマンドを潰さない。"
-  (if (and (integerp key) (<= 32 key) (<= key 126)
-           (warashi-nskk-im--consumes-typing-p)
-           (not (warashi-nskk-im--defer-p key)))
-      (list (warashi-nskk-im--event key))
-    (list key)))
-
-(defun warashi-nskk-im-setup ()
-  "現在のバッファで合成イベント経路を有効にする。"
-  (setq-local input-method-function #'warashi-nskk-im-translate))
-
-(defun warashi-nskk-im-activate (&optional _name)
-  "`japanese-nskk' 入力メソッドとして nskk を有効にする。"
-  (setq deactivate-current-input-method-function #'warashi-nskk-im-deactivate)
-  (nskk-global-mode 1))
-
-(defun warashi-nskk-im-deactivate ()
-  "`japanese-nskk' 入力メソッドを無効にする。"
-  (nskk-global-mode -1))
-
-(register-input-method
+(setup (:package warashi-nskk-im)
+  (:require warashi-nskk-im)
+  ;; C-\ 経路との比較のために japanese-nskk も登録しておく。
+  (register-input-method
    "japanese-nskk" "Japanese" #'warashi-nskk-im-activate ""
    "SKK (nskk) via input-method-function")
+  (:with-hook nskk-mode-hook
+    (:hook warashi-nskk-im-setup)))
+#+end_src
 
+キーマップ側の辻褄合わせはまだここにある。
+
+#+begin_src emacs-lisp
 (defvar warashi-nskk-map--originals nil
   "包む前の `nskk-mode-map' のバインド。(KEY . COMMAND) の alist。")
 
@@ -604,14 +545,7 @@ nskk 自身のハンドラが「知らないコマンド」扱いになって確
 
 (with-eval-after-load 'nskk
   (warashi-nskk-map-wrap)
-  ;; 合成イベントは他のどのマップにも存在しないので、nskk-mode-map に直接
-  ;; 置いても既存のキーとは衝突しない。合成イベントは翻訳が走ったときしか
-  ;; 届かないので、こちらは包まない。
-  (dotimes (i 95)
-    (keymap-set nskk-mode-map
-                (key-description (vector (warashi-nskk-im--event (+ 32 i))))
-                #'warashi-nskk-im--dispatch))
-  (add-hook 'nskk-mode-hook #'warashi-nskk-im-setup)
+  (warashi-nskk-im-install-dispatch-bindings)
   (add-hook 'nskk-mode-hook #'warashi-nskk-map-restore-bound-commands))
 #+end_src
 
