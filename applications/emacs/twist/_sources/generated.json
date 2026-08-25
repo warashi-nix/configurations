@@ -13,12 +13,12 @@
             "name": null,
             "owner": "emacsmirror",
             "repo": "epkgs",
-            "rev": "e655a52201d3064ddd3e4a1f274a94dc9abb1f7a",
-            "sha256": "sha256-ROrGY24GLakVFc94CzmT07VM117OqblaS8JZGp8QIc8=",
+            "rev": "98872b60db535d9d45801d06f7e1b76949769d90",
+            "sha256": "sha256-/A7VnSfwebL5Ytqdn7gyAXuDQZw2bQT3lxV5DVruCk4=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "e655a52201d3064ddd3e4a1f274a94dc9abb1f7a"
+        "version": "98872b60db535d9d45801d06f7e1b76949769d90"
     },
     "gnu-elpa": {
         "cargoLock": null,
