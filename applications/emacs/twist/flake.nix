@@ -55,6 +55,7 @@
             "consult-git-wit"
             "nskk-corfu-henkan"
             "spectreshell"
+            "warashi-agent-shell"
             "warashi-agent-shell-list"
             "warashi-nskk-im"
             "warashi-nskk-map"
@@ -67,6 +68,9 @@
             };
             nskk-corfu-henkan = _: _: {
               src = ./packages/nskk-corfu-henkan;
+            };
+            warashi-agent-shell = _: _: {
+              src = ./packages/warashi-agent-shell;
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;

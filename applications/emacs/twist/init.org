@@ -1046,81 +1046,25 @@ minor-mode map が major-mode map より先に引かれるため。nskk は rema
 =n= が先に =agent-shell-next-item= に解決され、以後 =[remap
 agent-shell-next-item]= しか探されない。
 
-#+begin_src emacs-lisp
-(defun warashi-agent-shell--self-insert-via-remap (fn &rest args)
-  ;; remap が無いときは素通しする。入力メソッドを使っていない状態での挙動を
-  ;; 変えないため。
-  (if-let* ((_ (agent-shell--typing-at-prompt-p))
-            (remapped (command-remapping #'self-insert-command)))
-      (call-interactively remapped)
-    (apply fn args)))
+実装は =warashi-agent-shell= に切り出している。remap の有無で挙動が変わるうえ、
+壊れても例外にはならず「入力した文字が少しおかしい」としてしか出ないので、ert で
+固定する。
 
-(with-eval-after-load 'agent-shell
-  (dolist (fn '(agent-shell-next-item
-                agent-shell-previous-item
-                agent-shell-quote-region
-                agent-shell-image-scale-increase
-                agent-shell-image-scale-decrease
-                agent-shell-image-scale-reset))
-    (advice-add fn :around #'warashi-agent-shell--self-insert-via-remap)))
+#+begin_src emacs-lisp
+(setup (:package warashi-agent-shell)
+  (:with-feature agent-shell
+    (:when-loaded
+      (require 'warashi-agent-shell)
+      (warashi-agent-shell-install-self-insert-advice))))
 #+end_src
 
 model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
 その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
 
 #+begin_src emacs-lisp
-(defun warashi-agent-shell--apply-thought-level ()
-  "agent config に載せた thought level (effort) を新しい shell に適用する。"
-  ;; effort は agent-shell の agent config に設定点が無く、session 確立後に
-  ;; ACP の config option として送るしかない。claude-agent-acp は初期 effort を
-  ;; settings ファイルからしか読まないため、_meta 経由では指定できない。
-  (when-let* ((config (alist-get :agent-config (agent-shell--state)))
-              (level (alist-get :warashi-thought-level config)))
-    (agent-shell-subscribe-to
-     :shell-buffer (current-buffer)
-     :event 'init-finished
-     :on-event
-     (lambda (_event)
-       (agent-shell--config-option-set-thought-level-id
-        :thought-level-id level
-        :on-failure (lambda (acp-error _raw-message)
-                      (message "Failed to set thought level %s: %s" level acp-error)))))))
-
-(defun warashi-agent-shell--start-claude (model-id thought-level)
-  "MODEL-ID と THOUGHT-LEVEL を指定して Claude agent-shell を起動する。"
-  (require 'agent-shell-anthropic)
-  (let ((config (agent-shell-anthropic-make-claude-code-config)))
-    ;; :default-model-id は session 確立後に funcall されるので、動的束縛では
-    ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
-    (setcdr (assq :default-model-id config) (lambda () model-id))
-    ;; thought level を動的束縛で渡さないのは、`agent-shell-mode-hook' が
-    ;; `agent-shell--dwim' の動的エクステント内で走るとは限らないため。
-    ;; config は state の :agent-config に保存されるので、そこから読ませる。
-    (push (cons :warashi-thought-level thought-level) config)
-    (agent-shell--dwim :config config :new-shell t)))
-
-(defmacro warashi-agent-shell-define-claude-variants (&rest variants)
-  "VARIANTS から Claude agent-shell の起動コマンドを定義する。
-VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
-`warashi-agent-shell-claude-NAME' と、eshell から短い名前で呼ぶための
-`eshell/claude-NAME' を生成する。"
-  ;; 一覧を defconst に置いてマクロから参照しないのは、byte-compile 時に
-  ;; defconst が評価されず、マクロ展開時に void-variable になるため。
-  `(progn
-     ,@(mapcan
-        (pcase-lambda (`(,name ,model-id ,thought-level))
-          (let ((fn (intern (format "warashi-agent-shell-claude-%s" name)))
-                (eshell-fn (intern (format "eshell/claude-%s" name))))
-            (list
-             `(defun ,fn ()
-                ,(format "Claude agent-shell を model %s / effort %s で起動する。"
-                         model-id thought-level)
-                (interactive)
-                (warashi-agent-shell--start-claude ,model-id ,thought-level))
-             `(defun ,eshell-fn (&rest _args)
-                ,(format "eshell から `%s' を起動する。" fn)
-                (,fn)))))
-        variants)))
+;; マクロ展開は byte-compile 時に走るので、compile 時にも読ませる。
+(eval-when-compile (require 'warashi-agent-shell))
+(require 'warashi-agent-shell)
 
 ;; MODEL-ID は agent-shell 起動時に "Available models" に出る ID。
 ;; sonnet-xhigh だけ 200k なのは、sonnet に 1M context 版の ID が無いため。
@@ -1136,34 +1080,11 @@ session の累積コストを context usage indicator の隣に常設する。�
 いる最中に膨らみを察知したいため。
 
 #+begin_src emacs-lisp
-(defun warashi-agent-shell--cost-indicator ()
-  "session の累積コストを表示用の文字列で返す。"
-  ;; state を読むのに内部関数を使うのは、usage を取得する公開 API が無いため。
-  (when-let* ((usage (map-elt (agent-shell--state) :usage))
-              (amount (map-elt usage :cost-amount))
-              ((> amount 0)))
-    (let ((currency (map-elt usage :cost-currency)))
-      ;; USD を $ に畳むのは、幅の限られる header で 2 文字を惜しむため。
-      (format "%s%.2f" (if (member currency '(nil "USD")) "$" currency) amount))))
-
-(defun warashi-agent-shell--append-cost-indicator (indicator)
-  "context usage INDICATOR の後ろに cost を足す。"
-  ;; mode-line ではなく context indicator に相乗りするのは、tty では
-  ;; `agent-shell-header-style' が text になり、`agent-shell--mode-line-format'
-  ;; が nil を返して情報が header-line 側にしか出ないため。
-  ;; indicator が nil のときに cost だけ返さないのは、context 未取得の段階で
-  ;; header に単独の数字が現れると何の値か分からないため。
-  (if-let* ((indicator)
-            (cost (warashi-agent-shell--cost-indicator)))
-      (concat indicator " " cost)
-    indicator))
-
 (setup agent-shell
   (:with-hook agent-shell-mode-hook
     (:hook warashi-agent-shell--apply-thought-level))
   (:when-loaded
-    (advice-add 'agent-shell--context-usage-indicator :filter-return
-                #'warashi-agent-shell--append-cost-indicator)))
+    (warashi-agent-shell-install-cost-indicator)))
 #+end_src
 
 *** 一覧サイドバー
