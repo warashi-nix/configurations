@@ -145,6 +145,10 @@
             ...
           }:
           {
+            # Emacs のローカルパッケージの ert テスト。定義は
+            # applications/emacs/twist/flake.nix 側にあり、ここでは CI と
+            # `nix flake check` から見える位置へ引き上げるだけ。
+            checks = inputs'.my-emacs.checks;
             apps = inputs'.my-emacs.packages.default.makeApps {
               lockDirName = "applications/emacs/twist/lock";
             };

@@ -130,6 +130,38 @@
           exportManifest = true;
         }
       );
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = import (inputs.nixpkgs) {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          # テストは twist がビルドした env の Emacs で走らせる。
+          # nskk-corfu-henkan のテストは nskk を本物として駆動するので、
+          # 素の Emacs にスタブを積む方式では成立しない。env は host 構成が
+          # どのみちビルドするものなので、CI 上の追加コストはほぼ無い。
+          emacs = packages.${system}.default;
+          hasTest = name: builtins.pathExists (./packages + "/${name}/${name}-test.el");
+          testablePackages = builtins.filter hasTest (builtins.attrNames (builtins.readDir ./packages));
+        in
+        builtins.listToAttrs (
+          map (name: {
+            name = "emacs-${name}";
+            value =
+              pkgs.runCommand "emacs-${name}-test"
+                {
+                  nativeBuildInputs = [ emacs ];
+                }
+                ''
+                  # -L で env 側の同名パッケージより手前にソースを置く。
+                  cd ${./packages}/${name}
+                  emacs -Q --batch -L . -l ${name}-test.el -f ert-run-tests-batch-and-exit
+                  touch $out
+                '';
+          }) testablePackages
+        )
+      );
       packages = forAllSystems (
         system:
         let
