@@ -906,8 +906,10 @@ session の累積コストを context usage indicator の隣に常設する。�
     (warashi-agent-shell-install-cost-indicator)))
 #+end_src
 
-git-wit の worktree で起動した shell は buffer 名の project 部分を memo にする。
-worktree のディレクトリ名は ID 由来で、一覧に並べてもどの作業か読み取れないため。
+git-wit の worktree で起動した shell は buffer 名の project 部分を =repository / memo=
+にする。worktree のディレクトリ名は ID 由来で、一覧に並べてもどの作業か読み取れな
+いため。repository 名を頭に置くのは、memo だけではどのリポジトリの作業か分からな
+くなるため。
 
 #+begin_src emacs-lisp
 (setup agent-shell
