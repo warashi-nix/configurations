@@ -1673,6 +1673,13 @@ agent が走っている間ずっと再描画が走り、編集中の画面が�
 (setup emacs
   (:opt indent-tabs-mode nil
         frame-resize-pixelwise t)
+  ;; daemon 起動では `standard-display-table' が nil のことがあるため、いきなり
+  ;; `set-display-table-slot' を呼ばずに生成してから設定する。
+  (unless standard-display-table
+    (setq standard-display-table (make-display-table)))
+  ;; 文字リテラル ?│ は tangle 時の elisp パーサが読めず nix build が失敗するため、
+  ;; 文字列経由で渡す。
+  (set-display-table-slot standard-display-table 'vertical-border (string-to-char "│"))
   (:after-init which-key-mode)
   (:after-init load-theme 'modus-operandi))
 #+end_src
