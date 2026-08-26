@@ -204,6 +204,13 @@ ENV \
     PATH="/home/warashi/.nix-profile/bin:/home/warashi/.local/bin:${PATH}" \
     TZ=Asia/Tokyo
 
+# named volume はマウント先がイメージに存在しないと初回作成時に root 所有になり書き込めなくなる
+# （/nix と同じ理由）。USER 切替後なので mkdir 自体が warashi 所有で作られる。
+RUN mkdir -p \
+        /home/warashi/.cache/go-build \
+        /home/warashi/.cache/nix \
+        /home/warashi/go/pkg/mod
+
 # --------------------------------------------------------
 # Git・Claude・Copilot・Nixの設定
 # --------------------------------------------------------
