@@ -15,8 +15,9 @@
 ;;   + - 0 を素のキーで握っており、プロンプト上ではそれぞれのコマンドが
 ;;   `self-insert-command' を直接呼ぶ。直接呼び出しは `nskk-mode-map' の
 ;;   `<remap> <self-insert-command>' を通らないので、konnkai が こnnかい になる。
-;; - model と effort を固定した起動コマンド。effort は agent config に設定点が
-;;   無く、session 確立後に ACP の config option として送るしかない。
+;; - model と effort を固定した起動コマンド。Claude と、pi-acp 経由の pi の
+;;   二系統がある。effort は agent config に設定点が無く、session 確立後に ACP
+;;   の config option として送るしかない。
 ;; - session の累積コストを context usage indicator の隣に常設する。
 ;; - buffer 名の project 部分を repository 名と git-wit の memo にする。
 ;;   worktree のディレクトリ名は ID 由来で、並べたときにどの作業か読み取れない。
@@ -25,7 +26,8 @@
 ;; `warashi-agent-shell-install-cost-indicator'、
 ;; `warashi-agent-shell-install-git-wit-memo-name' を agent-shell のロード後に呼び、
 ;; `warashi-agent-shell--apply-thought-level' を `agent-shell-mode-hook' に登録
-;; する。起動コマンドは `warashi-agent-shell-define-claude-variants' で作る。
+;; する。起動コマンドは `warashi-agent-shell-define-claude-variants' と
+;; `warashi-agent-shell-define-pi-variants' で作る。
 
 ;;; Code:
 
@@ -110,6 +112,36 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
                          model-id thought-level)
                 (interactive)
                 (warashi-agent-shell--start-claude ,model-id ,thought-level))
+             `(defun ,eshell-fn (&rest _args)
+                ,(format "eshell から `%s' を起動する。" fn)
+                (,fn)))))
+        variants)))
+
+(defun warashi-agent-shell--start-pi (model-id)
+  "MODEL-ID を指定して pi agent-shell を起動する。"
+  (require 'agent-shell-pi)
+  (let ((config (agent-shell-pi-make-agent-config)))
+    ;; claude 側と同じく、MODEL-ID を lexical に閉じ込めた関数へ差し替える。
+    (setcdr (assq :default-model-id config) (lambda () model-id))
+    (agent-shell--dwim :config config :new-shell t)))
+
+(defmacro warashi-agent-shell-define-pi-variants (&rest variants)
+  "VARIANTS から pi agent-shell の起動コマンドを定義する。
+VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
+`warashi-agent-shell-pi-NAME' と、eshell から短い名前で呼ぶための
+`eshell/pi-NAME' を生成する。"
+  ;; thought level を取らないのは、ローカルモデルが reasoning 非対応で
+  ;; 送るべき effort が無いため。
+  `(progn
+     ,@(mapcan
+        (pcase-lambda (`(,name ,model-id))
+          (let ((fn (intern (format "warashi-agent-shell-pi-%s" name)))
+                (eshell-fn (intern (format "eshell/pi-%s" name))))
+            (list
+             `(defun ,fn ()
+                ,(format "pi agent-shell を model %s で起動する。" model-id)
+                (interactive)
+                (warashi-agent-shell--start-pi ,model-id))
              `(defun ,eshell-fn (&rest _args)
                 ,(format "eshell から `%s' を起動する。" fn)
                 (,fn)))))

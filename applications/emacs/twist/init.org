@@ -894,6 +894,14 @@ model と effort を固定した起動コマンドを用意する。eshell か�
  (fable-medium "claude-fable-5[1m]" "medium"))
 #+end_src
 
+pi も同じ形で用意する。軽い作業を athena のローカルモデルに逃がす導線で、モデル
+は pi-acp が組み立てる =provider/id= を指す。
+
+#+begin_src emacs-lisp
+(warashi-agent-shell-define-pi-variants
+ (ornith "athena/ornith-1-5-9b"))
+#+end_src
+
 session の累積コストを context usage indicator の隣に常設する。ターン終了時の
 ボックス (=agent-shell-show-usage-at-turn-end=) ではなく常設にするのは、走らせて
 いる最中に膨らみを察知したいため。

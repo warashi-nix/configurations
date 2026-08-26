@@ -103,6 +103,8 @@
   `(let ((captured nil))
      (cl-letf (((symbol-function 'agent-shell-anthropic-make-claude-code-config)
                 (lambda (&rest _) (list (cons :default-model-id #'ignore))))
+               ((symbol-function 'agent-shell-pi-make-agent-config)
+                (lambda (&rest _) (list (cons :default-model-id #'ignore))))
                ((symbol-function 'agent-shell--dwim)
                 (lambda (&rest args) (setq captured args))))
        ,@body)
@@ -140,6 +142,38 @@
                (lambda (&rest a) (setq args a))))
       (funcall 'eshell/claude-warashi-agent-shell-test-variant)
       (should (equal '("test-model" "high") args)))))
+
+(ert-deftest warashi-agent-shell-test-start-pi-config ()
+  "model が config に載り、新しい shell として起動する。"
+  (let* ((captured (warashi-agent-shell-test--capture-dwim
+                     (warashi-agent-shell--start-pi "athena/ornith-1-5-9b")))
+         (config (plist-get captured :config)))
+    (should (plist-get captured :new-shell))
+    ;; :default-model-id は session 確立後に funcall される。
+    (should (equal "athena/ornith-1-5-9b"
+                   (funcall (alist-get :default-model-id config))))))
+
+(ert-deftest warashi-agent-shell-test-start-pi-keeps-model-per-shell ()
+  "先に起動した shell の model が、後の起動で書き換わらない。"
+  (let ((first (alist-get :default-model-id
+                          (plist-get (warashi-agent-shell-test--capture-dwim
+                                       (warashi-agent-shell--start-pi "athena/ornith-1-5-9b"))
+                                     :config))))
+    (warashi-agent-shell-test--capture-dwim
+      (warashi-agent-shell--start-pi "athena/other"))
+    (should (equal "athena/ornith-1-5-9b" (funcall first)))))
+
+(ert-deftest warashi-agent-shell-test-define-pi-variants ()
+  "variant ごとにコマンドと eshell 用の関数を定義する。"
+  (warashi-agent-shell-define-pi-variants
+   (warashi-agent-shell-test-variant "test/model"))
+  (should (commandp 'warashi-agent-shell-pi-warashi-agent-shell-test-variant))
+  (should (fboundp 'eshell/pi-warashi-agent-shell-test-variant))
+  (let ((args nil))
+    (cl-letf (((symbol-function 'warashi-agent-shell--start-pi)
+               (lambda (&rest a) (setq args a))))
+      (funcall 'eshell/pi-warashi-agent-shell-test-variant)
+      (should (equal '("test/model") args)))))
 
 ;;;; コスト表示
 
