@@ -129,6 +129,14 @@ ARG PI_VERSION="latest"
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
 
+# pi-acp (pi の ACP アダプタ) インストール
+# pi 本体は ACP を話さないため、agent-shell から使うにはこのアダプタが要る。
+# 隣と違って latest にしないのは、0.0.x で README が breaking change を予告して
+# いるため。イメージ再ビルドのたびに agent-shell 側が壊れるのを避ける。
+ARG PI_ACP_VERSION="0.0.33"
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm install -g "pi-acp@${PI_ACP_VERSION}"
+
 # --------------------------------------------------------
 # ユーザー作成と権限設定
 # --------------------------------------------------------
