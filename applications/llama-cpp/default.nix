@@ -5,9 +5,11 @@
   ...
 }:
 let
+  llama = lib.getExe' pkgs.llama-cpp "llama";
   llama-server = lib.getExe' pkgs.llama-cpp "llama-server";
   state-directory = "${config.xdg.stateHome}/llama-server";
-  models-preset = (pkgs.formats.ini { }).generate "llama-server-models-preset.ini" {
+  cache-directory = "${config.xdg.cacheHome}/llama.cpp";
+  models = {
     gemma-4-12b-qat = {
       hf-repo = "unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL";
       mmproj-auto = false;
@@ -41,6 +43,51 @@ let
       load-on-startup = false;
     };
   };
+  models-preset = (pkgs.formats.ini { }).generate "llama-server-models-preset.ini" models;
+  download-args =
+    model:
+    [
+      "-hf"
+      model.hf-repo
+    ]
+    ++ lib.optional (!(model.mmproj-auto or true)) "--no-mmproj"
+    ++ lib.optional ((model.spec-type or null) == "draft-mtp") "--mtp";
+  download-models = pkgs.writeShellApplication {
+    name = "llama-download-models";
+    text = ''
+      export LLAMA_CACHE=${lib.escapeShellArg cache-directory}
+      mkdir -p "$LLAMA_CACHE"
+
+      download_one() {
+        case "$1" in
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (
+          name: model:
+          "    ${lib.escapeShellArg name}) ${
+                lib.escapeShellArgs (
+                  [
+                    llama
+                    "download"
+                  ]
+                  ++ download-args model
+                )
+              } ;;"
+        ) models
+      )}
+          *) echo "unknown model: $1" >&2; return 1 ;;
+        esac
+      }
+
+      if [ "$#" -eq 0 ]; then
+        set -- ${lib.escapeShellArgs (lib.attrNames models)}
+      fi
+
+      for model in "$@"; do
+        echo "downloading $model" >&2
+        download_one "$model"
+      done
+    '';
+  };
 in
 {
   home = {
@@ -51,6 +98,7 @@ in
     };
     packages = [
       pkgs.llama-cpp
+      download-models
     ];
   };
 
@@ -58,7 +106,7 @@ in
     enable = true;
     config = {
       EnvironmentVariables = {
-        LLAMA_CACHE = "${config.xdg.cacheHome}/llama.cpp";
+        LLAMA_CACHE = cache-directory;
       };
       KeepAlive = true;
       ProcessType = "Background";
