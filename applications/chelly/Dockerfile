@@ -201,7 +201,7 @@ RUN mkdir -p /nix && chmod 0755 /nix && chown "${UID}:${GID}" /nix
 # コンテナ固有の前提はそこには書けない。Claude Code が enterprise policy memory として
 # 読む /etc/claude-code/CLAUDE.md はイメージ側にしか無く、コンテナ内だけに効く。
 COPY --chmod=0644 <<'EOF' /etc/claude-code/CLAUDE.md
-- 実行環境は chelly が起動するエフェメラルなコンテナであり、終了時に破棄される
+- この環境はエフェメラルなコンテナであり、終了時に破棄される
 EOF
 
 USER warashi
