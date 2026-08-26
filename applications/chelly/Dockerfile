@@ -123,6 +123,12 @@ ARG CLAUDE_AGENT_ACP_VERSION="latest"
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm install -g "@agentclientprotocol/claude-agent-acp@${CLAUDE_AGENT_ACP_VERSION}"
 
+# pi coding agent CLI インストール
+# claude-agent-acp と同じ理由で npm から /usr/local 配下に入れる。
+ARG PI_VERSION="latest"
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
 # --------------------------------------------------------
 # ユーザー作成と権限設定
 # --------------------------------------------------------
@@ -222,7 +228,7 @@ RUN mkdir -p \
         /home/warashi/go/pkg/mod
 
 # --------------------------------------------------------
-# Git・Claude・Copilot・Nixの設定
+# Git・Claude・Copilot・pi・Nixの設定
 # --------------------------------------------------------
 # Git初期設定
 RUN mkdir -p /home/warashi/.config/git && \
@@ -237,6 +243,34 @@ RUN bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 # Copilot CLI インストール
 ADD --chmod=0666 https://gh.io/copilot-install /tmp/copilot-install.sh
 RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
+
+# pi の接続先設定
+# ホストの llama-server は 127.0.0.1 バインドのままにして LAN へ晒さないため、
+# コンテナからは gvproxy が張る host.containers.internal 経由で到達する。
+# apiKey は llama-server が検証しないダミーで、無いとモデルが選択肢に出ない。
+RUN mkdir -p /home/warashi/.pi/agent
+COPY --chown=warashi --chmod=0644 <<'EOF' /home/warashi/.pi/agent/models.json
+{
+  "providers": {
+    "athena": {
+      "baseUrl": "http://host.containers.internal:11435/v1",
+      "api": "openai-completions",
+      "apiKey": "llama-server",
+      "models": [
+        {
+          "id": "ornith-1-5-9b",
+          "name": "Ornith 1.5 9B (athena)",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 32768,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    }
+  }
+}
+EOF
 
 # Nix 設定（インストール自体は entrypoint が volume 側の /nix に対して行う）
 RUN mkdir -p ~/.config/nix && \
