@@ -30,6 +30,23 @@ let
       ui = false;
       load-on-startup = false;
     };
+    ornith-1-5-9b = {
+      hf-repo = "ornith-ai/Ornith-1.5-9B-GGUF:Q6_K";
+      ctx-size = 32768;
+      parallel = 1;
+      cache-type-k = "q8_0";
+      cache-type-v = "q8_0";
+      gpu-layers = 999;
+      flash-attn = "on";
+      temp = "0.6";
+      top-p = "0.95";
+      top-k = 20;
+      min-p = "0.0";
+      reasoning = "off";
+      sleep-idle-seconds = 900;
+      ui = false;
+      load-on-startup = false;
+    };
     qwen3-embedding-4b = {
       hf-repo = "Qwen/Qwen3-Embedding-4B-GGUF:Q4_K_M";
       embedding = true;
