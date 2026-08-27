@@ -1015,6 +1015,18 @@ git-wit の worktree で起動した shell は buffer 名の project 部分を =
   (:after-init spectreshell-eshell-mode))
 #+end_src
 
+pcomplete がビルトインで知っているコマンドは限られていて、just のように
+補完関数のないコマンドは引数が一切出ない。fish は補完定義を持っているので、
+pcomplete が解決できなかったぶんだけ fish に委譲する。
+
+#+begin_src emacs-lisp
+(setup (:package fish-completion)
+  ;; bash へのフォールバックは有効にしない。compgen 由来の補完は fish のもの
+  ;; より粗く、bash-completion を別途入れないと結局ファイル名しか返らない。
+  (:opt fish-completion-fallback-on-bash-p nil)
+  (:after-init global-fish-completion-mode))
+#+end_src
+
 ** tramp
 #+begin_src emacs-lisp
 (setup (:package tramp

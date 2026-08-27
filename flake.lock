@@ -519,6 +519,22 @@
         "type": "github"
       }
     },
+    "fish-completion": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1716041019,
+        "narHash": "sha256-cd9mJUFbBSX9gr/ePsCL/8hH8dFgHGnP54F8CxPuSlA=",
+        "owner": "LemonBreezes",
+        "repo": "emacs-fish-completion",
+        "rev": "1256f137a2039805d4e87f8e6c11a162ed019587",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LemonBreezes",
+        "repo": "emacs-fish-completion",
+        "type": "github"
+      }
+    },
     "fish-mode": {
       "flake": false,
       "locked": {
@@ -984,6 +1000,7 @@
         "envrc": "envrc",
         "exec-path-from-shell": "exec-path-from-shell",
         "f": "f",
+        "fish-completion": "fish-completion",
         "fish-mode": "fish-mode",
         "ghostel": "ghostel",
         "hcl-mode": "hcl-mode",

@@ -115,6 +115,12 @@
       repo = "f.el";
       type = "github";
     };
+    fish-completion = {
+      flake = false;
+      owner = "LemonBreezes";
+      repo = "emacs-fish-completion";
+      type = "github";
+    };
     fish-mode = {
       flake = false;
       owner = "wwwjfy";
