@@ -1021,9 +1021,15 @@ pcomplete が解決できなかったぶんだけ fish に委譲する。
 
 #+begin_src emacs-lisp
 (setup (:package fish-completion)
+  ;; autoload されるのは fish-completion-mode だけで、globalized 版には cookie が
+  ;; ないため、明示的に require しないと after-init 時点で未ロードになる。
+  (:require fish-completion)
   ;; bash へのフォールバックは有効にしない。compgen 由来の補完は fish のもの
   ;; より粗く、bash-completion を別途入れないと結局ファイル名しか返らない。
   (:opt fish-completion-fallback-on-bash-p nil)
+  ;; eshell でしか使わないが globalized 版を使う。fish-completion-mode は
+  ;; pcomplete-default-completion-function をグローバルに差し替えるので、
+  ;; eshell-mode-hook から直接呼ぶと初回セッションの module 初期化に負ける。
   (:after-init global-fish-completion-mode))
 #+end_src
 
