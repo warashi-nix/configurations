@@ -19,7 +19,7 @@ buildNpmPackage (final: {
     nodejs
   ];
 
-  npmDepsHash = "sha256-rSsW8Do9Z3MHDAhNfSHFUK04wAnF3v7lwI0sx3igxM4=";
+  npmDepsHash = "sha256-eLiNwwIJIl4VnY+nmu0DJ91Hl/RtCGKhcpEGTa/wQT0=";
 
   dontNpmBuild = true;
 
