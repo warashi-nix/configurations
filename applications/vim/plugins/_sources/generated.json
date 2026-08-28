@@ -43,7 +43,7 @@
     },
     "vim-lsp": {
         "cargoLock": null,
-        "date": "2026-04-19",
+        "date": "2026-08-10",
         "extract": null,
         "name": "vim-lsp",
         "passthru": null,
@@ -55,16 +55,16 @@
             "name": null,
             "owner": "prabirshrestha",
             "repo": "vim-lsp",
-            "rev": "474c656659b5fb51eec6770309e0211c8aa49b5b",
-            "sha256": "sha256-ZMqeuTKyQAknqXA4IvNCzgumcrafu0sLNp3ZFwQ6kj4=",
+            "rev": "e10d186452743beb7b43d2b3427020832f930c2b",
+            "sha256": "sha256-6AaV0dR9yfptp2aj8qwYsXF5MOch4PeW/CPaa4HTjuI=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "474c656659b5fb51eec6770309e0211c8aa49b5b"
+        "version": "e10d186452743beb7b43d2b3427020832f930c2b"
     },
     "vim-lsp-settings": {
         "cargoLock": null,
-        "date": "2026-07-25",
+        "date": "2026-08-25",
         "extract": null,
         "name": "vim-lsp-settings",
         "passthru": null,
@@ -76,12 +76,12 @@
             "name": null,
             "owner": "mattn",
             "repo": "vim-lsp-settings",
-            "rev": "b0c9bacfe98ff6bc4c5f6b0fffdc085d252387e0",
-            "sha256": "sha256-m+JEeqIPkGXzeP4mWLf9BA72siX0tOWMbLjgBDe/HNE=",
+            "rev": "c10b5a08be5e91379cc46550ef39ec963a81e9dc",
+            "sha256": "sha256-FqPmvfEf8i9HQbpod1ut5kUkcXxBNoafEEsTsL5BGvg=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "b0c9bacfe98ff6bc4c5f6b0fffdc085d252387e0"
+        "version": "c10b5a08be5e91379cc46550ef39ec963a81e9dc"
     },
     "vim-nix": {
         "cargoLock": null,
