@@ -8,6 +8,12 @@ on:
 
 permissions: {}
 
+# ubuntu-slim は LANG が未設定で、GHC 製の nvfetcher が git の出力を ASCII として読むため、
+# 非 ASCII を含むコミットメッセージで hGetContents エラーになる
+env:
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+
 jobs:
   list-flake-inputs:
     runs-on: ubuntu-slim
