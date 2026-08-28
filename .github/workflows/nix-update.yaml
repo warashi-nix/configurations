@@ -55,7 +55,13 @@ jobs:
           show-progress: false
       - name: List emacs packages
         id: list-emacs-packages
-        run: echo "packages=$(jq -c '.nodes[.root].inputs | keys' applications/emacs/twist/lock/flake.lock)" >> "$GITHUB_OUTPUT"
+        env:
+          # 手動実行は復旧手段として使うので絞り込まない。rev が lock と一致した
+          # まま lock 側だけが壊れた場合、事前判定では永久に拾えない
+          SKIP_FILTER: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          packages=$(./.github/workflows/list-emacs-updates.sh)
+          echo "packages=${packages}" >> "$GITHUB_OUTPUT"
 
   update-flake-inputs:
     runs-on: ubuntu-slim
@@ -166,6 +172,7 @@ jobs:
   update-emacs-packages:
     runs-on: ubuntu-slim
     needs: list-emacs-packages
+    if: needs.list-emacs-packages.outputs.packages != '[]'
     strategy:
       fail-fast: false
       matrix:
