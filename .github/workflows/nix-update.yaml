@@ -129,7 +129,9 @@ jobs:
           git config user.email "265781387+warashi-nix-updater[bot]@users.noreply.github.com"
           git switch -c "update-nvfetcher-${branch_name}"
       - name: Update nvfetcher
-        run: nix run 'nixpkgs#nvfetcher'
+        # nixpkgs レジストリを引くと channels.nixos.org の nixexprs.tar.xz の展開に
+        # 50 秒ほどかかるので、checkout 済みの flake.lock で固定した nixpkgs を使う
+        run: nix run --inputs-from "path:${GITHUB_WORKSPACE}" 'nixpkgs#nvfetcher'
         working-directory: ${{ matrix.dir }}
       - name: Commit and create pull request
         env:
