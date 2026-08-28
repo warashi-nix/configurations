@@ -3,11 +3,11 @@
     "acp": {
       "flake": false,
       "locked": {
-        "lastModified": 1787323732,
-        "narHash": "sha256-/wG4MSTaYBBHqFWIaOVq94apnro2sIeWOfbWwCcDvBU=",
+        "lastModified": 1787909869,
+        "narHash": "sha256-2hdGRiWWUySiFDhpcoA8diJa4C/dvbV98qgZFRbd4js=",
         "owner": "xenodium",
         "repo": "acp.el",
-        "rev": "4d7d58dc39870e9390e94617e13d7ada175d7945",
+        "rev": "42f5c268537220b94cb1f17e29d3f1f89e6ff0a0",
         "type": "github"
       },
       "original": {
