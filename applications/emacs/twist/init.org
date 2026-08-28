@@ -158,6 +158,7 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 ** envrc
 #+begin_src emacs-lisp
 (setup (:package envrc)
+  (:opt envrc-async t)
   (:after-init envrc-global-mode))
 #+end_src
 
