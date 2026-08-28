@@ -229,6 +229,8 @@ EOF
 # git worktree から起動すると .git 本体はマウントされるが他の worktree のディレクトリは
 # コンテナ内に存在しない。この状態で prune / remove を実行すると、消えたように見える
 # 他の worktree の登録ごと落としてしまうため、コンテナ内では実行させない。
+# remove は対象がコンテナ内に実在するときだけ通す。コンテナ内で add した worktree を
+# 片付けるのは正当な操作で、そこまで塞ぐと worktree を使う作業自体ができなくなる。
 # エイリアスでは組み込みサブコマンドを上書きできないので PATH 先頭の shim にしている。
 # gc も worktree を prune するが gc.worktreePruneExpire=never で無効化できるため対象外。
 COPY --chmod=0755 <<'EOF' /opt/chelly-shims/git
@@ -249,11 +251,34 @@ while [ "${#args[@]}" -gt 0 ]; do
         continue
         ;;
     worktree) worktree_seen=1 ;;
-    prune | remove)
+    prune)
         if [ "${worktree_seen}" = 1 ]; then
-            echo "chelly: git worktree ${args[0]} はコンテナ内では禁止されています" >&2
+            echo "chelly: git worktree prune はコンテナ内では禁止されています" >&2
             echo "chelly: 他の worktree のディレクトリがコンテナ内に無いため、その登録まで消えます" >&2
             exit 1
+        fi
+        break
+        ;;
+    remove)
+        if [ "${worktree_seen}" = 1 ]; then
+            target=""
+            for arg in "${args[@]:1}"; do
+                case "${arg}" in
+                --) continue ;;
+                -*) continue ;;
+                *)
+                    target="${arg}"
+                    break
+                    ;;
+                esac
+            done
+            # -C で移動した先を基準にした相対パスは shim の cwd では解決できないが、
+            # その場合は実在しない扱いになって拒否されるだけなので安全側に倒しておく。
+            if [ -z "${target}" ] || [ ! -d "${target}" ]; then
+                echo "chelly: git worktree remove はコンテナ内に実在する worktree にしか使えません" >&2
+                echo "chelly: ${target:-対象} はコンテナ内に無く、ホスト側にある worktree の登録を消す恐れがあります" >&2
+                exit 1
+            fi
         fi
         break
         ;;
