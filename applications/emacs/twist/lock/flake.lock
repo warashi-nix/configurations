@@ -179,11 +179,11 @@
     "corfu": {
       "flake": false,
       "locked": {
-        "lastModified": 1787829078,
-        "narHash": "sha256-b2D33E63zLDLTcrO+HBXOOuloDEfmXPAfLW+16g6C6c=",
+        "lastModified": 1787909567,
+        "narHash": "sha256-jc2cNEq3HG7/HIPt1R35IPs+ntg7c0kAXLaY5sKIIAU=",
         "owner": "minad",
         "repo": "corfu",
-        "rev": "afb932056e8f398ad29e53edb0ff3ea5c0f96eb9",
+        "rev": "c68f993d2df82bfab8a973c6f1af047dc3543093",
         "type": "github"
       },
       "original": {
