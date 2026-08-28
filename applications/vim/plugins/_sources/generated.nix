@@ -32,27 +32,27 @@
   };
   vim-lsp = {
     pname = "vim-lsp";
-    version = "474c656659b5fb51eec6770309e0211c8aa49b5b";
+    version = "e10d186452743beb7b43d2b3427020832f930c2b";
     src = fetchFromGitHub {
       owner = "prabirshrestha";
       repo = "vim-lsp";
-      rev = "474c656659b5fb51eec6770309e0211c8aa49b5b";
+      rev = "e10d186452743beb7b43d2b3427020832f930c2b";
       fetchSubmodules = false;
-      sha256 = "sha256-ZMqeuTKyQAknqXA4IvNCzgumcrafu0sLNp3ZFwQ6kj4=";
+      sha256 = "sha256-6AaV0dR9yfptp2aj8qwYsXF5MOch4PeW/CPaa4HTjuI=";
     };
-    date = "2026-04-19";
+    date = "2026-08-10";
   };
   vim-lsp-settings = {
     pname = "vim-lsp-settings";
-    version = "b0c9bacfe98ff6bc4c5f6b0fffdc085d252387e0";
+    version = "c10b5a08be5e91379cc46550ef39ec963a81e9dc";
     src = fetchFromGitHub {
       owner = "mattn";
       repo = "vim-lsp-settings";
-      rev = "b0c9bacfe98ff6bc4c5f6b0fffdc085d252387e0";
+      rev = "c10b5a08be5e91379cc46550ef39ec963a81e9dc";
       fetchSubmodules = false;
-      sha256 = "sha256-m+JEeqIPkGXzeP4mWLf9BA72siX0tOWMbLjgBDe/HNE=";
+      sha256 = "sha256-FqPmvfEf8i9HQbpod1ut5kUkcXxBNoafEEsTsL5BGvg=";
     };
-    date = "2026-07-25";
+    date = "2026-08-25";
   };
   vim-nix = {
     pname = "vim-nix";
