@@ -223,6 +223,64 @@ COPY --chmod=0644 <<'EOF' /etc/claude-code/CLAUDE.md
 - 実際に mount されているディレクトリは /proc/self/mountinfo で確認できる
 EOF
 
+# --------------------------------------------------------
+# git worktree の破壊的操作を止める shim
+# --------------------------------------------------------
+# git worktree から起動すると .git 本体はマウントされるが他の worktree のディレクトリは
+# コンテナ内に存在しない。この状態で prune / remove を実行すると、消えたように見える
+# 他の worktree の登録ごと落としてしまうため、コンテナ内では実行させない。
+# エイリアスでは組み込みサブコマンドを上書きできないので PATH 先頭の shim にしている。
+# gc も worktree を prune するが gc.worktreePruneExpire=never で無効化できるため対象外。
+COPY --chmod=0755 <<'EOF' /opt/chelly-shims/git
+#!/usr/bin/env bash
+set -eu
+
+worktree_seen=0
+args=("$@")
+while [ "${#args[@]}" -gt 0 ]; do
+    case "${args[0]}" in
+    # 値を別の引数として取るグローバルオプションは、その値をサブコマンドと誤認しないよう飛ばす。
+    -C | -c | --git-dir | --work-tree | --namespace | --exec-path | --super-prefix | --config-env)
+        args=("${args[@]:2}")
+        continue
+        ;;
+    -*)
+        args=("${args[@]:1}")
+        continue
+        ;;
+    worktree) worktree_seen=1 ;;
+    prune | remove)
+        if [ "${worktree_seen}" = 1 ]; then
+            echo "chelly: git worktree ${args[0]} はコンテナ内では禁止されています" >&2
+            echo "chelly: 他の worktree のディレクトリがコンテナ内に無いため、その登録まで消えます" >&2
+            exit 1
+        fi
+        break
+        ;;
+    *) break ;;
+    esac
+    args=("${args[@]:1}")
+done
+
+# 自分自身を再帰的に呼ばないよう PATH から shim のディレクトリを外して実体を探す。
+git_path=""
+IFS=:
+for dir in ${PATH}; do
+    if [ "${dir}" != /opt/chelly-shims ] && [ -x "${dir}/git" ]; then
+        git_path="${dir}/git"
+        break
+    fi
+done
+unset IFS
+
+if [ -z "${git_path}" ]; then
+    echo "chelly: git が見つかりません" >&2
+    exit 127
+fi
+
+exec "${git_path}" "$@"
+EOF
+
 USER warashi
 ENV USER=warashi
 WORKDIR /home/warashi
@@ -230,7 +288,7 @@ WORKDIR /home/warashi
 ENV \
     CLAUDE_CONFIG_DIR=/home/warashi/.claude \
     LANG=C.UTF-8 \
-    PATH="/home/warashi/.nix-profile/bin:/home/warashi/.local/bin:${PATH}" \
+    PATH="/opt/chelly-shims:/home/warashi/.nix-profile/bin:/home/warashi/.local/bin:${PATH}" \
     TZ=Asia/Tokyo
 
 # named volume はマウント先がイメージに存在しないと初回作成時に root 所有になり書き込めなくなる
@@ -246,6 +304,7 @@ RUN mkdir -p \
 # Git初期設定
 RUN mkdir -p /home/warashi/.config/git && \
     git config --global core.untrackedcache false && \
+    git config --global gc.worktreePruneExpire never && \
     git config --global user.name 'Shinnosuke Sawada-Dazai' && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
