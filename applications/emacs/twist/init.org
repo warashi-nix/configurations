@@ -251,6 +251,54 @@ handler は =/= や =/nix= にもマッチするので、tramp が読み込ま�
   (advice-add fn :around #'my/nskk-read-without-file-handlers))
 #+end_src
 
+*** store path が変わった後の辞書キャッシュ
+=dict-cache.eld= の有効判定 (=nskk--dict-cache-valid-p=) は「キャッシュが
+辞書ファイルより新しいか」の mtime 比較しかしない。store のファイルは
+mtime が epoch なので、キャッシュは何があっても有効と判定される。読んだ後
+に =:source-files= が現在の設定と一致するか検査されるが、ここで落ちても
+=nskk--dict-load-from-cache= は 0 件を黙って返すだけでファイルへ読み直さ
+ない。結果、SKK-JISYO.L の store path が変わると以後ずっと ja-dic (14.7 万
+件) に落ちたままになり、辞書をローカルに読ませている目的である見出しの前
+方一致が死ぬ。読ませる前に、こちらで捨てる。
+
+#+begin_src emacs-lisp
+(defun my/nskk-dict-cache-source-files (cache)
+  "CACHE の先頭から =:source-files= の値を読む。読めなければ `unknown'。"
+  (condition-case nil
+      (with-temp-buffer
+        (let ((file-name-handler-alist nil)
+              (coding-system-for-read 'utf-8-unix))
+          ;; :entries を含む全体は 20MB を超える。plist の先頭にある
+          ;; :source-files だけが要るので、先頭だけを読む。
+          (insert-file-contents cache nil 0 4096))
+        (goto-char (point-min))
+        (if (re-search-forward ":source-files[[:space:]]+" nil t)
+            (read (current-buffer))
+          'unknown))
+    (error 'unknown)))
+
+;; nskk を require せずに書く。コンパイル時の free variable 警告だけを消す。
+(defvar nskk-dict-system-dictionary-files)
+
+(defun my/nskk-invalidate-stale-dict-cache (&rest _)
+  (let ((cache (expand-file-name "nskk/dict-cache.eld" user-emacs-directory)))
+    (when (file-exists-p cache)
+      (let ((stored (my/nskk-dict-cache-source-files cache)))
+        ;; 並び順は問わない。nskk 側の照合 (nskk--dict-cache-source-valid-p)
+        ;; もソートして比べるので、ここだけ厳しくすると無駄に捨てることになる。
+        (unless (and (listp stored)
+                     (seq-every-p #'stringp stored)
+                     (equal (sort (copy-sequence stored) #'string<)
+                            (sort (copy-sequence nskk-dict-system-dictionary-files)
+                                  #'string<)))
+          (let ((file-name-handler-alist nil))
+            (delete-file cache)))))))
+
+;; :around ではなく :before。捨てた後は通常のファイル読み込み経路が走り、
+;; 新しい store path でキャッシュが書き直される。
+(advice-add 'nskk-dict-initialize :before #'my/nskk-invalidate-stale-dict-cache)
+#+end_src
+
 *** 辞書の先読み
 初回の =C-x C-j= は =nskk-dict-initialize= を同期で呼ぶ。SKK-JISYO.L
 (17.5 万件) の読み込みは =dict-cache.eld= が効いていても数秒かかり、その
