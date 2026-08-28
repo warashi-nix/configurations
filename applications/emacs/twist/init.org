@@ -1021,6 +1021,7 @@ pcomplete が解決できなかったぶんだけ fish に委譲する。
 
 #+begin_src emacs-lisp
 (setup (:package fish-completion)
+  (:nixpkgs fish)
   ;; autoload されるのは fish-completion-mode だけで、globalized 版には cookie が
   ;; ないため、明示的に require しないと after-init 時点で未ロードになる。
   (:require fish-completion)
