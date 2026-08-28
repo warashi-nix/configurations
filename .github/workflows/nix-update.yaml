@@ -33,16 +33,26 @@ jobs:
   list-nvfetcher:
     runs-on: ubuntu-slim
     outputs:
-      dirs: ${{ steps.list-nvfetcher.outputs.dirs }}
+      sources: ${{ steps.list-nvfetcher.outputs.sources }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           show-progress: false
-      - name: List nvfetcher.toml
+      - name: List nvfetcher sources
         id: list-nvfetcher
+        # ソース名は _sources/generated.json ではなく nvfetcher.toml のテーブル名から採る。
+        # まだ一度も fetch していない新規ソースも初回から対象に入るため
         run: |
-          echo "dirs=$(find . -name nvfetcher.toml -exec dirname {} \; | sort | jq -cnR '[inputs | select(length>0)]')" >> "$GITHUB_OUTPUT"
+          sources=$(
+            find . -name nvfetcher.toml | sort | while read -r toml; do
+              dir=$(dirname "$toml")
+              grep -o '^\[[^]]*\]' "$toml" | tr -d '[]' | while read -r source; do
+                jq -cn --arg dir "$dir" --arg source "$source" '{dir: $dir, source: $source}'
+              done
+            done | jq -cs .
+          )
+          echo "sources=${sources}" >> "$GITHUB_OUTPUT"
 
   list-emacs-packages:
     runs-on: ubuntu-slim
@@ -126,7 +136,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: ${{ fromJson(needs.list-nvfetcher.outputs.dirs) }}
+        include: ${{ fromJson(needs.list-nvfetcher.outputs.sources) }}
     steps:
       - name: Install Nix
         uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
@@ -148,28 +158,35 @@ jobs:
       - name: Prepare git
         env:
           TARGET_DIR: ${{ matrix.dir }}
+          TARGET_SOURCE: ${{ matrix.source }}
         run: |
           branch_name="${TARGET_DIR#./}"
           branch_name="${branch_name//\//-}"
 
           git config user.name "warashi-nix-updater[bot]"
           git config user.email "265781387+warashi-nix-updater[bot]@users.noreply.github.com"
-          git switch -c "update-nvfetcher-${branch_name}"
+          git switch -c "update-nvfetcher-${branch_name}-${TARGET_SOURCE}"
       - name: Update nvfetcher
         # nixpkgs レジストリを引くと channels.nixos.org の nixexprs.tar.xz の展開に
         # 50 秒ほどかかるので、checkout 済みの flake.lock で固定した nixpkgs を使う
-        run: nix run --inputs-from "path:${GITHUB_WORKSPACE}" 'nixpkgs#nvfetcher'
+        #
+        # --filter で 1 ソースに絞る。同じ generated.nix を書く兄弟 PR とは
+        # ソースごとに独立したブロックになるので、flake.lock と同様 3-way merge で解決できる
+        env:
+          TARGET_SOURCE: ${{ matrix.source }}
+        run: nix run --inputs-from "path:${GITHUB_WORKSPACE}" 'nixpkgs#nvfetcher' -- --filter "^${TARGET_SOURCE}\$"
         working-directory: ${{ matrix.dir }}
       - name: Commit and create pull request
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TARGET_DIR: ${{ matrix.dir }}
+          TARGET_SOURCE: ${{ matrix.source }}
         run: |
           git add .
           if ! git diff --cached --quiet; then
-            git commit -m "chore: update nvfetcher (${TARGET_DIR})"
+            git commit -m "chore: update nvfetcher (${TARGET_DIR}: ${TARGET_SOURCE})"
             git push --force origin HEAD
-            gh pr create --title "chore: update nvfetcher.toml (${TARGET_DIR})" --body "This PR updates the nvfetcher.toml (${TARGET_DIR}) to their latest versions." || echo "PR is already open"
+            gh pr create --title "chore: update nvfetcher.toml (${TARGET_DIR}: ${TARGET_SOURCE})" --body "This PR updates the nvfetcher source ${TARGET_SOURCE} in ${TARGET_DIR} to its latest version." || echo "PR is already open"
             gh pr merge --auto --squash || echo "Failed to merge PR"
           else
             echo "No changes to commit"
