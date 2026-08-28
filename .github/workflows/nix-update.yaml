@@ -26,7 +26,9 @@ jobs:
           show-progress: false
       - name: List flake inputs
         id: list-flake-inputs
-        run: echo "inputs=$(jq -c '.nodes[.root].inputs | keys' flake.lock)" >> "$GITHUB_OUTPUT"
+        # my-emacs-pkgs は root の lock を lock/flake.lock からミラーするだけなので、
+        # ここで更新しても no-op になる。update-emacs-packages に任せる
+        run: echo "inputs=$(jq -c '.nodes[.root].inputs | keys - ["my-emacs-pkgs"]' flake.lock)" >> "$GITHUB_OUTPUT"
 
   list-nvfetcher:
     runs-on: ubuntu-slim
