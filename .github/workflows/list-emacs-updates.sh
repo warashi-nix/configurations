@@ -3,6 +3,13 @@ set -euo pipefail
 
 LOCK="applications/emacs/twist/lock/flake.lock"
 
+# MODE=changed     上流に差分があるものだけ (既定)
+# MODE=all         全件。rev が lock と一致したまま lock 側だけが壊れた場合、
+#                  事前判定では永久に拾えないので手動実行の復旧手段として残す
+# MODE=git-inputs  生 git 取得のもの。tarball 取得の input と違って全履歴を
+#                  clone するため、ジョブ側で ~/.cache/nix を復元する対象
+MODE="${MODE:-changed}"
+
 # 上流に変更が無い日でも 58 個のジョブが Nix インストールから実フェッチまで
 # 一通り走ってしまうため、ここで ls-remote による事前判定を挟んで matrix を絞る。
 # ジョブ側で判定しないのは、判定した時点で既にジョブの固定費を払っているため。
@@ -19,7 +26,8 @@ list_all() {
          then "https://github.com/\($node.locked.owner)/\($node.locked.repo)"
          else $node.locked.url
          end),
-        ($node.original.ref // $node.locked.ref // "HEAD")
+        ($node.original.ref // $node.locked.ref // "HEAD"),
+        $node.locked.type
       ]
     | @tsv
   ' "$LOCK"
@@ -27,7 +35,7 @@ list_all() {
 
 check_one() {
   local name rev url ref remote
-  IFS=$'\t' read -r name rev url ref <<<"$1"
+  IFS=$'\t' read -r name rev url ref _ <<<"$1"
 
   case "$ref" in
   HEAD | refs/*) ;;
@@ -46,8 +54,22 @@ check_one() {
 }
 export -f check_one
 
-if [ "${SKIP_FILTER:-false}" = "true" ]; then
-  list_all | cut -f1 | sort | jq -cnR '[inputs | select(length > 0)]'
-else
-  list_all | xargs -d '\n' -P 16 -I{} bash -c 'check_one "$@"' _ {} | sort | jq -cnR '[inputs | select(length > 0)]'
-fi
+as_json() {
+  sort | jq -cnR '[inputs | select(length > 0)]'
+}
+
+case "$MODE" in
+all)
+  list_all | cut -f1 | as_json
+  ;;
+git-inputs)
+  list_all | awk -F'\t' '$5 == "git" { print $1 }' | as_json
+  ;;
+changed)
+  list_all | xargs -d '\n' -P 16 -I{} bash -c 'check_one "$@"' _ {} | as_json
+  ;;
+*)
+  echo "Unknown MODE: ${MODE}" >&2
+  exit 1
+  ;;
+esac
