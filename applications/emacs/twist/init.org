@@ -565,18 +565,20 @@ org-capture は inbox.org へ投入し、refile で整理する (inbox は空が
 #+end_src
 
 スマホからの capture は n8n の pending queue に溜まる。C-c o p で pull し、
-inbox.org へ追記して orglint が通ってから ack する。org 書式を組み立てるのは
-Emacs のこの 1 箇所だけで、n8n は text をそのまま預かる。
+inbox.org へ追記してから ack する。追記した内容には orglint -fix をかけ、直らな
+い違反が残っても警告するだけで取り込みは通す。org 書式を組み立てるのは Emacs の
+この 1 箇所だけで、n8n は text をそのまま預かる。
 
 consumer token は pull と ack ができてしまうため、iOS ショートカットが持つ
 producer token とは別のものを SOPS 経由でファイルに置き、その内容を
 Authorization ヘッダーにそのまま使う。
 
-実装は =warashi-pkm-capture= に置く。orglint が落ちたときの巻き戻しを間違えると、
-inbox に残ったまま ack しない (次の同期で二重に入る) か、消したのに ack する (取
-り込みが消える) かのどちらかになる。どちらも後から気付けないので ert で固定する。
+実装は =warashi-pkm-capture= に置く。orglint が落ちたときに巻き戻すと、queue から
+取り直しても同じ場所で落ちるだけで手で直す経路が無くなる。かといって残したまま
+ack しないと次の同期で二重に入るので、残して ack するのを ert で固定する。
 
-取り込み先と orglint コマンドは PKM の場所から導出して渡す。
+取り込み先と orglint コマンドは PKM の場所から導出して渡す。orglint は root 配下
+の org を書き戻すため、-fix は inbox.org 以外にも及ぶ。
 
 #+begin_src emacs-lisp
 (setup (:package warashi-pkm-capture)
@@ -591,7 +593,7 @@ inbox に残ったまま ack しない (次の同期で二重に入る) か、�
 (unless warashi-pkm-capture-orglint-command
   (setopt warashi-pkm-capture-orglint-command
           (let ((dir (directory-file-name (expand-file-name my/pkm-directory))))
-            (list "nix" "run" (concat dir "#orglint") "--" dir))))
+            (list "nix" "run" (concat dir "#orglint") "--" "-fix" dir))))
 #+end_src
 
 TODO 管理は tasks.org に集約する運用のため、agenda 対象はそれのみとする。
