@@ -58,7 +58,6 @@ jobs:
     runs-on: ubuntu-slim
     outputs:
       packages: ${{ steps.list-emacs-packages.outputs.packages }}
-      git-packages: ${{ steps.list-git-packages.outputs.git-packages }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -71,13 +70,6 @@ jobs:
         run: |
           packages=$(./.github/workflows/list-emacs-updates.sh)
           echo "packages=${packages}" >> "$GITHUB_OUTPUT"
-      - name: List git-type emacs packages
-        id: list-git-packages
-        env:
-          MODE: git-inputs
-        run: |
-          git_packages=$(./.github/workflows/list-emacs-updates.sh)
-          echo "git-packages=${git_packages}" >> "$GITHUB_OUTPUT"
 
   update-flake-inputs:
     runs-on: ubuntu-slim
@@ -225,25 +217,6 @@ jobs:
           git config user.name "warashi-nix-updater[bot]"
           git config user.email "265781387+warashi-nix-updater[bot]@users.noreply.github.com"
           git switch -c "update-emacs-package-${TARGET_PACKAGE}"
-      # 生 git 取得の input は全履歴を clone するため、build job が main で保存した
-      # ~/.cache/nix を読んで差分 fetch に落とす。tarball 取得の input は 1 秒前後で
-      # 終わるので復元しない。
-      # 保存しないのは、build 側が毎日作っているものを読むだけなら cache 枠を
-      # 増やさずに済むため。掴めなかった場合も従来どおり clone に落ちるだけで壊れない
-      #
-      # アーキを自分の runner (X64) ではなく ARM64 に固定するのは、hosts.nix に
-      # x86_64 のホストが無く、X64 の build が emacs の input を評価しないため。
-      # Linux-X64 のキャッシュは常に空同然になる。gitv3 の中身はアーキ非依存
-      # なので、ARM64 側のものをそのまま読んで問題ない
-      - name: Restore nix cache
-        if: contains(fromJson(needs.list-emacs-packages.outputs.git-packages), matrix.package)
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/nix
-          key: nix-cache-Linux-ARM64-${{ hashFiles('**/flake.lock') }}-${{ hashFiles('**/*.nix') }}
-          restore-keys: |
-            nix-cache-Linux-ARM64-${{ hashFiles('**/flake.lock') }}-
-            nix-cache-Linux-ARM64-
       - name: Update emacs package
         env:
           TARGET_PACKAGE: ${{ matrix.package }}

@@ -6,8 +6,6 @@ LOCK="applications/emacs/twist/lock/flake.lock"
 # MODE=changed     上流に差分があるものだけ (既定)
 # MODE=all         全件。rev が lock と一致したまま lock 側だけが壊れた場合、
 #                  事前判定では永久に拾えないので手動実行の復旧手段として残す
-# MODE=git-inputs  生 git 取得のもの。tarball 取得の input と違って全履歴を
-#                  clone するため、ジョブ側で ~/.cache/nix を復元する対象
 MODE="${MODE:-changed}"
 
 # 上流に変更が無い日でも 58 個のジョブが Nix インストールから実フェッチまで
@@ -26,8 +24,7 @@ list_all() {
          then "https://github.com/\($node.locked.owner)/\($node.locked.repo)"
          else $node.locked.url
          end),
-        ($node.original.ref // $node.locked.ref // "HEAD"),
-        $node.locked.type
+        ($node.original.ref // $node.locked.ref // "HEAD")
       ]
     | @tsv
   ' "$LOCK"
@@ -35,7 +32,7 @@ list_all() {
 
 check_one() {
   local name rev url ref remote
-  IFS=$'\t' read -r name rev url ref _ <<<"$1"
+  IFS=$'\t' read -r name rev url ref <<<"$1"
 
   case "$ref" in
   HEAD | refs/*) ;;
@@ -61,9 +58,6 @@ as_json() {
 case "$MODE" in
 all)
   list_all | cut -f1 | as_json
-  ;;
-git-inputs)
-  list_all | awk -F'\t' '$5 == "git" { print $1 }' | as_json
   ;;
 changed)
   list_all | xargs -d '\n' -P 16 -I{} bash -c 'check_one "$@"' _ {} | as_json
