@@ -10,7 +10,8 @@
 ;;; Commentary:
 
 ;; スマホからの capture は n8n の pending queue に溜まる。`warashi-pkm-capture-sync'
-;; で pull し、inbox.org へ追記して orglint が通ってから ack する。org 書式を組み
+;; で pull し、inbox.org へ追記してから ack する。追記した内容には orglint -fix を
+;; かけ、直らない違反が残っても警告するだけで取り込みは通す。org 書式を組み
 ;; 立てるのは Emacs のこの 1 箇所だけで、n8n は text をそのまま預かる。
 ;;
 ;; consumer token は pull と ack ができてしまうため、iOS ショートカットが持つ
@@ -129,20 +130,23 @@ ID を省略した場合は `org-id-new' で採番する。"
           (insert (warashi-pkm-capture--to-org capture)))
         (save-buffer)
         (with-current-buffer lint (erase-buffer))
-        (if (not (eq 0 (apply #'call-process (car warashi-pkm-capture-orglint-command)
-                              nil lint nil (cdr warashi-pkm-capture-orglint-command))))
-            ;; 追記を残したまま ack しないでおくと、次の同期で同じ capture が
-            ;; 二重に入る。queue を唯一の控えに保つため取り込みごと巻き戻す。
-            (progn
-              (delete-region start (point-max))
-              (save-buffer)
-              (display-buffer lint)
-              (error "orglint が通らなかったので取り込みを取り消しました"))
-          (goto-char start)
+        ;; orglint は -fix で直せる分を書き戻してから検査する。直らなかった分は
+        ;; 巻き戻さずに残す。巻き戻すと queue から取り直しても同じ場所で落ち、
+        ;; 手で直す経路が無くなるため。
+        (let ((linted (eq 0 (apply #'call-process
+                                   (car warashi-pkm-capture-orglint-command)
+                                   nil lint nil
+                                   (cdr warashi-pkm-capture-orglint-command)))))
+          (revert-buffer t t)
+          (goto-char (min start (point-max)))
           (setq warashi-pkm-capture--unacked
                 (mapcar (lambda (capture) (alist-get 'id capture)) captures))
           (warashi-pkm-capture--ack)
-          (message "%d 件取り込みました" (length captures)))))))
+          (if linted
+              (message "%d 件取り込みました" (length captures))
+            (display-buffer lint)
+            (message "%d 件取り込みましたが orglint が通っていません"
+                     (length captures))))))))
 
 (provide 'warashi-pkm-capture)
 ;;; warashi-pkm-capture.el ends here

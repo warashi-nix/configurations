@@ -134,18 +134,19 @@
       (should (equal "" (warashi-pkm-capture-test--inbox)))
       (should (equal '(("GET" "/pending" nil)) warashi-pkm-capture-test--requests)))))
 
-(ert-deftest warashi-pkm-capture-test-sync-rolls-back-on-lint-failure ()
-  "orglint が通らなければ取り込みごと巻き戻し、ack もしない。
-追記を残したまま ack しないでおくと、次の同期で同じ capture が二重に入る。"
+(ert-deftest warashi-pkm-capture-test-sync-keeps-entries-on-lint-failure ()
+  "orglint が通らなくても取り込みは残し、ack もする。
+巻き戻すと手で直す機会が無く、ack しないと次の同期で二重に入る。"
   (let ((warashi-pkm-capture-test--pending
          '(((id . "1") (text . "壊れた capture")
             (createdAt . "2026-08-25T12:34:00+09:00")))))
     (warashi-pkm-capture-test--with-inbox
       (setq warashi-pkm-capture-test--lint-status 1)
-      (should-error (warashi-pkm-capture-sync))
-      (should (equal "" (warashi-pkm-capture-test--inbox)))
+      (warashi-pkm-capture-sync)
+      (should (string-match-p "^\\* 壊れた capture$" (warashi-pkm-capture-test--inbox)))
       (should-not warashi-pkm-capture--unacked)
-      (should-not (assoc "POST" warashi-pkm-capture-test--requests)))))
+      (should (equal '("POST" "/ack" ((ids . ["1"])))
+                     (car warashi-pkm-capture-test--requests))))))
 
 (ert-deftest warashi-pkm-capture-test-sync-keeps-existing-entries ()
   "既にある内容の後ろに足す。行頭でなければ改行を挟む。"
