@@ -50,7 +50,11 @@
     (side . right)
     (window-width . 40)
     ;; C-x 1 で消えると気づきの装置として当てにできないので残す。
-    (window-parameters . ((no-delete-other-windows . t))))
+    ;; other-window の巡回から外すのは、shell と編集中の buffer を C-x o で
+    ;; 往復するあいだに割り込まれると、読むつもりのない一覧に何度も降りる
+    ;; ため。こちらへ移るのは `warashi-agent-shell-list-toggle' で行う。
+    (window-parameters . ((no-delete-other-windows . t)
+                          (no-other-window . t))))
   "サイドバーの表示先。")
 
 (defvar-local warashi-agent-shell-list--unread nil
@@ -221,13 +225,26 @@
         (current-buffer))))
 
 (defun warashi-agent-shell-list-toggle ()
-  "agent-shell の一覧サイドバーを開閉する。"
+  "agent-shell の一覧サイドバーを開き、移り、閉じる。
+出ていなければ開いてそこへ移り、出ていて他の window に居るならそこへ移り、
+サイドバーに居るなら閉じる。"
+  ;; 開く・移る・閉じるを 1 つのキーに載せているのは、`no-other-window' で
+  ;; C-x o の巡回から外した以上サイドバーへ移る手段が要り、閉じたくなるのは
+  ;; 一覧を見ているときなので、3 つが選択状態で言い分けられるため。
   (interactive)
   (require 'agent-shell)
   (if-let* ((window (get-buffer-window warashi-agent-shell-list-buffer-name t)))
-      (delete-window window)
-    (display-buffer (warashi-agent-shell-list--buffer)
-                    warashi-agent-shell-list-display-action)
+      (if (eq window (selected-window))
+          (delete-window window)
+        (select-window window))
+    (when-let* ((window (warashi-agent-shell-list--open)))
+      (select-window window))))
+
+(defun warashi-agent-shell-list--open ()
+  "サイドバーを表示し、その window を返す。選択はしない。"
+  (require 'agent-shell)
+  (prog1 (display-buffer (warashi-agent-shell-list--buffer)
+                         warashi-agent-shell-list-display-action)
     (warashi-agent-shell-list--refresh)))
 
 (defconst warashi-agent-shell-list--events
@@ -289,10 +306,12 @@
 (defun warashi-agent-shell-list--auto-open ()
   "最初の shell が作られたときにサイドバーを開く。"
   ;; 2 つ目以降で開き直さないのは、手動で閉じた一覧を勝手に戻さないため。
+  ;; toggle ではなく --open を呼ぶのは、shell を開いた直後に入力を取られると
+  ;; プロンプトを打ち始められないため。
   (unless (or (get-buffer-window warashi-agent-shell-list-buffer-name t)
               (seq-remove (lambda (buffer) (eq buffer (current-buffer)))
                           (agent-shell-buffers)))
-    (warashi-agent-shell-list-toggle)))
+    (warashi-agent-shell-list--open)))
 
 (provide 'warashi-agent-shell-list)
 ;;; warashi-agent-shell-list.el ends here

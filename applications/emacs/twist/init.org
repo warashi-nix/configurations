@@ -981,6 +981,10 @@ git-wit の worktree で起動した shell は buffer 名の project 部分を =
 う。=agent-shell-switch-buffer= は同じ情報を出せるが、呼んだ瞬間しか見えないので
 気づきの装置にはならない。side window に常駐させ、要操作の shell を先頭に集める。
 
+=C-x o= の巡回からは外してある。shell と編集中の buffer を往復するあいだに一覧へ
+降りても読むものが無いため。行き来は =C-c a= がまとめて引き受け、出ていなければ
+開いて移り、他の window に居れば移り、一覧に居れば閉じる。
+
 実装をここに置かず =warashi-agent-shell-list= に切り出しているのは、並び順と未読
 の扱いを ert で固定したいため。init.org の中身は tangle されて初めてロードされる
 ので、テストから =require= できない。

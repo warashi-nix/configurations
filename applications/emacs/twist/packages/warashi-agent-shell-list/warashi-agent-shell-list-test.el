@@ -288,6 +288,51 @@ SPECS は (VAR NAME STATUS TITLE) のリスト。VAR に buffer が束縛され�
       (when-let* ((buffer (get-buffer warashi-agent-shell-list-buffer-name)))
         (kill-buffer buffer)))))
 
+(ert-deftest warashi-agent-shell-list-test-toggle-skips-other-window ()
+  "開いたサイドバーは `other-window' の巡回に入らない。"
+  (warashi-agent-shell-list-test--with-shells
+      ((shell "shell" 'ready ""))
+    (unwind-protect
+        (save-window-excursion
+          (warashi-agent-shell-list-toggle)
+          (should (window-parameter
+                   (get-buffer-window warashi-agent-shell-list-buffer-name t)
+                   'no-other-window)))
+      (when-let* ((buffer (get-buffer warashi-agent-shell-list-buffer-name)))
+        (kill-buffer buffer)))))
+
+(ert-deftest warashi-agent-shell-list-test-toggle-selects-sidebar ()
+  "見えているサイドバーが選ばれていなければ、閉じずにそこへ移る。"
+  (warashi-agent-shell-list-test--with-shells
+      ((shell "shell" 'ready ""))
+    (unwind-protect
+        (save-window-excursion
+          (set-window-buffer (selected-window) shell)
+          (let ((origin (selected-window)))
+            (warashi-agent-shell-list-toggle)
+            (select-window origin)
+            (warashi-agent-shell-list-toggle)
+            (should (eq (selected-window)
+                        (get-buffer-window
+                         warashi-agent-shell-list-buffer-name t)))))
+      (when-let* ((buffer (get-buffer warashi-agent-shell-list-buffer-name)))
+        (kill-buffer buffer)))))
+
+(ert-deftest warashi-agent-shell-list-test-auto-open-keeps-focus ()
+  "自動で開いたサイドバーには移らない。"
+  (warashi-agent-shell-list-test--with-shells
+      ((shell "shell" 'ready ""))
+    (unwind-protect
+        (save-window-excursion
+          (set-window-buffer (selected-window) shell)
+          (let ((origin (selected-window)))
+            (with-current-buffer shell
+              (warashi-agent-shell-list--auto-open))
+            (should (get-buffer-window warashi-agent-shell-list-buffer-name t))
+            (should (eq (selected-window) origin))))
+      (when-let* ((buffer (get-buffer warashi-agent-shell-list-buffer-name)))
+        (kill-buffer buffer)))))
+
 (ert-deftest warashi-agent-shell-list-test-refresh-skips-hidden-sidebar ()
   "見えていないサイドバーは描き直さない。"
   (warashi-agent-shell-list-test--with-shells
