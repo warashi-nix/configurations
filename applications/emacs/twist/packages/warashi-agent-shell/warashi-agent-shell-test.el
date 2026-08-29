@@ -97,25 +97,30 @@
 
 ;;;; 起動コマンド
 
-(defmacro warashi-agent-shell-test--capture-dwim (&rest body)
-  "BODY 中の `agent-shell--dwim' の引数を返す。"
+(defmacro warashi-agent-shell-test--capture-start (&rest body)
+  "BODY 中の `agent-shell--start' の引数を返す。"
   (declare (indent 0))
   `(let ((captured nil))
      (cl-letf (((symbol-function 'agent-shell-anthropic-make-claude-code-config)
                 (lambda (&rest _) (list (cons :default-model-id #'ignore))))
                ((symbol-function 'agent-shell-pi-make-agent-config)
                 (lambda (&rest _) (list (cons :default-model-id #'ignore))))
-               ((symbol-function 'agent-shell--dwim)
+               ((symbol-function 'agent-shell--start)
                 (lambda (&rest args) (setq captured args))))
        ,@body)
      captured))
 
 (ert-deftest warashi-agent-shell-test-start-claude-config ()
-  "model と thought level が config に載り、新しい shell として起動する。"
-  (let* ((captured (warashi-agent-shell-test--capture-dwim
+  "model と thought level が config に載り、新規 session を割り込み無しで起動する。"
+  (let* ((captured (warashi-agent-shell-test--capture-start
                      (warashi-agent-shell--start-claude "opus[1m]" "low")))
          (config (plist-get captured :config)))
-    (should (plist-get captured :new-shell))
+    (should (plist-get captured :new-session))
+    ;; session strategy を new で上書きするのは、既定の prompt だと session
+    ;; 確立後に picker が minibuffer を奪うため。
+    (should (eq 'new (plist-get captured :session-strategy)))
+    ;; no-focus なのは、起動を投げた後に window を取り返されないため。
+    (should (plist-get captured :no-focus))
     ;; :default-model-id は session 確立後に funcall される。
     (should (equal "opus[1m]" (funcall (alist-get :default-model-id config))))
     (should (equal "low" (alist-get :warashi-thought-level config)))))
@@ -124,10 +129,10 @@
   "先に起動した shell の model が、後の起動で書き換わらない。
 :default-model-id を動的束縛ではなく lexical に閉じ込めているため。"
   (let* ((first (alist-get :default-model-id
-                           (plist-get (warashi-agent-shell-test--capture-dwim
+                           (plist-get (warashi-agent-shell-test--capture-start
                                         (warashi-agent-shell--start-claude "sonnet" "xhigh"))
                                       :config))))
-    (warashi-agent-shell-test--capture-dwim
+    (warashi-agent-shell-test--capture-start
       (warashi-agent-shell--start-claude "opus[1m]" "low"))
     (should (equal "sonnet" (funcall first)))))
 
@@ -144,11 +149,16 @@
       (should (equal '("test-model" "high") args)))))
 
 (ert-deftest warashi-agent-shell-test-start-pi-config ()
-  "model が config に載り、新しい shell として起動する。"
-  (let* ((captured (warashi-agent-shell-test--capture-dwim
+  "model が config に載り、新規 session を割り込み無しで起動する。"
+  (let* ((captured (warashi-agent-shell-test--capture-start
                      (warashi-agent-shell--start-pi "athena/ornith-1-5-9b")))
          (config (plist-get captured :config)))
-    (should (plist-get captured :new-shell))
+    (should (plist-get captured :new-session))
+    ;; session strategy を new で上書きするのは、既定の prompt だと session
+    ;; 確立後に picker が minibuffer を奪うため。
+    (should (eq 'new (plist-get captured :session-strategy)))
+    ;; no-focus なのは、起動を投げた後に window を取り返されないため。
+    (should (plist-get captured :no-focus))
     ;; :default-model-id は session 確立後に funcall される。
     (should (equal "athena/ornith-1-5-9b"
                    (funcall (alist-get :default-model-id config))))))
@@ -156,10 +166,10 @@
 (ert-deftest warashi-agent-shell-test-start-pi-keeps-model-per-shell ()
   "先に起動した shell の model が、後の起動で書き換わらない。"
   (let ((first (alist-get :default-model-id
-                          (plist-get (warashi-agent-shell-test--capture-dwim
+                          (plist-get (warashi-agent-shell-test--capture-start
                                        (warashi-agent-shell--start-pi "athena/ornith-1-5-9b"))
                                      :config))))
-    (warashi-agent-shell-test--capture-dwim
+    (warashi-agent-shell-test--capture-start
       (warashi-agent-shell--start-pi "athena/other"))
     (should (equal "athena/ornith-1-5-9b" (funcall first)))))
 

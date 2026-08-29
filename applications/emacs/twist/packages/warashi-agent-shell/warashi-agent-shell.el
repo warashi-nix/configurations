@@ -17,7 +17,9 @@
 ;;   `<remap> <self-insert-command>' を通らないので、konnkai が こnnかい になる。
 ;; - model と effort を固定した起動コマンド。Claude と、pi-acp 経由の pi の
 ;;   二系統がある。effort は agent config に設定点が無く、session 確立後に ACP
-;;   の config option として送るしかない。
+;;   の config option として送るしかない。起動は `agent-shell--dwim' ではなく
+;;   `agent-shell--start' に session strategy new を渡して行う。起動を投げた後に
+;;   picker や window の切り替えで割り込ませないため。
 ;; - session の累積コストを context usage indicator の隣に常設する。
 ;; - buffer 名の project 部分を repository 名と git-wit の memo にする。
 ;;   worktree のディレクトリ名は ID 由来で、並べたときにどの作業か読み取れない。
@@ -81,6 +83,19 @@
         :on-failure (lambda (acp-error _raw-message)
                       (message "Failed to set thought level %s: %s" level acp-error)))))))
 
+(defun warashi-agent-shell--start-shell (config)
+  "CONFIG で agent-shell を起動する。表示も focus もしない。"
+  ;; `agent-shell--dwim' を使わないのは、起動を投げた後に割り込むため。
+  ;; `agent-shell-session-strategy' が既定の prompt だと、session 確立まで待って
+  ;; から picker が minibuffer を奪い、その間に始めていた別の作業を潰す。dwim は
+  ;; 加えて起動元 buffer の context (eshell なら打った行そのもの) を差し込み、
+  ;; window も切り替える。起動したことは shell 一覧で気付けるので、ここでは何も
+  ;; 奪わない。
+  (agent-shell--start :config config
+                      :new-session t
+                      :session-strategy 'new
+                      :no-focus t))
+
 (defun warashi-agent-shell--start-claude (model-id thought-level)
   "MODEL-ID と THOUGHT-LEVEL を指定して Claude agent-shell を起動する。"
   (require 'agent-shell-anthropic)
@@ -89,10 +104,11 @@
     ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
     (setcdr (assq :default-model-id config) (lambda () model-id))
     ;; thought level を動的束縛で渡さないのは、`agent-shell-mode-hook' が
-    ;; `agent-shell--dwim' の動的エクステント内で走るとは限らないため。
+    ;; `warashi-agent-shell--start-shell' の動的エクステント内で走るとは限らない
+    ;; ため。
     ;; config は state の :agent-config に保存されるので、そこから読ませる。
     (push (cons :warashi-thought-level thought-level) config)
-    (agent-shell--dwim :config config :new-shell t)))
+    (warashi-agent-shell--start-shell config)))
 
 (defmacro warashi-agent-shell-define-claude-variants (&rest variants)
   "VARIANTS から Claude agent-shell の起動コマンドを定義する。
@@ -123,7 +139,7 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
   (let ((config (agent-shell-pi-make-agent-config)))
     ;; claude 側と同じく、MODEL-ID を lexical に閉じ込めた関数へ差し替える。
     (setcdr (assq :default-model-id config) (lambda () model-id))
-    (agent-shell--dwim :config config :new-shell t)))
+    (warashi-agent-shell--start-shell config)))
 
 (defmacro warashi-agent-shell-define-pi-variants (&rest variants)
   "VARIANTS から pi agent-shell の起動コマンドを定義する。

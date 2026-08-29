@@ -931,6 +931,11 @@ agent-shell-next-item]= しか探されない。
 model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
 その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
 
+起動後は buffer を表示せず、後述のサイドバーに任せる。=agent-shell--dwim= を使うと
+=agent-shell-session-strategy= の既定 =prompt= のまま session 確立を待ち、その時点で
+picker が minibuffer を奪う。eshell で起動を投げてから別の作業をしていると、これが
+数十秒後に割り込んでくる。
+
 #+begin_src emacs-lisp
 ;; マクロ展開は byte-compile 時に走るので、compile 時にも読ませる。
 (eval-when-compile (require 'warashi-agent-shell))
