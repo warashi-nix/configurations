@@ -310,7 +310,12 @@ USER warashi
 ENV USER=warashi
 WORKDIR /home/warashi
 
+# CLAUDE_CODE_EXECUTABLE で PATH の claude を指すのは、claude-agent-acp が既定で
+# @anthropic-ai/claude-agent-sdk にぶら下がる native binary を使い、CLI の版が acp の
+# リリース周期に縛られるため。バンドルを消さずに環境変数で上書きするのは、これが
+# アダプタ側の公式な分岐 (claudeCliPath) であるため。
 ENV \
+    CLAUDE_CODE_EXECUTABLE=/home/warashi/.local/bin/claude \
     CLAUDE_CONFIG_DIR=/home/warashi/.claude \
     LANG=C.UTF-8 \
     PATH="/opt/chelly-shims:/home/warashi/.nix-profile/bin:/home/warashi/.local/bin:${PATH}" \
