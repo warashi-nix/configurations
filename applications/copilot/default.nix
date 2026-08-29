@@ -56,6 +56,11 @@ let
     };
     # keep-sorted end
   };
+
+  # 共通指示のあとに copilot 固有の指示を続ける。固有側は共通化しようがないものだけ。
+  instructions = pkgs.writeText "copilot-instructions.md" (
+    config.warashi.agentInstructions.text + builtins.readFile ./copilot-instructions.md
+  );
 in
 {
   home = {
@@ -78,7 +83,7 @@ in
           ' "''${files[@]}"
         }
 
-        run cp -af ${./copilot-instructions.md} ${config.home.homeDirectory}/.copilot/copilot-instructions.md
+        run cp -af ${instructions} ${config.home.homeDirectory}/.copilot/copilot-instructions.md
         if [ -f ${config.home.homeDirectory}/.copilot/settings.json ]; then
         run cp -af ${config.home.homeDirectory}/.copilot/settings.json ${config.home.homeDirectory}/.copilot/settings.json.backup
         fi
