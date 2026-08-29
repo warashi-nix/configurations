@@ -595,10 +595,10 @@
     "org": {
       "flake": false,
       "locked": {
-        "lastModified": 1787989787,
-        "narHash": "sha256-ZfJOT9pbfeDxeb7bXeM4uk0bcxnOjGTvzWwUktgjxgQ=",
+        "lastModified": 1783143268,
+        "narHash": "sha256-7ZmwAkVjEf+a8I9zBE9IMdGdvTdDwM8DXFkG+f1oHZo=",
         "ref": "bugfix",
-        "rev": "80c431fe0c59bb6b6c4d05ad2d4d279f34b5fcd5",
+        "rev": "cdc16898fd46a30d7187c0a5830b2b898ffbd2de",
         "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
