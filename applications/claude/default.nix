@@ -70,14 +70,6 @@ in
         既定値は葉ごとに mkDefault されているため、必要な項目だけを上書きできる。
       '';
     };
-    brainium.enable = mkOption {
-      type = types.bool;
-      default = true;
-      description = ''
-        Add a memory entry pointing task/knowledge management to ~/ghq/github.com/Warashi/brainium.
-        brainium を持たない環境（このリポジトリを flake input として使う側）では false にして opt-out する。
-      '';
-    };
     memory = mkOption {
       type = types.lines;
       default = "";
@@ -117,10 +109,7 @@ in
 
   config = mkIf cfg.enable {
     warashi.claude = {
-      # types.lines は定義同士を改行で連結するため、mkAfter で足すと箇条書きの間に空行が入る
-      memory =
-        builtins.readFile ./CLAUDE.md
-        + optionalString cfg.brainium.enable "- タスク・ナレッジ管理には ~/ghq/github.com/Warashi/brainium を使う\n";
+      memory = config.warashi.agentInstructions.text;
 
       settings = mkDefaultRecursive {
         # keep-sorted start
