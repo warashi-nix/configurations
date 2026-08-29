@@ -230,15 +230,20 @@ jobs:
       # 終わるので復元しない。
       # 保存しないのは、build 側が毎日作っているものを読むだけなら cache 枠を
       # 増やさずに済むため。掴めなかった場合も従来どおり clone に落ちるだけで壊れない
+      #
+      # アーキを自分の runner (X64) ではなく ARM64 に固定するのは、hosts.nix に
+      # x86_64 のホストが無く、X64 の build が emacs の input を評価しないため。
+      # Linux-X64 のキャッシュは常に空同然になる。gitv3 の中身はアーキ非依存
+      # なので、ARM64 側のものをそのまま読んで問題ない
       - name: Restore nix cache
         if: contains(fromJson(needs.list-emacs-packages.outputs.git-packages), matrix.package)
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/nix
-          key: nix-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/flake.lock') }}-${{ hashFiles('**/*.nix') }}
+          key: nix-cache-Linux-ARM64-${{ hashFiles('**/flake.lock') }}-${{ hashFiles('**/*.nix') }}
           restore-keys: |
-            nix-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/flake.lock') }}-
-            nix-cache-${{ runner.os }}-${{ runner.arch }}-
+            nix-cache-Linux-ARM64-${{ hashFiles('**/flake.lock') }}-
+            nix-cache-Linux-ARM64-
       - name: Update emacs package
         env:
           TARGET_PACKAGE: ${{ matrix.package }}
