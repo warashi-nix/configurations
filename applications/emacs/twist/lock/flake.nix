@@ -226,6 +226,7 @@
     org = {
       flake = false;
       ref = "bugfix";
+      shallow = true;
       type = "git";
       url = "https://git.savannah.gnu.org/git/emacs/org-mode.git";
     };
@@ -280,6 +281,7 @@
     };
     setup = {
       flake = false;
+      shallow = true;
       type = "git";
       url = "https://codeberg.org/pkal/setup.el";
     };
@@ -304,6 +306,7 @@
     tramp = {
       flake = false;
       ref = "externals/tramp";
+      shallow = true;
       type = "git";
       url = "https://git.savannah.gnu.org/git/tramp.git";
     };

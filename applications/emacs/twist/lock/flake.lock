@@ -599,12 +599,13 @@
         "narHash": "sha256-jkQdIoX2YEwXasdc9bxfPYccKjBamOSVxKeljUvTHKE=",
         "ref": "bugfix",
         "rev": "82ebdc7144399f65ddc69eacc7804efa7bd4660e",
-        "revCount": 28671,
+        "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
       },
       "original": {
         "ref": "bugfix",
+        "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/emacs/org-mode.git"
       }
@@ -807,11 +808,12 @@
         "narHash": "sha256-lLeKsLFf1+Bjk6ETq+0Nncw6DPOVxE49cAexdLAr/5U=",
         "ref": "refs/heads/master",
         "rev": "de9b86c6f29cf9888e911924ffc4ce47312320c3",
-        "revCount": 224,
+        "shallow": true,
         "type": "git",
         "url": "https://codeberg.org/pkal/setup.el"
       },
       "original": {
+        "shallow": true,
         "type": "git",
         "url": "https://codeberg.org/pkal/setup.el"
       }
@@ -871,12 +873,13 @@
         "narHash": "sha256-Z/YXoW//6E/QxbRbEht+NhT4nXKJVktwsPG4oLTaBxA=",
         "ref": "externals/tramp",
         "rev": "aa3af2c1de177450e36c716ad856a725969aa3bc",
-        "revCount": 119,
+        "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/tramp.git"
       },
       "original": {
         "ref": "externals/tramp",
+        "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/tramp.git"
       }
