@@ -958,6 +958,9 @@ pi も同じ形で用意する。軽い作業を athena のローカルモデル
  (ornith "athena/ornith-1-5-9b"))
 #+end_src
 
+定義した variant は =warashi-agent-shell-project-switch= から名前で選べる。
+=project-switch-commands= への登録は [[*project.el][project.el]] にある。
+
 session の累積コストを context usage indicator の隣に常設する。ターン終了時の
 ボックス (=agent-shell-show-usage-at-turn-end=) ではなく常設にするのは、走らせて
 いる最中に膨らみを察知したいため。
@@ -1113,11 +1116,16 @@ pcomplete が解決できなかったぶんだけ fish に委譲する。
 #+end_src
 
 ** project.el
+=Agent shell= はエージェントを走らせるのが目的の切り替えのためのもので、eshell を
+開いて起動コマンドを打つ経路を畳んだもの。起動しても shell には飛ばず、同じ
+project のディスパッチに戻るので、続けて =g= で magit を開ける。
+
 #+begin_src emacs-lisp
 (setup project
   (:opt project-switch-commands '((consult-fd "Find file" ?f)
                                   (consult-project-buffer "Switch buffer" ?b)
                                   (consult-ripgrep "Ripgrep" ?r)
+                                  (warashi-agent-shell-project-switch "Agent shell" ?a)
                                   (consult-git-wit-switch "Switch project" ?w)
                                   (magit-project-status "Magit status" ?g)
                                   (project-eshell "Eshell" ?e)

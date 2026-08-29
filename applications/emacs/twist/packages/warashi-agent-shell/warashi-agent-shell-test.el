@@ -185,6 +185,66 @@
       (funcall 'eshell/pi-warashi-agent-shell-test-variant)
       (should (equal '("test/model") args)))))
 
+;;;; project-switch からの起動
+
+(ert-deftest warashi-agent-shell-test-variants-registered ()
+  "variant は claude / pi の別が付いた名前で定義順に一覧へ載る。"
+  (let ((warashi-agent-shell-variants nil))
+    (warashi-agent-shell-define-claude-variants
+     (warashi-agent-shell-test-registered "test-model" "high"))
+    (warashi-agent-shell-define-pi-variants
+     (warashi-agent-shell-test-registered "test/model"))
+    (should (equal
+             '(("claude-warashi-agent-shell-test-registered"
+                . warashi-agent-shell-claude-warashi-agent-shell-test-registered)
+               ("pi-warashi-agent-shell-test-registered"
+                . warashi-agent-shell-pi-warashi-agent-shell-test-registered))
+             warashi-agent-shell-variants))))
+
+(ert-deftest warashi-agent-shell-test-variants-not-duplicated ()
+  "同じ名前で定義し直しても一覧は増えない。
+init.org を評価し直すたびに候補が伸びると選べなくなるため。"
+  (let ((warashi-agent-shell-variants nil))
+    (warashi-agent-shell-define-claude-variants
+     (warashi-agent-shell-test-redefined "test-model" "high"))
+    (warashi-agent-shell-define-claude-variants
+     (warashi-agent-shell-test-redefined "other-model" "low"))
+    (should (equal 1 (length warashi-agent-shell-variants)))))
+
+(ert-deftest warashi-agent-shell-test-project-switch-starts-and-reopens ()
+  "選んだ variant を起動し、同じ project のディスパッチを開き直す。"
+  (let ((warashi-agent-shell-variants
+         '(("claude-test" . warashi-agent-shell-test--variant-command)))
+        (started nil)
+        (reopened nil)
+        (project-current-directory-override "/tmp/warashi-agent-shell-test/"))
+    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
+              ((symbol-function 'warashi-agent-shell-test--variant-command)
+               (lambda () (setq started t)))
+              ((symbol-function 'project-switch-project)
+               (lambda (dir) (setq reopened dir))))
+      (warashi-agent-shell-project-switch))
+    (should started)
+    ;; 起動しただけだと default-directory が元の project に戻り、続けて
+    ;; magit を開くのに project を選び直すことになる。
+    (should (equal "/tmp/warashi-agent-shell-test/" reopened))))
+
+(ert-deftest warashi-agent-shell-test-project-switch-outside-dispatch ()
+  "ディスパッチ外から呼んだときはメニューを開かない。"
+  (let ((warashi-agent-shell-variants
+         '(("claude-test" . warashi-agent-shell-test--variant-command)))
+        (started nil)
+        (reopened nil)
+        (project-current-directory-override nil))
+    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
+              ((symbol-function 'warashi-agent-shell-test--variant-command)
+               (lambda () (setq started t)))
+              ((symbol-function 'project-switch-project)
+               (lambda (dir) (setq reopened dir))))
+      (warashi-agent-shell-project-switch))
+    (should started)
+    (should-not reopened)))
+
 ;;;; コスト表示
 
 (ert-deftest warashi-agent-shell-test-cost-indicator ()

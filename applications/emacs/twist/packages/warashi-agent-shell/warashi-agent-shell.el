@@ -9,7 +9,7 @@
 
 ;;; Commentary:
 
-;; agent-shell に足している四つのこと。
+;; agent-shell に足している五つのこと。
 ;;
 ;; - 単キーコマンドに入力メソッドを奪わせない。`agent-shell-mode-map' は n p r
 ;;   + - 0 を素のキーで握っており、プロンプト上ではそれぞれのコマンドが
@@ -20,6 +20,8 @@
 ;;   の config option として送るしかない。起動は `agent-shell--dwim' ではなく
 ;;   `agent-shell--start' に session strategy new を渡して行う。起動を投げた後に
 ;;   picker や window の切り替えで割り込ませないため。
+;; - `project-switch-project' のディスパッチから variant を選んで起動する。
+;;   起動しても shell には飛ばず、同じ project のメニューを開き直す。
 ;; - session の累積コストを context usage indicator の隣に常設する。
 ;; - buffer 名の project 部分を repository 名と git-wit の memo にする。
 ;;   worktree のディレクトリ名は ID 由来で、並べたときにどの作業か読み取れない。
@@ -34,6 +36,7 @@
 ;;; Code:
 
 (require 'map)
+(require 'project)
 (require 'seq)
 (require 'subr-x)
 ;; agent-shell を実行時に require しないのは、起動コマンドを呼ぶまで agent-shell
@@ -65,6 +68,18 @@
     (advice-add fn :around #'warashi-agent-shell--self-insert-via-remap)))
 
 ;;;; 起動コマンド
+
+(defvar warashi-agent-shell-variants nil
+  "起動コマンドの一覧。要素は (NAME . COMMAND) で、定義順に並ぶ。")
+
+(defun warashi-agent-shell-register-variant (name command)
+  "NAME で選べる起動コマンド COMMAND を一覧に載せる。"
+  ;; 同じ NAME を上書きするのは、init.org を評価し直すたびに候補が伸びるのを
+  ;; 防ぐため。
+  (if-let* ((found (assoc name warashi-agent-shell-variants)))
+      (setcdr found command)
+    (setq warashi-agent-shell-variants
+          (append warashi-agent-shell-variants (list (cons name command))))))
 
 (defun warashi-agent-shell--apply-thought-level ()
   "agent config に載せた thought level (effort) を新しい shell に適用する。"
@@ -130,7 +145,9 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
                 (warashi-agent-shell--start-claude ,model-id ,thought-level))
              `(defun ,eshell-fn (&rest _args)
                 ,(format "eshell から `%s' を起動する。" fn)
-                (,fn)))))
+                (,fn))
+             `(warashi-agent-shell-register-variant
+               ,(format "claude-%s" name) ',fn))))
         variants)))
 
 (defun warashi-agent-shell--start-pi (model-id)
@@ -160,8 +177,33 @@ VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
                 (warashi-agent-shell--start-pi ,model-id))
              `(defun ,eshell-fn (&rest _args)
                 ,(format "eshell から `%s' を起動する。" fn)
-                (,fn)))))
+                (,fn))
+             `(warashi-agent-shell-register-variant
+               ,(format "pi-%s" name) ',fn))))
         variants)))
+
+;;;; project-switch からの起動
+
+(defun warashi-agent-shell--read-variant ()
+  "起動する variant のコマンドを選ばせて返す。"
+  (let ((name (completing-read "Agent shell: "
+                               (mapcar #'car warashi-agent-shell-variants)
+                               nil t)))
+    (alist-get name warashi-agent-shell-variants nil nil #'equal)))
+
+(defun warashi-agent-shell-project-switch ()
+  "variant を選んで起動し、`project-switch-project' のメニューに戻る。"
+  (interactive)
+  (when-let* ((command (warashi-agent-shell--read-variant)))
+    (funcall command))
+  ;; メニューを開き直すのは、`project-current-directory-override' が
+  ;; ディスパッチしたコマンドの終了で消えるため。起動して戻るだけでは元の
+  ;; project に居る状態になり、続けて magit を開くのに project を選び直す
+  ;; ことになる。project.el のメニューは 1 打鍵で閉じる読み取りループなので、
+  ;; 開いたままにする手は無い。
+  ;; M-x から呼んだときに開かないのは、戻る先のメニューが無いため。
+  (when project-current-directory-override
+    (project-switch-project project-current-directory-override)))
 
 ;;;; コスト表示
 
