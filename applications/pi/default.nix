@@ -10,6 +10,7 @@ let
   jsonFormat = pkgs.formats.json { };
   modelsFile = jsonFormat.generate "pi-models.json" cfg.models;
   settingsFile = jsonFormat.generate "pi-settings.json" cfg.settings;
+  instructionsFile = pkgs.writeText "pi-agents.md" config.warashi.agentInstructions.text;
   agentDir = "${config.home.homeDirectory}/.pi/agent";
   settingsPath = "${agentDir}/settings.json";
   mergedPath = "${agentDir}/settings.merged.json";
@@ -77,6 +78,10 @@ in
       run mkdir -p ${escapeShellArg agentDir}
       # 同じディレクトリに pi が sessions/ と auth.json を書くため、ファイル単位でのみ配置する
       run ${lib.getExe pkgs.rsync} -a ${modelsFile} ${escapeShellArg "${agentDir}/models.json"}
+
+      # pi は agentDir 直下を AGENTS.override.md -> AGENTS.md -> CLAUDE.md の順に探す。
+      # chelly が ~/.pi をマウントするため、ここに置けばコンテナからも見える。
+      run ${lib.getExe pkgs.rsync} -a ${instructionsFile} ${escapeShellArg "${agentDir}/AGENTS.md"}
 
       # settings.json だけ claude と同じく既存へ重ねるのは、models.json と違って
       # pi 自身もこのファイルに書く (analytics の ID、pi install したパッケージ) ため。
