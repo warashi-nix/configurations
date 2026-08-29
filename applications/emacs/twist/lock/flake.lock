@@ -131,11 +131,11 @@
     "consult": {
       "flake": false,
       "locked": {
-        "lastModified": 1787909054,
-        "narHash": "sha256-Qi9k18Ltt4JsU0hGL4aX5/qwtJoRYQaboySeZ+OqDWA=",
+        "lastModified": 1788019124,
+        "narHash": "sha256-kKTWFFz2A3dGTTX7hLKMpep6v8nd0MZBkvpzHdnfJh0=",
         "owner": "minad",
         "repo": "consult",
-        "rev": "5ebf5fa743f7a0ad1e16a2f4f3bc8bd5b63aefc9",
+        "rev": "3a2441ddb08d9897eb266cda4935fa91a767e1d5",
         "type": "github"
       },
       "original": {
