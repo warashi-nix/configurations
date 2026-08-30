@@ -950,11 +950,11 @@
     "vertico": {
       "flake": false,
       "locked": {
-        "lastModified": 1787931909,
-        "narHash": "sha256-wTLiPVk4QDHTB+c8sJZwg9pjgcSOkiT2HaxD4ZQlzeE=",
+        "lastModified": 1788053015,
+        "narHash": "sha256-RGNIFwbFciYlPEdHlxcOP6tql1SQtdgsl7s4QGhSumA=",
         "owner": "minad",
         "repo": "vertico",
-        "rev": "a7425c2865d2dbc36d8a12e09695b278b0142637",
+        "rev": "cd2eb6daff6a5a68a11740aa363729ec6f8702d3",
         "type": "github"
       },
       "original": {
