@@ -1293,7 +1293,8 @@
         "nixpkgs": "nixpkgs",
         "org-babel": "org-babel",
         "sops-nix": "sops-nix",
-        "treefmt-nix": "treefmt-nix"
+        "treefmt-nix": "treefmt-nix",
+        "zon2nix": "zon2nix_2"
       }
     },
     "s": {
@@ -1605,6 +1606,26 @@
         "owner": "jcollie",
         "repo": "zon2nix",
         "rev": "0ce628fb78309cdb13d098ae9c6fdbf87c75d25b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jcollie",
+        "repo": "zon2nix",
+        "type": "github"
+      }
+    },
+    "zon2nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787940666,
+        "narHash": "sha256-IW25ilDgmXhpGfWuxRnyVaQtbpIax3aBafmubjYVAbk=",
+        "owner": "jcollie",
+        "repo": "zon2nix",
+        "rev": "3caf5f342aaaeecaf82da261ded1c8e3e8ca5514",
         "type": "github"
       },
       "original": {

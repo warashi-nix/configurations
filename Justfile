@@ -67,3 +67,15 @@ _nixos-rebuild-for HOST:
 
 _nixos-rebuild-switch-for HOST:
   sudo nixos-rebuild switch --accept-flake-config --flake .#{{HOST}}
+
+# ghostel のネイティブモジュールが使う zig 依存 (ghostty) の固定を再生成する。
+# ghostel の rev が上がっても ghostty の pin が動かなければ内容は変わらない。
+# 動いたのに再生成しないと、nix のビルドサンドボックスから依存を引けず失敗する。
+emacs-ghostel-zon2nix:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  src="$(nix eval --raw --impure --expr \
+    'let lock = builtins.getFlake "path:{{ justfile_directory() }}/applications/emacs/twist/lock"; in lock.inputs.ghostel.outPath')"
+  out="{{ justfile_directory() }}/applications/emacs/twist/nix/ghostel-module/build.zig.zon.nix"
+  cd "$src"
+  zon2nix --16 --nix="$out" build.zig.zon
