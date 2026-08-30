@@ -1039,8 +1039,7 @@ git-wit の worktree で起動した shell は buffer 名の project 部分を =
               ghostel-comint)
   (:opt ghostel-shell-integration nil
         ghostel-tramp-shell-integration nil
-        ghostel-enable-osc52 t
-        ghostel-module-directory (locate-user-emacs-file "ghostel-module"))
+        ghostel-enable-osc52 t)
   (:after-init ghostel-compile-global-mode)
   (:after-init ghostel-comint-global-mode)
 
@@ -1065,9 +1064,7 @@ git-wit の worktree で起動した shell は buffer 名の project 部分を =
     (unless (advice-member-p #'warashi-envrc--ghostel-update-directory
                              #'ghostel--update-directory)
       (advice-add #'ghostel--update-directory :around
-                  #'warashi-envrc--ghostel-update-directory)))
-
-  (add-to-list 'warning-suppress-types '(ghostel)))
+                  #'warashi-envrc--ghostel-update-directory))))
 #+end_src
 
 ** eshell
