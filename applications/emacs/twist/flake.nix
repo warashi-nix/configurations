@@ -127,6 +127,26 @@
                 ORG_VERSION_EL
               '';
             };
+            ghostel =
+              _: prev:
+              let
+                module = pkgs.callPackage ./nix/ghostel-module {
+                  zig = pkgs.zig_0_16;
+                  inherit (prev) src version;
+                };
+              in
+              {
+                # ネイティブモジュールはビルド産物でソースツリーに存在せず、
+                # レシピの :files では同梱できない。src をビルド済みへ差し替え
+                # ると files 展開が IFD になるので、src はソースのまま
+                # preBuild でパッケージルートへコピーする。ここは ghostel の
+                # resource root でもあるため、ghostel-module-directory を設定
+                # しなくても elisp 側のローダがこの .so を見つける。
+                preBuild = ''
+                  cp ${module}/ghostel-module${pkgs.stdenv.hostPlatform.extensions.sharedLibrary} .
+                  cp ${module}/ghostel-module.version .
+                '';
+              };
             spectreshell =
               _: _:
               let
