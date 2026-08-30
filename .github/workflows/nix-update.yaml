@@ -226,6 +226,12 @@ jobs:
         # root は my-emacs-pkgs の推移依存を再フェッチせず lock/flake.lock をそのまま
         # ミラーするので、入力名を渡さなくても更新した 1 個だけが root に反映される
         run: nix flake update my-emacs-pkgs
+      - name: Regenerate ghostel zig dependencies
+        # ghostel の rev bump で ghostty の pin が動くと、build.zig.zon.nix が
+        # 古いままではビルドサンドボックスから zig 依存を引けず失敗する。
+        # auto-merge が有効なので、再生成は rev bump と同じ commit に含める
+        if: matrix.package == 'ghostel'
+        run: nix develop --command just emacs-ghostel-zon2nix
       - name: Commit and create pull request
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
