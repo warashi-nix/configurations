@@ -13,6 +13,7 @@
   * テストコードには What
   * コミットログには Why
   * コードコメントには Why not
+  * Why not は、現在のコードに残っている選択について、他の手を採らなかった理由を説明する
 - git add -p や git add --patch は禁止
 - git add --force は禁止
 - git add で複数のファイルを一度に追加するのは禁止
