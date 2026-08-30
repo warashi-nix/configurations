@@ -1,0 +1,7 @@
+;; GNU ELPA の spec は savannah を指すが、bugfix ブランチは書き換えられる
+;; ことがあり、ロックした rev が upload-pack から消えてビルドが壊れる。
+;; GitHub ミラーなら force-push 後の rev も SHA で取得できる。
+(org :fetcher github
+     :repo "bzg/org-mode"
+     :branch "bugfix"
+     :files ("lisp/*.el" ("etc" "etc/*")))
