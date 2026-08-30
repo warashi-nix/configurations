@@ -82,11 +82,19 @@ stdenv.mkDerivation (finalAttrs: {
   # 渡す) は使えない: ghostty のようにパス依存 (pkg/*) を含むパッケージを
   # --system で渡すと zig build が出力なしで無限ループする
   # (https://codeberg.org/ziglang/zig/issues/32121)。
+  # --hard-dereference は外せない: auto-optimise-store (linux で有効) が
+  # deps のツリー内で同一内容のファイルを hardlink にまとめるため、素の
+  # tar は 2 個目以降を type '1' (hardlink) エントリとして記録するが、zig
+  # の tar reader は type '1' を扱えず unable to unpack tarball で落ちる。
+  # 残りのフラグは tar の出力を決定的にするためのもので、正しさには影響
+  # しない。
   zigCache = runCommand "ghostel-module-zig-cache-${finalAttrs.version}" { } ''
     mkdir -p "$out"
     for dir in ${finalAttrs.deps}/*; do
       name="$(basename "$dir")"
-      tar -czf "$out/$name.tar.gz" -C ${finalAttrs.deps} "$name"
+      tar --hard-dereference \
+        --sort=name --owner=0 --group=0 --numeric-owner --mtime=@1 \
+        -czf "$out/$name.tar.gz" -C ${finalAttrs.deps} "$name"
     done
   '';
 
