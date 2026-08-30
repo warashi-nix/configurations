@@ -44,7 +44,7 @@
       };
     };
     emacs-twist = {
-      url = "github:Warashi/twist.nix/darwin-emacs-app";
+      url = "github:Warashi/twist.nix";
     };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
