@@ -48,7 +48,7 @@
        (setq unread-command-events nil)
        (electric-indent-local-mode -1)
        (nskk-mode 1)
-       (nskk--set-mode 'hiragana)
+       (nskk-set-mode 'hiragana)
        (setq nskk--romaji-buffer "")
        (nskk-corfu-henkan-setup)
        (unwind-protect (progn ,@body)
@@ -235,7 +235,7 @@ execute-kbd-macro は batch でイベントキューを汚すので、nskk の E
       (insert "漢字")
       (funcall (plist-get (nthcdr 3 capf) :exit-function) "漢字" 'finished))
     (should (equal (buffer-string) "漢字"))
-    (should-not (nskk--get-conversion-start))
+    (should-not (nskk-get-conversion-start))
     (should (equal nskk--romaji-buffer ""))))
 
 (ert-deftest nskk-corfu-henkan-test-table-follows-reading ()

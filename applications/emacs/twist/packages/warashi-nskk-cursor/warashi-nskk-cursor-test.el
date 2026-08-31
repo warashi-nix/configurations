@@ -57,7 +57,7 @@
     (unwind-protect
         (let (colors)
           (dolist (mode '(hiragana katakana ascii))
-            (nskk--set-mode mode)
+            (nskk-set-mode mode)
             (push (warashi-nskk-cursor-color) colors))
           (should (cl-every #'stringp colors))
           (should (equal colors (cl-remove-duplicates colors :test #'equal))))

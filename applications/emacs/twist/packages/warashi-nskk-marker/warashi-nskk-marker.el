@@ -10,7 +10,7 @@
 ;;; Commentary:
 
 ;; nskk は ▽ ▼ の挿入を `inhibit-modification-hooks' で隠す (`nskk-henkan.el' の
-;; `nskk--insert-marker' ほか)。隠れた挿入でバッファの位置がずれるため、次の通常
+;; `nskk-insert-marker' ほか)。隠れた挿入でバッファの位置がずれるため、次の通常
 ;; の挿入で track-changes の整合検査が落ちる。K で ▽ が入った時点では無事で、続く
 ;; a で かな が入った瞬間に死ぬ。
 ;;
@@ -49,7 +49,7 @@
 
 (defun warashi-nskk-marker-install-advice ()
   "nskk のマーカー操作をここの実装に差し替える。"
-  (advice-add 'nskk--insert-marker :override #'warashi-nskk-marker-insert)
+  (advice-add 'nskk-insert-marker :override #'warashi-nskk-marker-insert)
   (advice-add 'nskk--delete-marker-at :override #'warashi-nskk-marker-delete-at)
   (advice-add 'nskk--replace-marker-at :override #'warashi-nskk-marker-replace-at))
 

@@ -15,7 +15,7 @@
 ;;
 ;; nskk-completion-at-point は流用できない。あれが返すのは辞書の見出し語
 ;; (読み) の前方一致であって、変換候補ではない。ここで流用するのは region
-;; 計算 (nskk--get-conversion-start / nskk--skip-marker-pos) と、見出しの
+;; 計算 (nskk-get-conversion-start / nskk--skip-marker-pos) と、見出しの
 ;; 前方一致検索 (nskk--dcomp-search-prefix) だけ。
 
 ;;; Code:
@@ -328,7 +328,7 @@ non-nil のときの辞書読み込み時だけ。フラグを見るのは echo 
         (when (looking-at nskk-henkan-on-marker-regexp)
           (delete-region start (match-end 0))))
       (nskk--clear-conversion-start-marker)
-      (nskk--reset-romaji-buffer)
+      (nskk-reset-romaji-buffer)
       (nskk-with-current-state
         (nskk-state-set-henkan-phase nskk-current-state nil))
       (when (and reading word)
@@ -349,7 +349,7 @@ non-nil のときの辞書読み込み時だけ。フラグを見るのは echo 
 nil を返すと nskk-completion-at-point の読み補完に落ち、popup で RET を
 押したときに読みがそのまま確定してしまう。占有条件を
 nskk-completion-at-point と同じにしてあるので、▽ 中は必ずこちらが勝つ。"
-  (when-let* ((start (nskk--get-conversion-start))
+  (when-let* ((start (nskk-get-conversion-start))
               (text-start (nskk--skip-marker-pos
                            start nskk-henkan-on-marker-regexp))
               (_ (> (point) text-start)))
