@@ -2,6 +2,7 @@
   "nodes": {
     "root": {
       "inputs": {
+        "emacs-spectreshell": [],
         "nixpkgs": [],
         "org-babel": [],
         "twist": []
