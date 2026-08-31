@@ -80,14 +80,14 @@
     (cl-letf (((symbol-function 'advice-add)
                (lambda (fn how advice) (push (cons fn advice) installed))))
       (warashi-nskk-marker-install-advice))
-    (should (equal (cons 'nskk--insert-marker #'warashi-nskk-marker-insert)
-                   (assq 'nskk--insert-marker installed)))
+    (should (equal (cons 'nskk-insert-marker #'warashi-nskk-marker-insert)
+                   (assq 'nskk-insert-marker installed)))
     (should (equal (cons 'nskk--delete-marker-at #'warashi-nskk-marker-delete-at)
                    (assq 'nskk--delete-marker-at installed)))
     (should (equal (cons 'nskk--replace-marker-at #'warashi-nskk-marker-replace-at)
                    (assq 'nskk--replace-marker-at installed)))
     ;; nskk 側で改名や削除があったときに気付けるようにする。
-    (dolist (fn '(nskk--insert-marker nskk--delete-marker-at nskk--replace-marker-at))
+    (dolist (fn '(nskk-insert-marker nskk--delete-marker-at nskk--replace-marker-at))
       (should (fboundp fn)))))
 
 (provide 'warashi-nskk-marker-test)

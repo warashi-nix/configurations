@@ -26,7 +26,7 @@
   `(with-temp-buffer
      (electric-indent-local-mode -1)
      (nskk-mode 1)
-     (nskk--set-mode ,mode)
+     (nskk-set-mode ,mode)
      (unwind-protect (progn ,@body)
        (ignore-errors (nskk-mode -1)))))
 

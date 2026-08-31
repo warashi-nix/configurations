@@ -16,7 +16,7 @@
 ;; OSC 12 で端末に通知する。
 ;;
 ;; nskk 本体のカーソル制御 (`nskk-use-color-cursor') は切って使う。復帰を担う
-;; `nskk--cursor-color-restore' は、フレーム上に nskk バッファがひとつでも表示され
+;; `nskk-cursor-color-restore' は、フレーム上に nskk バッファがひとつでも表示され
 ;; ていると復帰を拒む (`nskk--other-nskk-buffers-active-p') ため、分割ウィンドウで
 ;; 片方にかなモードのバッファが見えているとこの同期が効かなくなる。書き手をここ
 ;; 一本に絞る。
