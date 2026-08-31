@@ -876,11 +876,11 @@
     "magit": {
       "flake": false,
       "locked": {
-        "lastModified": 1787399895,
-        "narHash": "sha256-PPX9Gt8Uv0A5o//FS81PaegZLOOBzLlVfopQ3SBX4cE=",
+        "lastModified": 1788173813,
+        "narHash": "sha256-Y7DHCMwcMZ9rpe5AnScbENB9mEeguLJb8wbSU18wV38=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "137f137dccb37097ae9caa31018cafa071ff4ec1",
+        "rev": "27e7c77f1a8279a1739c153ac62853cb5ca055dd",
         "type": "github"
       },
       "original": {
