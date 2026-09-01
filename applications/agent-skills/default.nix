@@ -3,6 +3,14 @@ let
   sources = pkgs.callPackage ./_sources/generated.nix { };
 in
 {
+  # agent-skills のバンドルはターゲット間で共通なため、Claude Code に配る skill だけを
+  # 選ぶ経路として warashi.claude.skills を使う
+  warashi.claude.skills = {
+    # keep-sorted start
+    pair-programming = ./skills/pair-programming;
+    # keep-sorted end
+  };
+
   programs.agent-skills = {
     enable = true;
     sources = {

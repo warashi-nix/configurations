@@ -78,6 +78,15 @@ in
         複数の定義は連結されるため、追記したい場合は mkAfter などを使う。
       '';
     };
+    skills = mkOption {
+      type = types.attrsOf types.path;
+      default = { };
+      description = ''
+        $CLAUDE_CONFIG_DIR/skills 以下に配置する skill。名前がディレクトリ名になる。
+        agent-skills のバンドルはターゲット間で共通なので、Claude Code に配る
+        skill だけを選ぶ経路としてこちらを使う。
+      '';
+    };
     extraSettingsSources = mkOption {
       type = types.listOf (
         types.submodule {
@@ -250,6 +259,13 @@ in
 
           run mkdir -p ${lib.escapeShellArg "${cfg.configDir}/output-styles"}
           run ${lib.getExe pkgs.rsync} -a ${./output-styles}/ ${lib.escapeShellArg "${cfg.configDir}/output-styles/"}
+
+          ${concatStringsSep "\n" (
+            mapAttrsToList (name: path: ''
+              run mkdir -p ${escapeShellArg "${cfg.configDir}/skills/${name}"}
+              run ${lib.getExe pkgs.rsync} -a --delete ${path}/ ${escapeShellArg "${cfg.configDir}/skills/${name}/"}
+            '') cfg.skills
+          )}
 
           if [ -f ${escapeShellArg settingsPath} ]; then
             run cp -af ${escapeShellArg settingsPath} ${escapeShellArg "${settingsPath}.backup"}
