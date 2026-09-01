@@ -9,6 +9,9 @@
 ;; agent-shell-status を cl-letf で差し替えるので、上流がそれらを改名・削
 ;; 除・仕様変更しても緑のまま通る。
 ;;
+;; state の中身は agent-shell 同梱の mock agent の config を agent-shell--make-state
+;; に渡して組む。session の確立は要らない。
+;;
 ;; twist の env でのみ成立する。素の Emacs には agent-shell が無いため、
 ;; just test-emacs の対象からは自然に外れる。
 
@@ -18,6 +21,7 @@
 (require 'find-func)
 (require 'agent-shell)
 (require 'agent-shell-viewport)
+(require 'agent-shell-mock-agent)
 (require 'warashi-agent-shell-list)
 
 (defun warashi-agent-shell-list-contract-test--keywords (fn)
@@ -45,17 +49,29 @@
                 (warashi-agent-shell-list-contract-test--keywords 'agent-shell-status))))
 
 (ert-deftest warashi-agent-shell-list-contract-test-state-is-buffer-local-variable ()
-  "`agent-shell--state' を `buffer-local-value' で引ける変数として持つ。
-中身が (:agent-config (:buffer-name ...)) や (:session (:title ...)) を引け
-る形かまでは見ない。state を組むには session を確立した shell が要り、バッ
-チでは起こせないため。スタブを置いて形だけ真似ると、このテストが塞ごうと
-している穴をそのまま作り直すことになる。"
+  "`agent-shell--state' を `buffer-local-value' で引ける変数として持つ。"
   (should (boundp 'agent-shell--state))
   (should (local-variable-if-set-p 'agent-shell--state)))
 
+(ert-deftest warashi-agent-shell-list-contract-test-state-shape ()
+  "一覧が state から読む経路が通る。
+agent 名は (:agent-config :buffer-name)、session title は (:session :title)。
+title は session を確立しないと入らないので値は見ず、:session キーが state
+に在ることだけを見る。"
+  (let ((state (agent-shell--make-state
+                :agent-config (agent-shell-mock-agent-make-agent-config))))
+    (should (equal "Mock" (map-nested-elt state '(:agent-config :buffer-name))))
+    (should (map-contains-key state :session))))
+
 (ert-deftest warashi-agent-shell-list-contract-test-buffer-name-prefix ()
-  "`agent-shell--buffer-name-prefix' を agent 名 1 つで呼べる。"
-  (should (equal '(1 . 1) (func-arity 'agent-shell--buffer-name-prefix))))
+  "`agent-shell--buffer-name-prefix' が buffer 名から剥がせる prefix を返す。
+一覧は幅 40 の side window に出すので、\"Mock Agent @ \" のような prefix を
+落とさないとプロジェクト名が残らない。"
+  (should (equal '(1 . 1) (func-arity 'agent-shell--buffer-name-prefix)))
+  (let* ((agent-name (map-elt (agent-shell-mock-agent-make-agent-config) :buffer-name))
+         (prefix (agent-shell--buffer-name-prefix agent-name)))
+    (should (stringp prefix))
+    (should (string-prefix-p agent-name prefix))))
 
 ;;;; 表示
 

@@ -9,6 +9,9 @@
 ;; cl-letf で差し替えるので、上流がそれらを改名・削除・仕様変更しても緑の
 ;; まま通る。nskk / epkgs の自動更新 PR で壊れたことに気付ける層がここ。
 ;;
+;; state の中身は agent-shell 同梱の mock agent の config を agent-shell--make-state
+;; に渡して組む。session の確立は要らない。
+;;
 ;; twist の env でのみ成立する。素の Emacs には agent-shell が無いため、
 ;; just test-emacs (ファイル名が <pkg>-test.el に完全一致するものだけを
 ;; 拾う) の対象からは自然に外れる。
@@ -20,6 +23,7 @@
 (require 'agent-shell)
 (require 'agent-shell-anthropic)
 (require 'agent-shell-pi)
+(require 'agent-shell-mock-agent)
 (require 'warashi-agent-shell)
 
 (defun warashi-agent-shell-contract-test--keywords (fn)
@@ -72,6 +76,27 @@ warashi-agent-shell は関数として、warashi-agent-shell-list は
 `buffer-local-value' で変数として読む。"
   (should (equal '(0 . 0) (func-arity 'agent-shell--state)))
   (should (boundp 'agent-shell--state)))
+
+(ert-deftest warashi-agent-shell-contract-test-state-holds-agent-config ()
+  "state の :agent-config に、渡した agent config がそのまま載る。
+thought level は agent config に push した独自キーを経由して session 確立
+後に読み出すので、config が別物に組み替えられると効かなくなる。"
+  (let* ((config (agent-shell-mock-agent-make-agent-config))
+         (state (progn
+                  ;; 本体と同じ順序で組む。push してから state に渡す。
+                  (push (cons :warashi-thought-level "high") config)
+                  (agent-shell--make-state :agent-config config))))
+    (should (equal "high" (alist-get :warashi-thought-level
+                                     (alist-get :agent-config state))))
+    (should (equal "Mock" (map-nested-elt state '(:agent-config :buffer-name))))))
+
+(ert-deftest warashi-agent-shell-contract-test-state-usage ()
+  "state の :usage からコストを引ける。
+session を確立していないので値は 0 だが、キーが揃っていることは見られる。"
+  (let ((usage (map-elt (agent-shell--make-state) :usage)))
+    (should (map-contains-key usage :cost-amount))
+    (should (map-contains-key usage :cost-currency))
+    (should (numberp (map-elt usage :cost-amount)))))
 
 (ert-deftest warashi-agent-shell-contract-test-subscribe-to-keywords ()
   "`agent-shell-subscribe-to' が購読に使うキーワードを受ける。"
