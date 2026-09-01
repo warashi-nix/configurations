@@ -269,6 +269,23 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
   (warashi-agent-shell-test--with-state '((:usage . ((:cost-amount . 0))))
     (should-not (warashi-agent-shell--cost-indicator))))
 
+(ert-deftest warashi-agent-shell-test-cost-indicator-busy ()
+  "ターン実行中は確定前の値と分かる印を付ける。"
+  (cl-letf (((symbol-function 'shell-maker-busy) (lambda () t)))
+    (warashi-agent-shell-test--with-state
+        '((:usage . ((:cost-amount . 1.5))))
+      (should (equal "~$1.50" (warashi-agent-shell--cost-indicator)))))
+  (cl-letf (((symbol-function 'shell-maker-busy) (lambda () nil)))
+    (warashi-agent-shell-test--with-state
+        '((:usage . ((:cost-amount . 1.5))))
+      (should (equal "$1.50" (warashi-agent-shell--cost-indicator)))))
+  ;; shell 以外の buffer から呼ばれても印を付けずに出す。
+  (cl-letf (((symbol-function 'shell-maker-busy)
+             (lambda () (error "Not in a shell"))))
+    (warashi-agent-shell-test--with-state
+        '((:usage . ((:cost-amount . 1.5))))
+      (should (equal "$1.50" (warashi-agent-shell--cost-indicator))))))
+
 (ert-deftest warashi-agent-shell-test-append-cost-indicator ()
   "context indicator の後ろに cost を足す。"
   (warashi-agent-shell-test--with-state

@@ -22,7 +22,8 @@
 ;;   picker や window の切り替えで割り込ませないため。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても shell には飛ばず、同じ project のメニューを開き直す。
-;; - session の累積コストを context usage indicator の隣に常設する。
+;; - session の累積コストを context usage indicator の隣に常設する。実行中は
+;;   確定前と分かるよう ~ を付ける。
 ;; - buffer 名の project 部分を repository 名と git-wit の memo にする。
 ;;   worktree のディレクトリ名は ID 由来で、並べたときにどの作業か読み取れない。
 ;;
@@ -213,9 +214,20 @@ VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
   (when-let* ((usage (map-elt (agent-shell--state) :usage))
               (amount (map-elt usage :cost-amount))
               ((> amount 0)))
-    (let ((currency (map-elt usage :cost-currency)))
+    (let ((currency (map-elt usage :cost-currency))
+          ;; `shell-maker-busy' は shell 以外の buffer で error を投げる。
+          ;; header の描画は shell buffer 内で走るので通常は来ないが、印が
+          ;; 付かないより indicator ごと消える方が困るため握り潰す。
+          (busy (ignore-errors (shell-maker-busy))))
       ;; USD を $ に畳むのは、幅の限られる header で 2 文字を惜しむため。
-      (format "%s%.2f" (if (member currency '(nil "USD")) "$" currency) amount))))
+      ;; 実行中に ~ を付けるのは、cost が claude-agent-acp の result にしか
+      ;; 載らず、隣の context だけが動くあいだ前ターンの値が残るため。金額を
+      ;; トークン数から自前で推定しないのは、単価表を持っても課金側のロジック
+      ;; と乖離した数字を常時出すことになるため。
+      (format "%s%s%.2f"
+              (if busy "~" "")
+              (if (member currency '(nil "USD")) "$" currency)
+              amount))))
 
 (defun warashi-agent-shell--append-cost-indicator (indicator)
   "context usage INDICATOR の後ろに cost を足す。"
