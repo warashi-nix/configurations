@@ -213,7 +213,10 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
   ;; 状態表示は mode-line の左端 (current-input-method-title) に出すので、
   ;; minor-mode 欄の lighter は畳んで消す。lighter を空にするのではなく Emacs 31
   ;; の畳み込みを使うのは、nskk 側の :lighter の定義に手を入れずに済むため。
-  (setopt mode-line-collapse-minor-modes '(nskk-mode))
+  ;; 畳んだ印 (既定は " …") も出さない。畳む対象が nskk だけなので、印があっても
+  ;; 何が隠れているか読み取れない。
+  (setopt mode-line-collapse-minor-modes '(nskk-mode)
+          mode-line-collapse-minor-modes-to "")
   ;; xdg が張った symlink ではなく store の実体を渡す。nskk の辞書読み込み
   ;; は対象と全親ディレクトリが書き込み不可であることを要求する
   ;; (stable-direct-source-p)。symlink 側の親は ~/.config なので必ず落ちる。
@@ -234,7 +237,11 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
         nskk-show-annotation t
         ;; カーソル色は warashi-nskk-cursor-apply が一手に握る。nskk 本体に任せ
         ;; るとバッファを移っても色が更新されない
-        nskk-use-color-cursor nil)
+        nskk-use-color-cursor nil
+        ;; ddskk の左端表示 (--かな:-) に合わせる。既定の " %m" は先頭に空白が
+        ;; 空くだけで、mode-line 左端の他の飾りと揃わない。ddskk が ascii と
+        ;; abbrev にだけ付ける "::" は桁揃えの飾りなので写さない。
+        nskk-modeline-format "-%m:-")
   (:with-hook nskk-mode-hook
     (:hook nskk-corfu-henkan-setup)))
 #+end_src
