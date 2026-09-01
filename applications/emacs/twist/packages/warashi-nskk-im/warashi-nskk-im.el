@@ -136,7 +136,7 @@ minor-mode 欄ではなくそこに出る。propertize 済みの文字列をそ�
   (cond
    ((bound-and-true-p nskk-mode)
     (setq current-input-method-title (nskk-modeline-indicator)))
-   ;; C-x C-j や `nskk-toggle-mode' は `deactivate-input-method' を通らずに
+   ;; `nskk-toggle-mode' を直に叩くと `deactivate-input-method' を通らずに
    ;; nskk-mode だけを落とす。`current-input-method' は立ったままなので、
    ;; 畳まないと打鍵は ascii なのに左端は かな のまま固まる。
    ((equal current-input-method "japanese-nskk")

@@ -67,8 +67,11 @@ ascii モードではハンドラが `self-insert-command' に落ちるため、
                 nskk-mode-map)
     (pcase-dolist (`(,event . ,binding) entries)
       (cond
-       ;; C-x C-j はモードを問わず切替の入口として生かす。
-       ((eq event ?\C-x) nil)
+       ;; C-x C-j は外す。入り口も出口も C-\ (japanese-nskk) 一本にする。
+       ;; C-x C-j で落とすと current-input-method が立ったまま残り、次の
+       ;; C-\ が有効化ではなく無効化として働く。C-x の下の他のキーは触らない。
+       ((eq event ?\C-x)
+        (keymap-unset nskk-mode-map "C-x C-j" t))
        ((eq event ?\C-j)
         (warashi-nskk-map--wrap-binding
          (vector event) binding #'warashi-nskk-map--mode-switch-filter))

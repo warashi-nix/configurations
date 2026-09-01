@@ -237,7 +237,7 @@
     (should (equal "keep" current-input-method-title))))
 (ert-deftest warashi-nskk-im-test-sync-title-clears-when-nskk-left ()
   "nskk が落ちたら表示も畳む。"
-  ;; C-x C-j や nskk-toggle-mode は deactivate-input-method を通らずに
+  ;; nskk-toggle-mode を直に叩くと deactivate-input-method を通らずに
   ;; nskk-mode だけを落とす。表示だけ かな のまま残ると、打鍵は ascii なのに
   ;; 左端は かな という、この表示が消すはずだった取り違えが起きる。
   (with-temp-buffer

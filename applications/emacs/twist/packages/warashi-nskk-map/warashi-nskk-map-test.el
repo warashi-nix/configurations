@@ -107,16 +107,20 @@ KEY だという状況を作ってから引く。"
     (warashi-nskk-map-test--with-mode 'ascii
       (should-not (warashi-nskk-map-test--lookup "q")))))
 
-(ert-deftest warashi-nskk-map-test-wrap-leaves-c-x-alone ()
-  "C-x は包まない。C-x C-j をモードに依らず切替の入口として残すため。"
+(ert-deftest warashi-nskk-map-test-wrap-removes-c-x-c-j ()
+  "C-x C-j は外す。入り口も出口も C-\\ 一本にするため。"
   (let* ((nskk-mode-map (make-sparse-keymap))
          (warashi-nskk-map--originals nil)
          (sub (make-sparse-keymap)))
     (define-key sub (kbd "C-j") (warashi-nskk-map-test--command
                                  'warashi-nskk-map-test--toggle))
+    (define-key sub (kbd "C-k") (warashi-nskk-map-test--command
+                                 'warashi-nskk-map-test--other))
     (define-key nskk-mode-map (kbd "C-x") sub)
     (warashi-nskk-map-wrap)
-    (should (eq sub (keymap-lookup nskk-mode-map "C-x")))
+    (should-not (keymap-lookup nskk-mode-map "C-x C-j"))
+    ;; C-x の下の他のキーには手を出さない。
+    (should (keymap-lookup nskk-mode-map "C-x C-k"))
     (should-not warashi-nskk-map--originals)))
 
 (ert-deftest warashi-nskk-map-test-wrap-keeps-c-j-across-modes ()

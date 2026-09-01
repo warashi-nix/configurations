@@ -307,12 +307,12 @@ mtime が epoch なので、キャッシュは何があっても有効と判定�
 #+end_src
 
 *** 辞書の先読み
-初回の =C-x C-j= は =nskk-dict-initialize= を同期で呼ぶ。SKK-JISYO.L
+初回の =C-\= は =nskk-dict-initialize= を同期で呼ぶ。SKK-JISYO.L
 (17.5 万件) の読み込みは =dict-cache.eld= が効いていても数秒かかり、その
 間 Emacs は固まる。daemon を上げ直すたびに最初の日本語入力で必ず踏む。
 
 起動後のアイドルで一度 nskk-mode を通しておけば、初期化はすべて冪等ガー
-ドに当たって以後の =C-x C-j= は即座に返る。
+ドに当たって以後の =C-\= は即座に返る。
 
 #+begin_src emacs-lisp
 (defun my/nskk-preload-schedule ()
@@ -454,11 +454,10 @@ quail のように自前の read ループは持たない。ループを持つ�
     (:hook warashi-nskk-im-sync-title)))
 #+end_src
 
-C-x C-j や =nskk-toggle-mode= で落とすと =current-input-method= は立ったまま
-残るので、次の =C-\= が有効化ではなく無効化として働く。表示は畳まれるので取り
-違えは起きず、hook から =deactivate-input-method= を呼ぶと再帰しうるため畳みに
-行かない。=nskk-mode= は permanent-local ではない一方 =current-input-method= は
-そうなので、major mode を切り替えたバッファでも同じ形になる。
+=nskk-mode-map= の =C-x C-j= は =warashi-nskk-map-wrap= で外す。あれで落とすと
+=current-input-method= が立ったまま残り、次の =C-\= が有効化ではなく無効化とし
+て働く。入り口も出口も =C-\= 一本にする。=M-x nskk-toggle-mode= を直に叩けば同
+じ状態は作れるが、表示は畳まれるので打鍵との取り違えにはならない。
 
 キーマップ側の辻褄合わせは =warashi-nskk-map= に置く。包む条件は
 =warashi-nskk-im= の差し替え条件と同じものでなければならず、ずれると read-only
