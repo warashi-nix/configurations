@@ -230,8 +230,14 @@
           # 素の Emacs にスタブを積む方式では成立しない。env は host 構成が
           # どのみちビルドするものなので、CI 上の追加コストはほぼ無い。
           emacs = packages.${system}.default;
+          allPackages = builtins.attrNames (builtins.readDir ./packages);
           hasTest = name: builtins.pathExists (./packages + "/${name}/${name}-test.el");
-          testablePackages = builtins.filter hasTest (builtins.attrNames (builtins.readDir ./packages));
+          testablePackages = builtins.filter hasTest allPackages;
+          # 契約テストは上流を実物として突き当てるので、単体テストとは別の
+          # derivation にする。落ちたのが自分の変更か上流の変更かを、CI の
+          # 失敗名だけで切り分けられるようにするため。
+          hasContractTest = name: builtins.pathExists (./packages + "/${name}/${name}-contract-test.el");
+          contractTestablePackages = builtins.filter hasContractTest allPackages;
         in
         builtins.listToAttrs (
           map (name: {
@@ -248,6 +254,19 @@
                   touch $out
                 '';
           }) testablePackages
+          ++ map (name: {
+            name = "emacs-${name}-contract";
+            value =
+              pkgs.runCommand "emacs-${name}-contract-test"
+                {
+                  nativeBuildInputs = [ emacs ];
+                }
+                ''
+                  cd ${./packages}/${name}
+                  emacs -Q --batch -L . -l ${name}-contract-test.el -f ert-run-tests-batch-and-exit
+                  touch $out
+                '';
+          }) contractTestablePackages
         )
       );
       packages = forAllSystems (
