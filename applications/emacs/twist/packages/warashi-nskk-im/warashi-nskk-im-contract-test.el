@@ -86,6 +86,23 @@
     (with-temp-buffer
       (activate-input-method "warashi-nskk-contract-test")
       (should (equal "写した" current-input-method-title)))))
+(ert-deftest warashi-nskk-im-contract-test-modeline-format ()
+  "飾りを外した素の状態文字列を取り出す口が変わっていない。"
+  ;; 桁を揃える - の数を数えるために、nskk 側の飾りは付けさせない。
+  (let ((nskk-modeline-format "%m"))
+    (should (equal "かな" (warashi-nskk-im-contract-test--with-mode 'hiragana
+                            (nskk-modeline-indicator))))))
+
+(ert-deftest warashi-nskk-im-contract-test-mode-string-width ()
+  "状態の文字列は右揃えに取った桁に収まる。"
+  ;; はみ出すと mode-line 上で桁が揃わなくなる。nskk が文字列を変えたらここで
+  ;; 落ちる。
+  (let ((nskk-modeline-format "%m"))
+    (dolist (mode '(hiragana katakana ascii latin jisx0208-latin abbrev))
+      (let ((width (warashi-nskk-im-contract-test--with-mode mode
+                     (string-width (nskk-modeline-indicator)))))
+        (should (equal (list mode t)
+                       (list mode (<= width warashi-nskk-im--title-mode-width))))))))
 
 (provide 'warashi-nskk-im-contract-test)
 ;;; warashi-nskk-im-contract-test.el ends here

@@ -217,7 +217,7 @@
           (progn
             (warashi-nskk-im-activate)
             (should (stringp current-input-method-title))
-            (should (equal (nskk-modeline-indicator) current-input-method-title)))
+            (should (equal (warashi-nskk-im--title) current-input-method-title)))
         (ignore-errors (nskk-mode -1))))))
 
 (ert-deftest warashi-nskk-im-test-sync-title-follows-mode ()
@@ -265,6 +265,24 @@
     (warashi-nskk-im-sync-title)
     (should (stringp current-input-method-title))
     (should-not (text-properties-at 0 current-input-method-title))))
+(ert-deftest warashi-nskk-im-test-title-is-right-aligned ()
+  "状態が変わっても左端の表示は同じ桁を占める。"
+  (let (titles)
+    (dolist (mode '(hiragana katakana ascii jisx0208-latin abbrev))
+      (warashi-nskk-im-test--with-mode mode
+        (warashi-nskk-im-sync-title)
+        (push (cons mode current-input-method-title) titles)))
+    (pcase-dolist (`(,mode . ,title) titles)
+      (should (equal (list mode 7) (list mode (string-width title)))))))
+
+(ert-deftest warashi-nskk-im-test-title-pads-on-the-left ()
+  "桁を埋める - は左に足す。状態の文字列は右に寄る。"
+  (warashi-nskk-im-test--with-mode 'ascii
+    (warashi-nskk-im-sync-title)
+    (should (equal "--SKK:-" current-input-method-title)))
+  (warashi-nskk-im-test--with-mode 'hiragana
+    (warashi-nskk-im-sync-title)
+    (should (equal "-かな:-" current-input-method-title))))
 
 (provide 'warashi-nskk-im-test)
 ;;; warashi-nskk-im-test.el ends here

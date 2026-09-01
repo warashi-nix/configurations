@@ -237,11 +237,7 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
         nskk-show-annotation t
         ;; カーソル色は warashi-nskk-cursor-apply が一手に握る。nskk 本体に任せ
         ;; るとバッファを移っても色が更新されない
-        nskk-use-color-cursor nil
-        ;; ddskk の左端表示 (--かな:-) に合わせる。既定の " %m" は先頭に空白が
-        ;; 空くだけで、mode-line 左端の他の飾りと揃わない。ddskk が ascii と
-        ;; abbrev にだけ付ける "::" は桁揃えの飾りなので写さない。
-        nskk-modeline-format "-%m:-")
+        nskk-use-color-cursor nil)
   (:with-hook nskk-mode-hook
     (:hook nskk-corfu-henkan-setup)))
 #+end_src

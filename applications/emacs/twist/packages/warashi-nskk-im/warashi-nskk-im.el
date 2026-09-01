@@ -127,6 +127,22 @@ major mode の単キーコマンドを潰さない。"
   (setq-local input-method-function #'warashi-nskk-im-translate))
 
 
+(defconst warashi-nskk-im--title-mode-width 4
+  "状態の文字列に取る桁数。かな カナ 全英 の全角 2 文字ぶん。")
+
+(defun warashi-nskk-im--title ()
+  "mode-line の左端に置く状態表示を組み立てて返す。"
+  ;; 飾りを `nskk-modeline-format' ではなくここで付けるのは、桁を揃える -
+  ;; の数が状態ごとに変わるため。書式文字列一本では表現できない。
+  (let* ((nskk-modeline-format "%m")
+         (mode (substring-no-properties (nskk-modeline-indicator)))
+         ;; 半角の SKK や aA を右に寄せる。左に足すのは、状態が変わっても
+         ;; 文字列の右端 (: の隣) が動かないようにするため。
+         (pad (max 0 (- warashi-nskk-im--title-mode-width (string-width mode)))))
+    ;; 先頭の - が 1 つなのは、mode-line-front-space の - がこの手前に出るため。
+    ;; ddskk の見た目 (--かな:-) と桁が揃う。
+    (concat "-" (make-string pad ?-) mode ":-")))
+
 (defun warashi-nskk-im-sync-title ()
   "nskk の状態表示を `current-input-method-title' に写す。
 `mode-line-mule-info' がこの変数を mode-line の左端に描くので、状態は
@@ -139,8 +155,7 @@ minor-mode 欄ではなくそこに出る。"
   ;; 側で一点に集まっていて、再描画のたびに評価させる必要がない。
   (cond
    ((bound-and-true-p nskk-mode)
-    (setq current-input-method-title
-          (substring-no-properties (nskk-modeline-indicator))))
+    (setq current-input-method-title (warashi-nskk-im--title)))
    ;; `nskk-toggle-mode' を直に叩くと `deactivate-input-method' を通らずに
    ;; nskk-mode だけを落とす。`current-input-method' は立ったままなので、
    ;; 畳まないと打鍵は ascii なのに左端は かな のまま固まる。
