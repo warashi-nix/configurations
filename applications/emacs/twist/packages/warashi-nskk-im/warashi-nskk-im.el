@@ -126,23 +126,21 @@ major mode の単キーコマンドを潰さない。"
   "現在のバッファで合成イベント経路を有効にする。"
   (setq-local input-method-function #'warashi-nskk-im-translate))
 
-;; 状態ごとの色は `nskk-modeline-indicator' が face の text property として
-;; 載せてくるが、mode-line は risky でない変数の値からは property を捨てる。
-;; ddskk も自前の `skk-modeline-input-mode' を risky にして同じ形を作っている。
-;; risky にすると file-local variables からの設定は確認を挟んで拒まれるので、
-;; 緩めるのではなく締める方向に効く。
-(put 'current-input-method-title 'risky-local-variable t)
 
 (defun warashi-nskk-im-sync-title ()
   "nskk の状態表示を `current-input-method-title' に写す。
 `mode-line-mule-info' がこの変数を mode-line の左端に描くので、状態は
-minor-mode 欄ではなくそこに出る。propertize 済みの文字列をそのまま渡す。"
-  ;; risky にした今は `(:eval ...)' 構造も置けるが、確定した文字列を入れる。
-  ;; 状態が変わる場所は nskk 側で一点に集まっていて、再描画のたびに評価させる
-  ;; 必要がない。
+minor-mode 欄ではなくそこに出る。"
+  ;; 色は落とす。ddskk も端末では色を付けず (skk-indicator-use-cursor-color が
+  ;; window-system 依存)、GUI で付ける色はカーソル色そのもの。こちらではカーソル
+  ;; 色の同期を warashi-nskk-cursor が担っているので、mode-line 側は素で置く。
+  ;;
+  ;; `(:eval ...)' 構造ではなく確定した文字列を入れる。状態が変わる場所は nskk
+  ;; 側で一点に集まっていて、再描画のたびに評価させる必要がない。
   (cond
    ((bound-and-true-p nskk-mode)
-    (setq current-input-method-title (nskk-modeline-indicator)))
+    (setq current-input-method-title
+          (substring-no-properties (nskk-modeline-indicator))))
    ;; `nskk-toggle-mode' を直に叩くと `deactivate-input-method' を通らずに
    ;; nskk-mode だけを落とす。`current-input-method' は立ったままなので、
    ;; 畳まないと打鍵は ascii なのに左端は かな のまま固まる。
