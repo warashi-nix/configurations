@@ -181,18 +181,60 @@
   (with-temp-buffer
     (should-not (eq #'warashi-nskk-im-translate input-method-function))))
 
-(ert-deftest warashi-nskk-im-test-activate-toggles-global-mode ()
-  "入力メソッドの有効・無効が nskk-global-mode に対応する。"
-  (let ((deactivate-current-input-method-function nil))
+(ert-deftest warashi-nskk-im-test-activate-toggles-buffer-local-mode ()
+  "入力メソッドの有効・無効は、そのバッファの nskk-mode だけを動かす。"
+  (let ((deactivate-current-input-method-function nil)
+        (other (generate-new-buffer " *warashi-nskk-im-test-other*")))
     (unwind-protect
-        (progn
+        (with-temp-buffer
           (warashi-nskk-im-activate)
-          (should (bound-and-true-p nskk-global-mode))
+          (should (bound-and-true-p nskk-mode))
           (should (eq #'warashi-nskk-im-deactivate
                       deactivate-current-input-method-function))
+          (with-current-buffer other
+            (should-not (bound-and-true-p nskk-mode)))
           (warashi-nskk-im-deactivate)
-          (should-not (bound-and-true-p nskk-global-mode)))
-      (nskk-global-mode -1))))
+          (should-not (bound-and-true-p nskk-mode)))
+      (kill-buffer other))))
+
+(ert-deftest warashi-nskk-im-test-activate-enters-hiragana ()
+  "有効化した直後からかなで打てる。"
+  (let ((deactivate-current-input-method-function nil))
+    (with-temp-buffer
+      (unwind-protect
+          (progn
+            (warashi-nskk-im-activate)
+            (should (eq 'hiragana (nskk-state-get-mode))))
+        (ignore-errors (nskk-mode -1))))))
+
+;;;; mode-line 左端の状態表示
+
+(ert-deftest warashi-nskk-im-test-activate-sets-title ()
+  "有効化した時点で入力メソッドの表示が状態を指している。"
+  (let ((deactivate-current-input-method-function nil))
+    (with-temp-buffer
+      (unwind-protect
+          (progn
+            (warashi-nskk-im-activate)
+            (should (stringp current-input-method-title))
+            (should (equal (nskk-modeline-indicator) current-input-method-title)))
+        (ignore-errors (nskk-mode -1))))))
+
+(ert-deftest warashi-nskk-im-test-sync-title-follows-mode ()
+  "状態を変えると表示も変わる。"
+  (warashi-nskk-im-test--with-mode 'hiragana
+    (warashi-nskk-im-sync-title)
+    (let ((hiragana current-input-method-title))
+      (nskk-set-mode 'katakana)
+      (warashi-nskk-im-sync-title)
+      (should-not (equal hiragana current-input-method-title)))))
+
+(ert-deftest warashi-nskk-im-test-sync-title-skips-other-buffers ()
+  "nskk が居ないバッファの表示には触らない。"
+  (with-temp-buffer
+    (setq current-input-method-title "keep")
+    (warashi-nskk-im-sync-title)
+    (should (equal "keep" current-input-method-title))))
 
 (provide 'warashi-nskk-im-test)
 ;;; warashi-nskk-im-test.el ends here

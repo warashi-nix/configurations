@@ -22,9 +22,14 @@
 ;; `nskk-mode-map' 側で本来のハンドラに橋渡しする形なら、`this-command' が
 ;; `nskk-self-insert' のまま残るので corfu 連携はそのまま動く。
 ;;
+;; 有効化は `nskk-global-mode' ではなくバッファローカルな `nskk-mode' で行う。
+;; 状態表示を `current-input-method-title' に載せて mode-line の左端に出すには、
+;; 有効・無効・状態・表示が同じバッファローカルな一点から決まっている必要がある。
+;;
 ;; 利用側で `warashi-nskk-im-install-dispatch-bindings' を `nskk-mode-map' の
 ;; 用意できたところで呼び、`warashi-nskk-im-setup' を `nskk-mode-hook' に登録
-;; する。`japanese-nskk' として入力メソッド登録するなら
+;; し、`warashi-nskk-im-install-title-advice' を nskk のロード後に呼ぶ。
+;; `japanese-nskk' として入力メソッド登録するなら
 ;; `warashi-nskk-im-activate' を `register-input-method' に渡す。
 
 ;;; Code:
@@ -120,14 +125,36 @@ major mode の単キーコマンドを潰さない。"
   "現在のバッファで合成イベント経路を有効にする。"
   (setq-local input-method-function #'warashi-nskk-im-translate))
 
+(defun warashi-nskk-im-sync-title ()
+  "nskk の状態表示を `current-input-method-title' に写す。
+`mode-line-mule-info' がこの変数を mode-line の左端に描くので、状態は
+minor-mode 欄ではなくそこに出る。propertize 済みの文字列をそのまま渡す。"
+  ;; `(:eval ...)' 構造ではなく確定した文字列を入れる。
+  ;; `current-input-method-title' は risky-local-variable ではないので、
+  ;; 値に入れた :eval は描画時に評価されない。
+  (when (bound-and-true-p nskk-mode)
+    (setq current-input-method-title (nskk-modeline-indicator))))
+
+(defun warashi-nskk-im-install-title-advice ()
+  "状態が変わるたびに表示を写すようにする。"
+  ;; 状態遷移の口は複数あるが、どれも最後に `nskk-modeline-update' を通る。
+  ;; 個々のコマンドではなくここ一点に付ける。
+  (advice-add 'nskk-modeline-update :after #'warashi-nskk-im-sync-title))
+
 (defun warashi-nskk-im-activate (&optional _name)
   "`japanese-nskk' 入力メソッドとして nskk を有効にする。"
   (setq deactivate-current-input-method-function #'warashi-nskk-im-deactivate)
-  (nskk-global-mode 1))
+  (nskk-mode 1)
+  ;; 有効化はそのまま `nskk-state-default-mode' (ascii) に落ちる。C-\ は
+  ;; 日本語を打ち始める操作なので、かなまで進めてしまう。
+  (nskk-set-mode-hiragana)
+  ;; `activate-input-method' は呼び出し後に title が文字列でなければ登録時の
+  ;; TITLE で埋める。ここで入れておけば上書きされない。
+  (warashi-nskk-im-sync-title))
 
 (defun warashi-nskk-im-deactivate ()
   "`japanese-nskk' 入力メソッドを無効にする。"
-  (nskk-global-mode -1))
+  (nskk-mode -1))
 
 (provide 'warashi-nskk-im)
 ;;; warashi-nskk-im.el ends here
