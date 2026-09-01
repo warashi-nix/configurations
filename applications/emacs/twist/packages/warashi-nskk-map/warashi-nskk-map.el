@@ -9,8 +9,8 @@
 
 ;;; Commentary:
 
-;; minor-mode map は major-mode map より先に引かれるので、`nskk-global-mode' で
-;; 全バッファに広げると q / l / x / RET などが dired や magit の単キーを潰す。
+;; minor-mode map は major-mode map より先に引かれるので、`nskk-mode' が入った
+;; バッファでは q / l / x / RET などが dired や magit の単キーを潰す。
 ;; `nskk-mode-map' の各バインドを `:filter' 付きに包み直し、nskk が打鍵を取る
 ;; べきときだけ有効にする。
 ;;
@@ -58,8 +58,8 @@ C-j は ascii モードから かなモードへ戻る唯一の打鍵なので�
 
 (defun warashi-nskk-map-wrap ()
   "`nskk-mode-map' の各バインドを `:filter' 付きに包み直す。
-minor-mode map は major-mode map より先に引かれるので、nskk-global-mode で
-全バッファに広げると q / l / x / RET などが dired や magit の単キーを潰す。
+minor-mode map は major-mode map より先に引かれるので、nskk-mode が入った
+バッファでは q / l / x / RET などが dired や magit の単キーを潰す。
 ascii モードではハンドラが `self-insert-command' に落ちるため、read-only
 バッファでは quit する代わりに \"Buffer is read-only\" になる。"
   (let (entries)

@@ -23,8 +23,7 @@ nskk が単キーに束縛したコマンドの一覧で、これを元に remap
 (ert-deftest warashi-nskk-map-contract-test-mode ()
   "keymap と hook の口が変わっていない。"
   (should (boundp 'nskk-mode-map))
-  (should (boundp 'nskk-mode-hook))
-  (should (equal '(0 . 1) (func-arity 'nskk-global-mode))))
+  (should (boundp 'nskk-mode-hook)))
 
 (provide 'warashi-nskk-map-contract-test)
 ;;; warashi-nskk-map-contract-test.el ends here
