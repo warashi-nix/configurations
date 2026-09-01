@@ -27,8 +27,9 @@
 ;; 有効・無効・状態・表示が同じバッファローカルな一点から決まっている必要がある。
 ;;
 ;; 利用側で `warashi-nskk-im-install-dispatch-bindings' を `nskk-mode-map' の
-;; 用意できたところで呼び、`warashi-nskk-im-setup' を `nskk-mode-hook' に登録
-;; し、`warashi-nskk-im-install-title-advice' を nskk のロード後に呼ぶ。
+;; 用意できたところで呼び、`warashi-nskk-im-setup' と
+;; `warashi-nskk-im-sync-title' を `nskk-mode-hook' に登録し、
+;; `warashi-nskk-im-install-title-advice' を nskk のロード後に呼ぶ。
 ;; `japanese-nskk' として入力メソッド登録するなら
 ;; `warashi-nskk-im-activate' を `register-input-method' に渡す。
 
@@ -132,8 +133,14 @@ minor-mode 欄ではなくそこに出る。propertize 済みの文字列をそ�
   ;; `(:eval ...)' 構造ではなく確定した文字列を入れる。
   ;; `current-input-method-title' は risky-local-variable ではないので、
   ;; 値に入れた :eval は描画時に評価されない。
-  (when (bound-and-true-p nskk-mode)
-    (setq current-input-method-title (nskk-modeline-indicator))))
+  (cond
+   ((bound-and-true-p nskk-mode)
+    (setq current-input-method-title (nskk-modeline-indicator)))
+   ;; C-x C-j や `nskk-toggle-mode' は `deactivate-input-method' を通らずに
+   ;; nskk-mode だけを落とす。`current-input-method' は立ったままなので、
+   ;; 畳まないと打鍵は ascii なのに左端は かな のまま固まる。
+   ((equal current-input-method "japanese-nskk")
+    (setq current-input-method-title nil))))
 
 (defun warashi-nskk-im-install-title-advice ()
   "状態が変わるたびに表示を写すようにする。"

@@ -235,6 +235,29 @@
     (setq current-input-method-title "keep")
     (warashi-nskk-im-sync-title)
     (should (equal "keep" current-input-method-title))))
+(ert-deftest warashi-nskk-im-test-sync-title-clears-when-nskk-left ()
+  "nskk が落ちたら表示も畳む。"
+  ;; C-x C-j や nskk-toggle-mode は deactivate-input-method を通らずに
+  ;; nskk-mode だけを落とす。表示だけ かな のまま残ると、打鍵は ascii なのに
+  ;; 左端は かな という、この表示が消すはずだった取り違えが起きる。
+  (with-temp-buffer
+    (setq current-input-method "japanese-nskk")
+    (setq current-input-method-title "かな")
+    (warashi-nskk-im-sync-title)
+    (should-not current-input-method-title)))
+
+(ert-deftest warashi-nskk-im-test-deactivate-clears-title ()
+  "nskk-mode を落とすと表示が畳まれる。"
+  ;; nskk-mode -1 は nskk-modeline-update を通らないので、advice だけでは
+  ;; 届かない。nskk-mode-hook が無効化時にも走ることに乗る。
+  (let ((deactivate-current-input-method-function nil))
+    (with-temp-buffer
+      (add-hook 'nskk-mode-hook #'warashi-nskk-im-sync-title nil t)
+      (setq current-input-method "japanese-nskk")
+      (warashi-nskk-im-activate)
+      (should current-input-method-title)
+      (nskk-mode -1)
+      (should-not current-input-method-title))))
 
 (provide 'warashi-nskk-im-test)
 ;;; warashi-nskk-im-test.el ends here
