@@ -31,6 +31,9 @@ emacs-update:
 # Emacs ローカルパッケージの ert を手元の Emacs で回す
 # nix build を挟まないのは、1 ファイル直すたびの往復を短く保つため。
 # CI との一致は .#checks 側が担保する。
+# <pkg>-contract-test.el を拾わないのは、上流を実物として require するため
+# 素の Emacs では成立しないから。ファイル名を完全一致で見ているので、
+# 除外は自動的に効く。契約テストは .#checks 側だけで走る。
 test-emacs PACKAGE='':
   #!/usr/bin/env bash
   set -euo pipefail
