@@ -210,6 +210,10 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 (setup (:package nskk nskk-corfu-henkan)
   ;; with-eval-after-load を通さないために setopt で書く
   (setopt default-input-method "japanese-nskk")
+  ;; 状態表示は mode-line の左端 (current-input-method-title) に出すので、
+  ;; minor-mode 欄の lighter は畳んで消す。lighter を空にするのではなく Emacs 31
+  ;; の畳み込みを使うのは、nskk 側の :lighter の定義に手を入れずに済むため。
+  (setopt mode-line-collapse-minor-modes '(nskk-mode))
   ;; xdg が張った symlink ではなく store の実体を渡す。nskk の辞書読み込み
   ;; は対象と全親ディレクトリが書き込み不可であることを要求する
   ;; (stable-direct-source-p)。symlink 側の親は ~/.config なので必ず落ちる。
@@ -414,7 +418,7 @@ nskk--cursor-color-restore は、フレーム上に nskk バッファがひと�
   (add-hook 'kill-emacs-hook #'warashi-nskk-cursor-tty-reset-all))
 #+end_src
 
-*** PoC: input-method-function でキーを先に受け取る
+*** input-method-function でキーを先に受け取る
 =nskk-mode-map= は打鍵の取り込みを =<remap> <self-insert-command>= 一本に頼って
 いるが、remap は「そのキーが解決したコマンド」に引かれるため、major mode が印字
 可能キーを直接バインドしていると nskk まで届かない。agent-shell の =n= がその例
@@ -427,10 +431,9 @@ quail のように自前の read ループは持たない。ループを持つ�
 =nskk-mode-map= 側で本来のハンドラに橋渡しする形なら、=this-command= が
 =nskk-self-insert= のまま残るので corfu 連携はそのまま動く。
 
-PoC として測りたいのは以下。=C-x C-j= 経路 (=current-input-method= は nil のま
-ま) で発火するか、prefix key (=C-x n=) が壊れないか、=read-char= や
-=y-or-n-p=、isearch、keyboard macro での挙動。=C-\= 経路との比較のために
-=japanese-nskk= も登録しておく。
+入り口は =C-\= 一本にする。=japanese-nskk= を通ると =current-input-method= が立
+ち、状態表示を =current-input-method-title= 経由で mode-line の左端に出せる。
+=C-x C-j= 経路 (=current-input-method= は nil のまま) は残さない。
 
 実装をここに置かず =warashi-nskk-im= に切り出しているのは、差し替えを見送る条件
 と橋渡しの挙動を ert で固定したいため。init.org の中身は tangle されて初めてロー
@@ -439,10 +442,11 @@ PoC として測りたいのは以下。=C-x C-j= 経路 (=current-input-method=
 #+begin_src emacs-lisp
 (setup (:package warashi-nskk-im)
   (:require warashi-nskk-im)
-  ;; C-\ 経路との比較のために japanese-nskk も登録しておく。
   (register-input-method
    "japanese-nskk" "Japanese" #'warashi-nskk-im-activate ""
    "SKK (nskk) via input-method-function")
+  (with-eval-after-load 'nskk
+    (warashi-nskk-im-install-title-advice))
   (:with-hook nskk-mode-hook
     (:hook warashi-nskk-im-setup)))
 #+end_src
