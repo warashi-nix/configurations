@@ -258,6 +258,11 @@
       (should current-input-method-title)
       (nskk-mode -1)
       (should-not current-input-method-title))))
+(ert-deftest warashi-nskk-im-test-title-is-risky ()
+  "状態表示の色が描画まで残る。"
+  ;; risky でない変数の値に入れた text property は mode-line の描画で捨てら
+  ;; れ、状態ごとの色が全て既定色になる。
+  (should (get 'current-input-method-title 'risky-local-variable)))
 
 (provide 'warashi-nskk-im-test)
 ;;; warashi-nskk-im-test.el ends here
