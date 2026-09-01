@@ -21,6 +21,7 @@
 (require 'ert)
 (require 'find-func)
 (require 'agent-shell)
+(require 'shell-maker)
 (require 'agent-shell-anthropic)
 (require 'agent-shell-pi)
 (require 'agent-shell-mock-agent)
@@ -116,6 +117,18 @@ session を確立していないので値は 0 だが、キーが揃っている
 (ert-deftest warashi-agent-shell-contract-test-buffer-name-prefix ()
   "`agent-shell--buffer-name-prefix' を agent 名 1 つで呼べる。"
   (should (equal '(1 . 1) (func-arity 'agent-shell--buffer-name-prefix))))
+
+
+;;;; コスト表示
+
+(ert-deftest warashi-agent-shell-contract-test-shell-maker-busy ()
+  "`shell-maker-busy' を引数なしで呼べ、shell 以外の buffer では signal する。
+コストに実行中の印を付けるのに busy 判定を借りており、shell 外での signal
+は `ignore-errors' で握り潰している。上流が nil を返すよう変えても印の出方
+は変わらないが、引数を取るようになったり関数が消えたりすると効かなくなる。"
+  (should (equal '(0 . 0) (func-arity 'shell-maker-busy)))
+  (with-temp-buffer
+    (should-error (shell-maker-busy))))
 
 (provide 'warashi-agent-shell-contract-test)
 ;;; warashi-agent-shell-contract-test.el ends here
