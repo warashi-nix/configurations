@@ -1620,11 +1620,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788282279,
-        "narHash": "sha256-1aOwRbs/l2v94bnlWr2vkp3+JTAEZ3UhngbWy8VcZhs=",
+        "lastModified": 1788301447,
+        "narHash": "sha256-5vUunjPW05Kbh8a1LKgyyAaFInb9X52ZvnsITSitB0A=",
         "owner": "jcollie",
         "repo": "zon2nix",
-        "rev": "cd9bbb6c870165945555be932683e7bda23a9cdb",
+        "rev": "97cd62a05dc1b9a4b978efa67ea80a459e619dc3",
         "type": "github"
       },
       "original": {
