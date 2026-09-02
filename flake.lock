@@ -639,11 +639,11 @@
     "ghostel": {
       "flake": false,
       "locked": {
-        "lastModified": 1788260383,
-        "narHash": "sha256-7ZUcuJm6ujgAR6d/eVeWALXlux0b4QHImkIAzO0/SLE=",
+        "lastModified": 1788371589,
+        "narHash": "sha256-ZzRf/3QoG499S2bJhA+wnphqX0KDiY+Pe7yENKh8AV4=",
         "owner": "dakra",
         "repo": "ghostel",
-        "rev": "e0c185cd548b43f2d54490a0b7de95de7d2f0d8c",
+        "rev": "2bea18f3b52bf97d8222fea706da6fabdfc2cbb8",
         "type": "github"
       },
       "original": {
