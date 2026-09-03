@@ -259,11 +259,11 @@
     "envrc": {
       "flake": false,
       "locked": {
-        "lastModified": 1788281163,
-        "narHash": "sha256-xC9WNI4NdiT5kw2fY9h/c2BYjoOEEsURFWuZfLWJ5nE=",
+        "lastModified": 1788443980,
+        "narHash": "sha256-W+Q/3MNIRA04CoMcBhtoHn0bChumNcS1BvlpOos0nMg=",
         "owner": "purcell",
         "repo": "envrc",
-        "rev": "105da4c1520e42310234564e6477fc3b9a9b9d7b",
+        "rev": "64944dab7991ae571caa5303cf324be91d9e8171",
         "type": "github"
       },
       "original": {
