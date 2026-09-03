@@ -27,6 +27,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     bash \
     jq \
     xz-utils \
+    podman-compose \
     podman-docker \
     uidmap \
     passt \
