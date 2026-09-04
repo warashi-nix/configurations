@@ -373,7 +373,26 @@ if ! chelly_nix_install_log="$(flock /nix/.chelly-install.lock sh -c '
   exit 1
 fi
 
+# 入れる開発環境があるかは flake.nix の存在ではなく属性を引けるかで判定する。flake.nix は
+# あっても devShell を持たない、あるいは flake が壊れているリポジトリがあり、そこで
+# nix develop が落ちるとコンテナごと起動できなくなるため。壊れた flake を直す作業も
+# コンテナ内で行うので、引けなかったときは止めずに素のシェルまで落とす。
+# 属性の探索を自前で書かず installable を引くのは、引数なしの nix develop 自身と同じ
+# 規則で解決させるため。
+# 引けなかった理由は出さない。devShell を持たないリポジトリでは毎回の起動が雑音になり、
+# flake が壊れているかどうかは nix develop を直接叩けば分かる。
+# devShell の評価は通るがビルドだけ失敗する場合は拾えない。拾うには exec の前に
+# nix develop を通す必要があり、成功する毎回の起動が倍近く遅くなるため取らない。
+chelly_flake_has_shell=false
 if [ -f flake.nix ]; then
+  chelly_system="$(nix config show system)"
+  if nix eval --accept-flake-config --raw ".#devShells.${chelly_system}.default.type" >/dev/null 2>&1 ||
+    nix eval --accept-flake-config --raw ".#packages.${chelly_system}.default.type" >/dev/null 2>&1; then
+    chelly_flake_has_shell=true
+  fi
+fi
+
+if [ "${chelly_flake_has_shell}" = true ]; then
   if [ "$#" -eq 0 ]; then
     exec nix develop --accept-flake-config
   fi
@@ -384,6 +403,9 @@ elif [ -f shell.nix ]; then
   fi
   exec nix-shell --run "$*"
 else
+  if [ "$#" -eq 0 ]; then
+    exec bash
+  fi
   exec "$@"
 fi
 EOF
