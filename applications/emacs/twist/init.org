@@ -962,10 +962,10 @@ picker が minibuffer を奪う。eshell で起動を投げてから別の作業
 ;; MODEL-ID は agent-shell 起動時に "Available models" に出る ID。
 ;; sonnet-xhigh だけ 200k なのは、sonnet に 1M context 版の ID が無いため。
 (warashi-agent-shell-define-claude-variants
- (sonnet-xhigh "sonnet"             "xhigh")
- (opus-low     "opus[1m]"           "low")
- (opus-medium  "opus[1m]"           "medium")
- (fable-medium "claude-fable-5[1m]" "medium"))
+ (sonnet-xhigh "sonnet[1m]" "xhigh")
+ (opus-low     "opus[1m]"   "low")
+ (opus-medium  "opus[1m]"   "medium")
+ (fable-medium "fable[1m]"  "medium"))
 #+end_src
 
 pi も同じ形で用意する。軽い作業を athena のローカルモデルに逃がす導線で、モデル
