@@ -23,6 +23,7 @@
       "discord"
       "domzilla-caffeine"
       "elecom-mouse-util"
+      "fastmail"
       "firefox"
       "font-biz-udgothic"
       "font-biz-udmincho"
