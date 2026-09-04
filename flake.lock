@@ -486,6 +486,22 @@
         "type": "github"
       }
     },
+    "eshell-syntax-highlighting": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1734899436,
+        "narHash": "sha256-/cgEGI1ADq/lFnZR6LoVDQoqBt6vEJLQmYx+yzhSA5E=",
+        "owner": "akreisher",
+        "repo": "eshell-syntax-highlighting",
+        "rev": "62418fd8b2380114a3f6dad699c1ba45329db1d2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "akreisher",
+        "repo": "eshell-syntax-highlighting",
+        "type": "github"
+      }
+    },
     "exec-path-from-shell": {
       "flake": false,
       "locked": {
@@ -997,6 +1013,7 @@
         "el-job": "el-job",
         "ellama": "ellama",
         "envrc": "envrc",
+        "eshell-syntax-highlighting": "eshell-syntax-highlighting",
         "exec-path-from-shell": "exec-path-from-shell",
         "f": "f",
         "fish-completion": "fish-completion",

@@ -103,6 +103,12 @@
       repo = "envrc";
       type = "github";
     };
+    eshell-syntax-highlighting = {
+      flake = false;
+      owner = "akreisher";
+      repo = "eshell-syntax-highlighting";
+      type = "github";
+    };
     exec-path-from-shell = {
       flake = false;
       owner = "purcell";

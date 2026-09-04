@@ -1089,6 +1089,13 @@ git-wit の worktree で起動した shell は buffer 名の project 部分を =
   (:after-init spectreshell-eshell-mode))
 #+end_src
 
+fish から乗り換えて失われた、実行前にコマンドの存在が分かる手がかりを戻す。
+
+#+begin_src emacs-lisp
+(setup (:package eshell-syntax-highlighting)
+  (:after-init eshell-syntax-highlighting-global-mode))
+#+end_src
+
 pcomplete がビルトインで知っているコマンドは限られていて、just のように
 補完関数のないコマンドは引数が一切出ない。fish は補完定義を持っているので、
 pcomplete が解決できなかったぶんだけ fish に委譲する。
