@@ -515,11 +515,11 @@
     "md-mode": {
       "flake": false,
       "locked": {
-        "lastModified": 1788139544,
-        "narHash": "sha256-nElm1cDdVD6h0nr6RKi1ureNnx+KwOFcYza9qFYlp/w=",
+        "lastModified": 1788516898,
+        "narHash": "sha256-6bnLeE3cHJN/ibptlhAD1/unreSC7/hdNqlHfgOjCQI=",
         "owner": "yibie",
         "repo": "md-mode",
-        "rev": "eaf9be73d737020db3a1075216e354dec500b1e1",
+        "rev": "a88d5165f2a2b2a8b719b9a259ccd7fee8bde543",
         "type": "github"
       },
       "original": {
