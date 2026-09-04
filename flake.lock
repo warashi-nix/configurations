@@ -1099,11 +1099,11 @@
     "nskk": {
       "flake": false,
       "locked": {
-        "lastModified": 1788068018,
-        "narHash": "sha256-BTJYmJdvs0Nmk1QQ6h25LCfLSF2nCZ6C5q3lTyRqKkw=",
+        "lastModified": 1788542403,
+        "narHash": "sha256-JQ0ZPt5USckU9tKzBKOxLaoycBJ5zgX2GTreUx1FE4k=",
         "owner": "takeokunn",
         "repo": "nskk.el",
-        "rev": "d19559b08835f6e9901a8f611526a1c9f9717114",
+        "rev": "110cf163eb5cef862b36104bd4d10df33707eaf3",
         "type": "github"
       },
       "original": {
