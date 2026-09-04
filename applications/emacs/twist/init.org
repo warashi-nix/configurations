@@ -610,7 +610,8 @@ ack しないと次の同期で二重に入るので、残して ack するの�
 (unless warashi-pkm-capture-orglint-command
   (setopt warashi-pkm-capture-orglint-command
           (let ((dir (directory-file-name (expand-file-name my/pkm-directory))))
-            (list "nix" "run" (concat dir "#orglint") "--" "-fix" dir))))
+            (list "nix" "shell" (concat dir "#brainium-tools")
+                  "--command" "orglint" "-fix" dir))))
 #+end_src
 
 TODO 管理は tasks.org に集約する運用のため、agenda 対象はそれのみとする。
