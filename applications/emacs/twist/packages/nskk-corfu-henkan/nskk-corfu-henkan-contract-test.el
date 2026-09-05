@@ -54,7 +54,7 @@ nskk-search-learn は単体テストが cl-letf で差し替えるので、実�
 見るのはここだけ。"
   (should (equal '(2 . 3) (func-arity 'nskk-search-learn)))
   (should (equal '(2 . 2) (func-arity 'nskk-study-reorder)))
-  (should (equal '(2 . 3) (func-arity 'nskk-study-after-kakutei))))
+  (should (equal '(2 . 4) (func-arity 'nskk-study-after-kakutei))))
 
 ;;;; 注釈
 
