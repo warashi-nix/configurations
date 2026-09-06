@@ -467,11 +467,11 @@
     "llm": {
       "flake": false,
       "locked": {
-        "lastModified": 1788554051,
-        "narHash": "sha256-iq4xBkfIHS3+YoPPFjfaT3gVQ3d2fUK29n1KJWjCvb0=",
+        "lastModified": 1788702301,
+        "narHash": "sha256-dPays7pyuHdmJJbDpcwl0UacG9bj221YX8eES/x/AO8=",
         "owner": "ahyatt",
         "repo": "llm",
-        "rev": "f1c5d25100644f067ada661d96f68d1941599556",
+        "rev": "f4c8b2f5ebf25e4957e7f9804f0f8f426755be8d",
         "type": "github"
       },
       "original": {
