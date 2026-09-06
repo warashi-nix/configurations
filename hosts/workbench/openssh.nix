@@ -19,7 +19,7 @@ in
       }
     ];
     extraConfig = ''
-      AcceptEnv COLORTERM
+      AcceptEnv COLORTERM GHOSTTY_SHELL_FEATURES
     '';
   };
 }

@@ -55,6 +55,17 @@ in
       if string match -qr '^ghostel(,|$)' -- "$INSIDE_EMACS"
         source "${ghostel}/etc/shell/ghostel.fish"
       end
+
+      ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+        # ghostty shell integration
+        # GHOSTTY_RESOURCES_DIR は ghostty 自体がローカル起動時にのみ子プロセスへ
+        # 設定する変数で ssh 越しには引き継がれず、home-manager の
+        # enableFishIntegration が生成する読み込み処理が発火しないため、
+        # ssh 先でここから補う
+        if test -z "$GHOSTTY_RESOURCES_DIR"; and string match -q "xterm-ghostty" -- "$TERM"
+          set -gx GHOSTTY_RESOURCES_DIR "${pkgs.ghostty}/share/ghostty"
+        end
+      ''}
     '';
     plugins = lib.filter (x: x != null) (
       builtins.map (
