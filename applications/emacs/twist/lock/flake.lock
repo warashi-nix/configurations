@@ -579,11 +579,11 @@
     "nskk": {
       "flake": false,
       "locked": {
-        "lastModified": 1788623336,
-        "narHash": "sha256-B1IdqxuDe11bbEq+UMpblMLOHhmY5JCJMNhU8rHdaDI=",
+        "lastModified": 1788669906,
+        "narHash": "sha256-6qZRHfKzo511PhOiejlTLhl84OCx7uwMdbcMBk7tdGs=",
         "owner": "takeokunn",
         "repo": "nskk.el",
-        "rev": "d689549a1259c0132db9e068de5b90103c662b43",
+        "rev": "065730641aa74a4b55c0b251fb71ce0a092f3b81",
         "type": "github"
       },
       "original": {
