@@ -24,6 +24,7 @@
 (require 'shell-maker)
 (require 'agent-shell-anthropic)
 (require 'agent-shell-pi)
+(require 'agent-shell-github)
 (require 'agent-shell-mock-agent)
 (require 'warashi-agent-shell)
 
@@ -65,9 +66,20 @@
 (ert-deftest warashi-agent-shell-contract-test-agent-configs ()
   "agent config が :default-model-id を差し替えられる alist で返る。"
   (dolist (make '(agent-shell-anthropic-make-claude-code-config
-                  agent-shell-pi-make-agent-config))
+                  agent-shell-pi-make-agent-config
+                  agent-shell-github-make-copilot-config))
     (should (equal '(0 . 0) (func-arity make)))
     (should (assq :default-model-id (funcall make)))))
+
+(ert-deftest warashi-agent-shell-contract-test-copilot-client-maker ()
+  "Copilot の client-maker は buffer を受け、生成時の command 設定を参照する。"
+  (let* ((config (agent-shell-github-make-copilot-config))
+         (agent-shell-github-acp-command
+          '("copilot" "--acp" "--model" "gpt-6-astra" "--effort" "low"))
+         (client (funcall (alist-get :client-maker config) (current-buffer))))
+    (should (equal "copilot" (map-elt client :command)))
+    (should (equal '("--acp" "--model" "gpt-6-astra" "--effort" "low")
+                   (map-elt client :command-params)))))
 
 ;;;; thought level の適用
 

@@ -15,11 +15,11 @@
 ;;   + - 0 を素のキーで握っており、プロンプト上ではそれぞれのコマンドが
 ;;   `self-insert-command' を直接呼ぶ。直接呼び出しは `nskk-mode-map' の
 ;;   `<remap> <self-insert-command>' を通らないので、konnkai が こnnかい になる。
-;; - model と effort を固定した起動コマンド。Claude と、pi-acp 経由の pi の
-;;   二系統がある。effort は agent config に設定点が無く、session 確立後に ACP
-;;   の config option として送るしかない。起動は `agent-shell--dwim' ではなく
-;;   `agent-shell--start' に session strategy new を渡して行う。起動を投げた後に
-;;   picker や window の切り替えで割り込ませないため。
+;; - model と effort を固定した起動コマンド。Claude、pi-acp 経由の pi、
+;;   Copilot CLI の三系統がある。Claude の effort は session 確立後に ACP
+;;   の config option として送り、Copilot は CLI 引数で渡す。
+;;   起動は `agent-shell--dwim' ではなく `agent-shell--start' に session strategy
+;;   new を渡して行う。起動を投げた後に picker や window の切り替えで割り込ませないため。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても shell には飛ばず、同じ project のメニューを開き直す。
 ;; - session の累積コストを context usage indicator の隣に常設する。実行中は
@@ -31,8 +31,9 @@
 ;; `warashi-agent-shell-install-cost-indicator'、
 ;; `warashi-agent-shell-install-git-wit-memo-name' を agent-shell のロード後に呼び、
 ;; `warashi-agent-shell--apply-thought-level' を `agent-shell-mode-hook' に登録
-;; する。起動コマンドは `warashi-agent-shell-define-claude-variants' と
-;; `warashi-agent-shell-define-pi-variants' で作る。
+;; する。起動コマンドは `warashi-agent-shell-define-claude-variants'、
+;; `warashi-agent-shell-define-pi-variants'、
+;; `warashi-agent-shell-define-copilot-variants' で作る。
 
 ;;; Code:
 
@@ -181,6 +182,46 @@ VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
                 (,fn))
              `(warashi-agent-shell-register-variant
                ,(format "pi-%s" name) ',fn))))
+        variants)))
+
+(defun warashi-agent-shell--start-copilot (model-id thought-level)
+  "MODEL-ID と THOUGHT-LEVEL を指定して Copilot agent-shell を起動する。"
+  (require 'agent-shell-github)
+  (let* ((config (agent-shell-github-make-copilot-config))
+         (client-maker (alist-get :client-maker config)))
+    ;; CLI で指定するので、ACP のモデル一覧が無い場合にも動くよう
+    ;; session 確立後の default model 設定は行わない。
+    (setcdr (assq :default-model-id config) #'ignore)
+    ;; client 生成は遅延し得るため、起動関数全体ではなく生成時に束縛する。
+    (setcdr (assq :client-maker config)
+            (lambda (buffer)
+              (let ((agent-shell-github-acp-command
+                     (append agent-shell-github-acp-command
+                             (list "--model" model-id "--effort" thought-level))))
+                (funcall client-maker buffer))))
+    (warashi-agent-shell--start-shell config)))
+
+(defmacro warashi-agent-shell-define-copilot-variants (&rest variants)
+  "VARIANTS から Copilot agent-shell の起動コマンドを定義する。
+VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
+`warashi-agent-shell-copilot-NAME' と、eshell から短い名前で呼ぶための
+`eshell/copilot-NAME' を生成する。"
+  `(progn
+     ,@(mapcan
+        (pcase-lambda (`(,name ,model-id ,thought-level))
+          (let ((fn (intern (format "warashi-agent-shell-copilot-%s" name)))
+                (eshell-fn (intern (format "eshell/copilot-%s" name))))
+            (list
+             `(defun ,fn ()
+                ,(format "Copilot agent-shell を model %s / effort %s で起動する。"
+                         model-id thought-level)
+                (interactive)
+                (warashi-agent-shell--start-copilot ,model-id ,thought-level))
+             `(defun ,eshell-fn (&rest _args)
+                ,(format "eshell から `%s' を起動する。" fn)
+                (,fn))
+             `(warashi-agent-shell-register-variant
+               ,(format "copilot-%s" name) ',fn))))
         variants)))
 
 ;;;; project-switch からの起動

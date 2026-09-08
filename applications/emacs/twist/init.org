@@ -976,6 +976,22 @@ pi も同じ形で用意する。軽い作業を athena のローカルモデル
  (ornith "athena/ornith-1-5-9b"))
 #+end_src
 
+Copilot CLI の ACP も =copilot-luna-low= などで起動できる。GPT-5.6 系と
+GPT-6 Astra に low / medium を用意する。model と effort は CLI 引数で渡し、
+ACP のモデル一覧や thought level の設定項目が無い場合にも起動時に指定する。
+
+#+begin_src emacs-lisp
+(warashi-agent-shell-define-copilot-variants
+ (luna-low     "gpt-5.6-luna"  "low")
+ (luna-medium  "gpt-5.6-luna"  "medium")
+ (terra-low    "gpt-5.6-terra" "low")
+ (terra-medium "gpt-5.6-terra" "medium")
+ (sol-low      "gpt-5.6-sol"   "low")
+ (sol-medium   "gpt-5.6-sol"   "medium")
+ (astra-low    "gpt-6-astra"   "low")
+ (astra-medium "gpt-6-astra"   "medium"))
+#+end_src
+
 定義した variant は =warashi-agent-shell-project-switch= から名前で選べる。
 =project-switch-commands= への登録は [[*project.el][project.el]] にある。
 

@@ -11,6 +11,7 @@
 (require 'ert)
 (require 'cl-lib)
 (require 'agent-shell)
+(require 'agent-shell-github)
 (require 'warashi-agent-shell)
 
 (defvar warashi-agent-shell-test--state nil
@@ -184,6 +185,70 @@
                (lambda (&rest a) (setq args a))))
       (funcall 'eshell/pi-warashi-agent-shell-test-variant)
       (should (equal '("test/model") args)))))
+
+(ert-deftest warashi-agent-shell-test-start-copilot-config ()
+  "Copilot は CLI に model と effort を渡し、作業場所を変えず割り込み無しで起動する。"
+  (let* ((default-directory "/ssh:athena:/work/project/")
+         (agent-shell-github-default-model-id "other-model")
+         (agent-shell-github-acp-command '("custom-copilot" "--acp" "--no-color"))
+         (agent-shell-github-environment '("TEST=value"))
+         (captured (warashi-agent-shell-test--capture-start
+                     (warashi-agent-shell--start-copilot "gpt-5.6-luna" "low")))
+         (config (plist-get captured :config))
+         (client-args nil))
+    (should (plist-get captured :new-session))
+    (should (eq 'new (plist-get captured :session-strategy)))
+    (should (plist-get captured :no-focus))
+    (should-not (funcall (alist-get :default-model-id config)))
+    (should-not (alist-get :warashi-thought-level config))
+    (cl-letf (((symbol-function 'agent-shell--make-acp-client)
+               (lambda (&rest args)
+                 (should (equal default-directory "/ssh:athena:/work/project/"))
+                 (setq client-args args))))
+      (funcall (alist-get :client-maker config) (current-buffer)))
+    (should (equal "custom-copilot" (plist-get client-args :command)))
+    (should (equal '("--acp" "--no-color" "--model" "gpt-5.6-luna" "--effort" "low")
+                   (plist-get client-args :command-params)))
+    (should (equal '("TEST=value") (plist-get client-args :environment-variables)))
+    (should (eq (current-buffer) (plist-get client-args :context-buffer)))
+    (should (equal '("custom-copilot" "--acp" "--no-color")
+                   agent-shell-github-acp-command))))
+
+(ert-deftest warashi-agent-shell-test-start-copilot-keeps-settings-per-shell ()
+  "遅延生成する client でも、model と effort は他の shell の起動に影響されない。"
+  (let* ((agent-shell-github-acp-command '("copilot" "--acp"))
+         (first (plist-get (warashi-agent-shell-test--capture-start
+                            (warashi-agent-shell--start-copilot "gpt-5.6-luna" "low"))
+                          :config))
+         (second (plist-get (warashi-agent-shell-test--capture-start
+                             (warashi-agent-shell--start-copilot "gpt-6-astra" "medium"))
+                           :config)))
+    (cl-letf (((symbol-function 'agent-shell--make-acp-client) #'list))
+      (dolist (case `((,second "gpt-6-astra" "medium")
+                      (,first "gpt-5.6-luna" "low")))
+        (let ((client (funcall (alist-get :client-maker (car case)) (current-buffer))))
+          (should (equal (append '("--acp" "--model")
+                                 (list (cadr case) "--effort" (caddr case)))
+                         (plist-get client :command-params))))))))
+
+(ert-deftest warashi-agent-shell-test-define-copilot-variants ()
+  "Copilot の variant は M-x と eshell から同じ設定で起動し、再定義で候補が増えない。"
+  (let ((warashi-agent-shell-variants nil)
+        (args nil))
+    (dotimes (_ 2)
+      (warashi-agent-shell-define-copilot-variants
+       (warashi-agent-shell-test-variant "gpt-6-astra" "medium")))
+    (should (commandp 'warashi-agent-shell-copilot-warashi-agent-shell-test-variant))
+    (should (equal '(("copilot-warashi-agent-shell-test-variant"
+                      . warashi-agent-shell-copilot-warashi-agent-shell-test-variant))
+                   warashi-agent-shell-variants))
+    (cl-letf (((symbol-function 'warashi-agent-shell--start-copilot)
+               (lambda (&rest a) (setq args a))))
+      (call-interactively 'warashi-agent-shell-copilot-warashi-agent-shell-test-variant)
+      (should (equal '("gpt-6-astra" "medium") args))
+      (setq args nil)
+      (funcall 'eshell/copilot-warashi-agent-shell-test-variant)
+      (should (equal '("gpt-6-astra" "medium") args)))))
 
 ;;;; project-switch からの起動
 
