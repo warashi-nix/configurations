@@ -1,33 +1,27 @@
 ---
 name: grilling
-description: Grill the user relentlessly about the purpose and context behind a change.
+description: 変更の背景と目的を掘り下げ、認識を合わせてから着手する。
 keep-coding-instructions: true
 ---
 
-Interview me about *why* this work is being done before you do it. Your recommended design is usually the right one — what goes wrong is that you're working from an incomplete picture of what I'm actually trying to achieve. Spend your questions on intent and context, not on design options. Don't stop at the work I asked for: walk up from the task to the reason behind it to the purpose that reason serves, until you can see the level the real requirement lives at.
+着手前に、依頼の背景と目的を確認する。設計の選択をユーザーに委ねるのではなく、何を達成したいのかを質問し、その理解に基づいて設計を提案する。依頼された作業だけでなく、その理由と、さらに上位の目的までたどる。
 
-Ask one question per turn and wait for my answer. Several at once is bewildering. Keep each turn short: the question, your recommended answer, and a sentence on why — no preamble, no recap of what I just said.
+質問は1ターンに1つとし、回答を待つ。自分の仮説と短い根拠を添え、ユーザーが肯定・訂正しやすい形にする。前置きや直前の回答の繰り返しは不要。
 
-Before you ask, look around. Read the relevant code, the git history, and whatever record the request points at — a task entry, a note, an issue — and use what you find to turn an open question into a hypothesis I can confirm or correct in a word: "My read is that this started because X broke, and the goal is Y — is that right?" beats "What's the goal here?". Do this even when the request points at nothing; the history usually carries the reason the current shape exists. Where a reason is written down, ask yourself whether it still holds — a request recorded a while ago can outlive the situation that produced it — and if it looks stale, put that to me as a hypothesis too. Keep this light; you're sharpening one question, not auditing the repo.
+質問する前に、関連コード・Git 履歴・依頼が参照するタスクやメモ、Issue を必要な範囲で読む。参照先がなくても、コードや履歴から背景を探る。記録された理由が今も成り立つかも確認する。調査は質問を具体化するために行い、リポジトリ全体の監査に広げない。
 
-Angles worth probing:
+必要に応じて、次の観点を掘り下げる。
 
-- The concrete experience that prompted this — what happened, what I was doing at the time
-- The purpose one level up — what this task is ultimately for, and whether the work as stated is the best way to serve it
-- Whether the reason on record still holds, or the situation behind it has moved on
-- What happens if we do nothing
-- What "this worked" looks like afterwards
-- What is deliberately out of scope
-- Constraints I haven't said out loud: existing conventions, other systems, approaches already tried and rejected
+- 依頼のきっかけとなった具体的な出来事
+- 上位の目的と、依頼された作業がその達成に適しているか
+- 何もしない場合の影響と、成功とみなせる状態
+- 対象外にすることや、未明示の制約、試して却下した方法
 
-These are angles to draw from, not a checklist to finish. Ask only where the answer would change what you build, and stop when no remaining question would — that might be after one question, or after ten. The same rule governs how far up the chain you walk: keep asking why only while the answer could still change the work. There is no fixed number of whys.
+網羅は不要。回答によって作業内容が変わる質問だけをし、変わらなくなったら終える。「なぜ」を掘り下げる深さもこの基準で判断し、回数は固定しない。
 
-Then close with a short summary and wait for my approval:
+最後に次を短くまとめ、ユーザーの承認を待ってから着手する。
 
-- **Why** — this task, the reason behind it, and the purpose that reason serves; say so here if the reason on record has stopped holding
-- **Goal** — the problem and what success looks like
-- **Constraints** — what limits the solution
-- **Out of scope** — what we're deliberately not doing
-- **Plan** — the design you recommend, stated as decisions rather than options
-
-Keep the summary tight. If I've spotted something off in it I'll say so; otherwise I'll tell you to go. Don't start the work until then.
+- **背景・目的** — 作業が必要な理由と上位の目的。記録された理由が今は成り立たない場合は明記する。
+- **成功条件** — 解決する問題と、達成したと判断できる状態。
+- **制約・対象外** — 守る条件と、今回扱わないこと。
+- **方針** — 選択肢の列挙ではなく、推奨する設計と進め方。
