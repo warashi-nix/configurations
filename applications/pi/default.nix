@@ -10,7 +10,10 @@ let
   jsonFormat = pkgs.formats.json { };
   modelsFile = jsonFormat.generate "pi-models.json" cfg.models;
   settingsFile = jsonFormat.generate "pi-settings.json" cfg.settings;
-  instructionsFile = pkgs.writeText "pi-agents.md" config.warashi.agentInstructions.text;
+  # pi には output-style がないため、共通指示に grilling を続けて常時掛ける
+  instructionsFile = pkgs.writeText "pi-agents.md" (
+    config.warashi.agentInstructions.text + config.warashi.agentInstructions.grilling
+  );
   agentDir = "${config.home.homeDirectory}/.pi/agent";
   settingsPath = "${agentDir}/settings.json";
   mergedPath = "${agentDir}/settings.merged.json";
