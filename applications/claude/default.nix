@@ -118,7 +118,7 @@ in
 
   config = mkIf cfg.enable {
     warashi.claude = {
-      memory = config.warashi.agentInstructions.text;
+      memory = config.warashi.agent-instructions.text;
 
       settings = mkDefaultRecursive {
         # keep-sorted start

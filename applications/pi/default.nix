@@ -12,7 +12,7 @@ let
   settingsFile = jsonFormat.generate "pi-settings.json" cfg.settings;
   # pi には output-style がないため、共通指示に grilling を続けて常時掛ける
   instructionsFile = pkgs.writeText "pi-agents.md" (
-    config.warashi.agentInstructions.text + config.warashi.agentInstructions.grilling
+    config.warashi.agent-instructions.text + config.warashi.agent-instructions.grilling
   );
   agentDir = "${config.home.homeDirectory}/.pi/agent";
   settingsPath = "${agentDir}/settings.json";

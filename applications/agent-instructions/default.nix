@@ -5,7 +5,7 @@
 }:
 with lib;
 let
-  cfg = config.warashi.agentInstructions;
+  cfg = config.warashi.agent-instructions;
 
   # Claude Code の output-style ファイルを正本にする。frontmatter は Claude 固有なので本文だけ使う
   grillingSource = ../claude/output-styles/grilling.md;
@@ -17,7 +17,7 @@ let
     elemAt grillingParts 1;
 in
 {
-  options.warashi.agentInstructions = {
+  options.warashi.agent-instructions = {
     common = mkOption {
       type = types.lines;
       default = builtins.readFile ./AGENTS.md;
@@ -53,7 +53,7 @@ in
   };
 
   # types.lines は定義同士を改行で連結するため、mkAfter で足すと箇条書きの間に空行が入る
-  config.warashi.agentInstructions = {
+  config.warashi.agent-instructions = {
     text =
       cfg.common
       + optionalString cfg.brainium.enable "- タスク・ナレッジ管理には ~/ghq/github.com/Warashi/brainium を使う\n";
