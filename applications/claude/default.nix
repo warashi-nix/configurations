@@ -157,6 +157,7 @@ in
           # keep-sorted start
           CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
           CLAUDE_CODE_ENABLE_TELEMETRY = "1";
+          CLAUDE_CODE_THRIFTY_SONIC = "0";
           # keep-sorted end
         };
         permissions = {
