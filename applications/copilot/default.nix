@@ -58,8 +58,11 @@ let
   };
 
   # 共通指示のあとに copilot 固有の指示を続ける。固有側は共通化しようがないものだけ。
+  # grilling を末尾に置くのは、見出し付きの散文なので箇条書きの間に挟むと一覧が途切れるため。
   instructions = pkgs.writeText "copilot-instructions.md" (
-    config.warashi.agentInstructions.text + builtins.readFile ./copilot-instructions.md
+    config.warashi.agentInstructions.text
+    + builtins.readFile ./copilot-instructions.md
+    + config.warashi.agentInstructions.grilling
   );
 in
 {
