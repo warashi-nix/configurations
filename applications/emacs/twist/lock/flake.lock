@@ -595,11 +595,11 @@
     "orderless": {
       "flake": false,
       "locked": {
-        "lastModified": 1788090983,
-        "narHash": "sha256-QUDTahNzzebICxd9zFy4aww04I74+VbhyQp62O0FkYY=",
+        "lastModified": 1788966398,
+        "narHash": "sha256-8OrXAIdh7WmhJQWuM+0T3qn8DSn8hN0Sj5P2Y6pT1K4=",
         "owner": "oantolin",
         "repo": "orderless",
-        "rev": "51f677f464424ce3c46e3deacb7709784795a03b",
+        "rev": "5806e3f9401606d16962cffae68188c92deb1272",
         "type": "github"
       },
       "original": {
