@@ -1496,11 +1496,11 @@
     "transient": {
       "flake": false,
       "locked": {
-        "lastModified": 1788274315,
-        "narHash": "sha256-v8ur7iVn2GhnmRvjV/OWa97g2mktbIwWQ/yOYoEynOA=",
+        "lastModified": 1788944502,
+        "narHash": "sha256-EcdcKAO+lQ9P8kzEaU9RK2+VLQPfPUabbiHJYKFrGCo=",
         "owner": "magit",
         "repo": "transient",
-        "rev": "0cacc84ff0c7df126e194666ff8b8a1e6082e796",
+        "rev": "03c8ccc6aab24021787aada2be12d64cb1f436e8",
         "type": "github"
       },
       "original": {
