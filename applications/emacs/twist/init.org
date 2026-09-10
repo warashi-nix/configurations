@@ -202,21 +202,35 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 #+end_src
 
 * 入力・編集
+** sekken
+SKK 風の境界を残しながら文を一括変換する。Rust の変換エンジンと辞書・
+モデルは Nix で固定し、条件付き文字言語モデルによる候補の並べ替えも使う。
+nskk と ddskk は =C-u C-\= から選べる退路として残す。
+
+#+begin_src emacs-lisp
+(setup (:package sekken)
+  (setopt default-input-method "japanese-sekken"
+          mode-line-collapse-minor-modes '(sekken-mode nskk-mode)
+          mode-line-collapse-minor-modes-to "")
+  (:require sekken)
+  (:opt sekken-server-program (locate-user-emacs-file "sekken/sekken")
+        sekken-server-dic (locate-user-emacs-file "sekken/system.dic.zst")
+        sekken-server-model (locate-user-emacs-file "sekken/model.zst")
+        sekken-server-jisyo (locate-user-emacs-file "sekken/SKK-JISYO.L")
+        sekken-server-lm (locate-user-emacs-file "sekken/lm.zst")))
+#+end_src
+
 ** nskk
-変換候補を corfu に出したいので ddskk ではなく nskk を使う。候補を capf
-として返す nskk-corfu-henkan がそれを担う。
+sekken が壊れたときや挙動を比較したいときの退路として残す。候補を capf
+として返す nskk-corfu-henkan により変換候補を corfu に出す。
 
 #+begin_src emacs-lisp
 (setup (:package nskk nskk-corfu-henkan)
-  ;; with-eval-after-load を通さないために setopt で書く
-  (setopt default-input-method "japanese-nskk")
   ;; 状態表示は mode-line の左端 (current-input-method-title) に出すので、
   ;; minor-mode 欄の lighter は畳んで消す。lighter を空にするのではなく Emacs 31
   ;; の畳み込みを使うのは、nskk 側の :lighter の定義に手を入れずに済むため。
-  ;; 畳んだ印 (既定は " …") も出さない。畳む対象が nskk だけなので、印があっても
-  ;; 何が隠れているか読み取れない。
-  (setopt mode-line-collapse-minor-modes '(nskk-mode)
-          mode-line-collapse-minor-modes-to "")
+  ;; 畳んだ印 (既定は " …") も出さない。畳む対象は入力方式だけなので、印があって
+  ;; も何が隠れているか読み取れない。
   ;; xdg が張った symlink ではなく store の実体を渡す。nskk の辞書読み込み
   ;; は対象と全親ディレクトリが書き込み不可であることを要求する
   ;; (stable-direct-source-p)。symlink 側の親は ~/.config なので必ず落ちる。

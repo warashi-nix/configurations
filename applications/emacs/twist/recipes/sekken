@@ -1,0 +1,3 @@
+(sekken :fetcher github
+        :repo "Warashi/sekken"
+        :files ("lisp/*.el"))

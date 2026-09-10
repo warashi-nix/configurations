@@ -4,6 +4,7 @@
     twist.follows = "";
     org-babel.follows = "";
     emacs-spectreshell.follows = "";
+    sekken.follows = "";
   };
   outputs =
     inputs:
@@ -54,6 +55,7 @@
           localPackages = [
             "consult-git-wit"
             "nskk-corfu-henkan"
+            "sekken"
             "spectreshell"
             "warashi-agent-shell"
             "warashi-agent-shell-list"
@@ -125,6 +127,16 @@
                 ;; End:
                 ;;; org-version.el ends here
                 ORG_VERSION_EL
+              '';
+            };
+            sekken = _: _: {
+              src = inputs.sekken.outPath;
+              # twist は recipe の :files を site-lisp 直下へ平坦化するため、
+              # upstream の ../share という相対配置を同じディレクトリへ直す。
+              preBuild = ''
+                substituteInPlace sekken-kana.el \
+                  --replace-fail '"../share/kana-table.tsv"' '"kana-table.tsv"'
+                cp ${inputs.sekken.outPath}/sekken-rs/core/kana-table.tsv .
               '';
             };
             ghostel =

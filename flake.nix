@@ -72,6 +72,7 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         org-babel.follows = "org-babel";
+        sekken.follows = "sekken";
         twist.follows = "emacs-twist";
         emacs-spectreshell.follows = "emacs-spectreshell";
       };
@@ -84,6 +85,10 @@
     };
     org-babel = {
       url = "github:emacs-twist/org-babel";
+    };
+    sekken = {
+      url = "github:Warashi/sekken/v0.1.0";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
       url = "github:Mic92/sops-nix";
