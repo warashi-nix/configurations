@@ -837,11 +837,11 @@
     "shell-maker": {
       "flake": false,
       "locked": {
-        "lastModified": 1787229912,
-        "narHash": "sha256-OT2aGY/7fc1c0qAqAMp7L7TDJSdRRniBWjNv3WmPMYc=",
+        "lastModified": 1789003184,
+        "narHash": "sha256-wH0OYeKthy+V0pWX1WNM8BEJW/gkzEdj/duJfRScS0w=",
         "owner": "xenodium",
         "repo": "shell-maker",
-        "rev": "ab4f8ebaf4ef7a7db4762c5d5075baea580044ba",
+        "rev": "f448a74a8eded23aa42f8d60a41c5d8d3a183d07",
         "type": "github"
       },
       "original": {
