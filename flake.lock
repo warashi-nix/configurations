@@ -35,11 +35,11 @@
     "agent-shell": {
       "flake": false,
       "locked": {
-        "lastModified": 1788834411,
-        "narHash": "sha256-++ik5k/+lDkv9PgQcuqom6gAO02N/21vWj6piU2eUbE=",
+        "lastModified": 1789037280,
+        "narHash": "sha256-YXbyg65aUVtULxeXa//2DwNoOQc23P1l/dHaWyNMZ2c=",
         "owner": "xenodium",
         "repo": "agent-shell",
-        "rev": "cc24345e9db2a205f7b8821015f89be3de7dd1e4",
+        "rev": "82364bc1ff94a8f15210f74a336b7ecc85c076d8",
         "type": "github"
       },
       "original": {
