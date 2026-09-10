@@ -2,6 +2,7 @@
   inputs,
   config,
   pkgs,
+  lib,
   ...
 }:
 let
@@ -15,19 +16,13 @@ let
   };
   sekkenModel = pkgs.fetchurl {
     url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/model.zst";
-    hash = "sha256-QmEs9+F3gVyOThpeTI7HvRuLdhbV5qxgW64z4PSzO2g=";
+    hash = "sha256-zL8SeQond/LlDICnHf/3g6+zA23EJ+BqA3LYyUy09nw=";
   };
   sekkenLm = pkgs.fetchurl {
     url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/lm.zst";
     hash = "sha256-oT6tS3Q7Xc0YIzPGIFZpe1Qy94Q4el1JtYxnb4OCfNY=";
   };
-  # LM の読み込みログを Emacs の非同期 stderr pipe に書くと Rust の stdio が
-  # status 101 で落ちる。診断を捨てず、通常ファイルへ書く wrapper を挟む。
-  sekkenServer = pkgs.writeShellScript "sekken" ''
-    stateDir="''${XDG_STATE_HOME:-"$HOME/.local/state"}/sekken"
-    ${pkgs.coreutils}/bin/mkdir -p "$stateDir"
-    exec ${sekkenPackage}/bin/sekken "$@" 2>>"$stateDir/server.log"
-  '';
+  sekkenServer = lib.getExe' sekkenPackage "sekken";
   # nskk の見出し前方一致は prolog の trie しか引かないため、辞書をローカル
   # に読ませる必要がある。nskk-dict-load-system-dictionaries は
   # coding-system を渡さず undecided で decode するので、EUC-JP のまま渡す
