@@ -87,7 +87,7 @@
       url = "github:emacs-twist/org-babel";
     };
     sekken = {
-      url = "github:Warashi/sekken/v0.1.0";
+      url = "github:Warashi/sekken";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
