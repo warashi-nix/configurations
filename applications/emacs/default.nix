@@ -16,11 +16,11 @@ let
   };
   sekkenModel = pkgs.fetchurl {
     url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/model.zst";
-    hash = "sha256-zL8SeQond/LlDICnHf/3g6+zA23EJ+BqA3LYyUy09nw=";
+    hash = "sha256-hKrkXlsMz19ZBUUrvoQCSu9l+5XbUmECttCpiCtSHMI=";
   };
   sekkenLm = pkgs.fetchurl {
     url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/lm.zst";
-    hash = "sha256-oT6tS3Q7Xc0YIzPGIFZpe1Qy94Q4el1JtYxnb4OCfNY=";
+    hash = "sha256-ez1+YXPzYWVcI5k4Qz1VvxC53hdRVef3kvl2lpQUv84=";
   };
   sekkenServer = lib.getExe' sekkenPackage "sekken";
   # nskk の見出し前方一致は prolog の trie しか引かないため、辞書をローカル
