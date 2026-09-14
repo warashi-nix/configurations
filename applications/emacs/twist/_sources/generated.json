@@ -43,7 +43,7 @@
     },
     "melpa": {
         "cargoLock": null,
-        "date": "2026-09-13",
+        "date": "2026-09-14",
         "extract": null,
         "name": "melpa",
         "passthru": null,
@@ -55,12 +55,12 @@
             "name": null,
             "owner": "melpa",
             "repo": "melpa",
-            "rev": "68468434c4d4c6073f7add54b3eca9abb6b0bba3",
-            "sha256": "sha256-skjduYl6QP7w6JN62rX+u7CqxnpiNpjiorvxmJ2B9xA=",
+            "rev": "8bf7fddfac28f437c313d2b4ff318c70df801239",
+            "sha256": "sha256-ZpVjK3Hm6i72N6vOM3wusR5jcQ8M7LWB0RgUOHvxQ+c=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "68468434c4d4c6073f7add54b3eca9abb6b0bba3"
+        "version": "8bf7fddfac28f437c313d2b4ff318c70df801239"
     },
     "nongnu-elpa": {
         "cargoLock": null,
