@@ -20,14 +20,14 @@
   };
   yaskkserv2 = {
     pname = "yaskkserv2";
-    version = "f5bc4590c798c591e9861e02ea2e12d227a047ed";
+    version = "cb31add270166fac78e1b47fc03dde840a393637";
     src = fetchFromGitHub {
       owner = "wachikun";
       repo = "yaskkserv2";
-      rev = "f5bc4590c798c591e9861e02ea2e12d227a047ed";
+      rev = "cb31add270166fac78e1b47fc03dde840a393637";
       fetchSubmodules = false;
-      sha256 = "sha256-6XE/ujU+B/gTd+S4LWQRFk9JbZz1z9SR+Nr7cARqLtY=";
+      sha256 = "sha256-4RFflztnKrtlHM3zaQGwQKOdH+S+0/oUba1L6YSPw3s=";
     };
-    date = "2026-03-20";
+    date = "2026-09-14";
   };
 }
