@@ -23,14 +23,6 @@ let
     hash = "sha256-ez1+YXPzYWVcI5k4Qz1VvxC53hdRVef3kvl2lpQUv84=";
   };
   sekkenServer = lib.getExe' sekkenPackage "sekken";
-  # nskk の見出し前方一致は prolog の trie しか引かないため、辞書をローカル
-  # に読ませる必要がある。nskk-dict-load-system-dictionaries は
-  # coding-system を渡さず undecided で decode するので、EUC-JP のまま渡す
-  # と化ける。UTF-8 に変換し、coding cookie も合わせて書き換えて置く。
-  skk-jisyo-l = pkgs.runCommand "SKK-JISYO.L-utf8" { } ''
-    ${pkgs.nkf}/bin/nkf -E -w '${skkSources.skkdict.src}/SKK-JISYO.L' \
-      | sed '1s/coding: euc-jp/coding: utf-8/' > $out
-  '';
 in
 {
   xdg = {
@@ -38,10 +30,6 @@ in
       emacs-ddskk-init-el = {
         target = "emacs/ddskk/init.el";
         source = ./ddskk/init.el;
-      };
-      emacs-nskk-jisyo-l = {
-        target = "emacs/nskk/SKK-JISYO.L";
-        source = skk-jisyo-l;
       };
       emacs-sekken-bin = {
         target = "emacs/sekken/sekken";
@@ -53,7 +41,7 @@ in
       };
       emacs-sekken-jisyo = {
         target = "emacs/sekken/SKK-JISYO.L";
-        source = skk-jisyo-l;
+        source = "${skkSources.skkdict.src}/SKK-JISYO.L";
       };
       emacs-sekken-model = {
         target = "emacs/sekken/model.zst";
