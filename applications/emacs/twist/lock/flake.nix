@@ -309,6 +309,12 @@
       repo = "terraform-mode";
       type = "github";
     };
+    textui = {
+      flake = false;
+      owner = "yibie";
+      repo = "textui";
+      type = "github";
+    };
     tramp = {
       flake = false;
       ref = "externals/tramp";

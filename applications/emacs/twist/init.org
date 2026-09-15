@@ -697,6 +697,7 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 #+begin_src emacs-lisp
 (setup (:package md-mode)
   (:match-file "*.md"))
+(setup (:package textui))
 #+end_src
 
 ** bash

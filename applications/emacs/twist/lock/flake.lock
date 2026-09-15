@@ -791,6 +791,7 @@
         "shell-maker": "shell-maker",
         "term-title": "term-title",
         "terraform-mode": "terraform-mode",
+        "textui": "textui",
         "tramp": "tramp",
         "tramp-rpc": "tramp-rpc",
         "transient": "transient",
@@ -879,6 +880,22 @@
       "original": {
         "owner": "hcl-emacs",
         "repo": "terraform-mode",
+        "type": "github"
+      }
+    },
+    "textui": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788742613,
+        "narHash": "sha256-n64ntywOG3b4EdLsMJSrfcUYX2ef+JP1IO6B8yLJlWo=",
+        "owner": "yibie",
+        "repo": "textui",
+        "rev": "ce37202ec910e03008bd50472b2df1217b5f1a7e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yibie",
+        "repo": "textui",
         "type": "github"
       }
     },
