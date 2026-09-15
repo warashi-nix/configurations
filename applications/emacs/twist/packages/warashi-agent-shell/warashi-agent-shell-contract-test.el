@@ -7,7 +7,7 @@
 ;;
 ;; 単体テスト (warashi-agent-shell-test.el) は agent-shell--state などを
 ;; cl-letf で差し替えるので、上流がそれらを改名・削除・仕様変更しても緑の
-;; まま通る。nskk / epkgs の自動更新 PR で壊れたことに気付ける層がここ。
+;; まま通る。epkgs の自動更新 PR で壊れたことに気付けるのがこの層。
 ;;
 ;; state の中身は agent-shell 同梱の mock agent の config を agent-shell--make-state
 ;; に渡して組む。session の確立は要らない。
@@ -42,18 +42,6 @@
         (mapcar (lambda (arg) (intern (format ":%s" (if (consp arg) (car arg) arg))))
                 (seq-take-while (lambda (arg) (not (memq arg '(&rest &optional &aux))))
                                 tail))))))
-
-;;;; 打鍵の横取り
-
-(ert-deftest warashi-agent-shell-contract-test-typing-at-prompt-p ()
-  "`agent-shell--typing-at-prompt-p' を引数なしで呼べる。"
-  (should (fboundp 'agent-shell--typing-at-prompt-p))
-  (should (equal '(0 . 0) (func-arity 'agent-shell--typing-at-prompt-p))))
-
-(ert-deftest warashi-agent-shell-contract-test-self-insert-commands-exist ()
-  "advice を張る agent-shell のコマンドが実在する。"
-  (dolist (command warashi-agent-shell-self-insert-commands)
-    (should (fboundp command))))
 
 ;;;; shell の起動
 

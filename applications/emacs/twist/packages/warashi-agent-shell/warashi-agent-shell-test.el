@@ -25,46 +25,6 @@
                 (lambda (&rest _) warashi-agent-shell-test--state)))
        ,@body)))
 
-;;;; 単キーコマンドに入力メソッドを奪わせない
-
-(ert-deftest warashi-agent-shell-test-self-insert-uses-remap ()
-  "プロンプト上では remap 先 (入力メソッド) に打鍵を渡す。"
-  (let ((called nil))
-    (cl-letf (((symbol-function 'agent-shell--typing-at-prompt-p) (lambda () t))
-              ((symbol-function 'command-remapping) (lambda (&rest _) 'remapped))
-              ((symbol-function 'call-interactively)
-               (lambda (cmd &rest _) (setq called cmd))))
-      (warashi-agent-shell--self-insert-via-remap
-       (lambda () (setq called 'original)))
-      (should (eq 'remapped called)))))
-
-(ert-deftest warashi-agent-shell-test-self-insert-passes-through ()
-  "プロンプト外と remap 無しでは元のコマンドをそのまま走らせる。
-入力メソッドを使っていない状態での挙動を変えないため。"
-  (dolist (case '((nil t) (t nil)))
-    (cl-letf* ((typing (car case))
-               (remap (cadr case))
-               ((symbol-function 'agent-shell--typing-at-prompt-p)
-                (lambda () typing))
-               ((symbol-function 'command-remapping) (lambda (&rest _) remap)))
-      (let ((args nil))
-        (warashi-agent-shell--self-insert-via-remap
-         (lambda (&rest a) (setq args a)) 'x 'y)
-        (should (equal '(x y) args))))))
-
-(ert-deftest warashi-agent-shell-test-self-insert-advice-covers-commands ()
-  "self-insert を直接呼ぶコマンドは全て remap 経由に差し替わる。"
-  (let ((installed nil))
-    (cl-letf (((symbol-function 'advice-add)
-               (lambda (fn how advice) (push (list fn how advice) installed))))
-      (warashi-agent-shell-install-self-insert-advice))
-    (dolist (fn warashi-agent-shell-self-insert-commands)
-      (should (member (list fn :around #'warashi-agent-shell--self-insert-via-remap)
-                      installed)))
-    ;; 一覧に挙げたコマンドが agent-shell 側から消えていたら気付けるようにする。
-    (dolist (fn warashi-agent-shell-self-insert-commands)
-      (should (fboundp fn)))))
-
 ;;;; thought level
 
 (ert-deftest warashi-agent-shell-test-thought-level-subscribes ()

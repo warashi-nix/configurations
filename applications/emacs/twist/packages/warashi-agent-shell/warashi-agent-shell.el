@@ -9,12 +9,8 @@
 
 ;;; Commentary:
 
-;; agent-shell に足している五つのこと。
+;; agent-shell に足している四つのこと。
 ;;
-;; - 単キーコマンドに入力メソッドを奪わせない。`agent-shell-mode-map' は n p r
-;;   + - 0 を素のキーで握っており、プロンプト上ではそれぞれのコマンドが
-;;   `self-insert-command' を直接呼ぶ。直接呼び出しは `nskk-mode-map' の
-;;   `<remap> <self-insert-command>' を通らないので、konnkai が こnnかい になる。
 ;; - model と effort を固定した起動コマンド。Claude、pi-acp 経由の pi、
 ;;   Copilot CLI の三系統がある。Claude の effort は session 確立後に ACP
 ;;   の config option として送り、Copilot は CLI 引数で渡す。
@@ -27,8 +23,7 @@
 ;; - buffer 名の project 部分を repository 名と git-wit の memo にする。
 ;;   worktree のディレクトリ名は ID 由来で、並べたときにどの作業か読み取れない。
 ;;
-;; 利用側で `warashi-agent-shell-install-self-insert-advice'、
-;; `warashi-agent-shell-install-cost-indicator'、
+;; 利用側で `warashi-agent-shell-install-cost-indicator'、
 ;; `warashi-agent-shell-install-git-wit-memo-name' を agent-shell のロード後に呼び、
 ;; `warashi-agent-shell--apply-thought-level' を `agent-shell-mode-hook' に登録
 ;; する。起動コマンドは `warashi-agent-shell-define-claude-variants'、
@@ -44,30 +39,6 @@
 ;; agent-shell を実行時に require しないのは、起動コマンドを呼ぶまで agent-shell
 ;; を読む必要が無いため。compile 時だけ読ませる。
 (eval-when-compile (require 'agent-shell))
-
-;;;; 単キーコマンドに入力メソッドを奪わせない
-
-(defconst warashi-agent-shell-self-insert-commands
-  '(agent-shell-next-item
-    agent-shell-previous-item
-    agent-shell-quote-region
-    agent-shell-image-scale-increase
-    agent-shell-image-scale-decrease
-    agent-shell-image-scale-reset)
-  "プロンプト上で `self-insert-command' を直接呼ぶ agent-shell のコマンド。")
-
-(defun warashi-agent-shell--self-insert-via-remap (fn &rest args)
-  ;; remap が無いときは素通しする。入力メソッドを使っていない状態での挙動を
-  ;; 変えないため。
-  (if-let* ((_ (agent-shell--typing-at-prompt-p))
-            (remapped (command-remapping #'self-insert-command)))
-      (call-interactively remapped)
-    (apply fn args)))
-
-(defun warashi-agent-shell-install-self-insert-advice ()
-  "`warashi-agent-shell-self-insert-commands' を remap 経由に差し替える。"
-  (dolist (fn warashi-agent-shell-self-insert-commands)
-    (advice-add fn :around #'warashi-agent-shell--self-insert-via-remap)))
 
 ;;;; 起動コマンド
 

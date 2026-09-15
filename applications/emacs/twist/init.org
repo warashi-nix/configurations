@@ -665,31 +665,7 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
   (:after-init agent-shell-tramp-mode))
 #+end_src
 
-*** 単キーコマンドに入力メソッドを奪わせない
-=agent-shell-mode-map= は =n= =p= =r= =+= =-= =0= を素のキーで握っており、プロン
-プト上ではそれぞれのコマンドが =self-insert-command= を直接呼ぶ
-(=agent-shell.el= の =agent-shell-next-item= ほか)。直接呼び出しは
-=nskk-mode-map= の =<remap> <self-insert-command>= を通らないので、=n= が生の
-ASCII のまま入り、続く =o= だけが nskk を通って =nお= になる。=konnkai= のように
-=n= を含む読みが軒並み壊れる。
-
-ddskk が無事なのは =skk-j-mode-map= に印字可能 ASCII を直接バインドしていて、
-minor-mode map が major-mode map より先に引かれるため。nskk は remap 一本なので
-=n= が先に =agent-shell-next-item= に解決され、以後 =[remap
-agent-shell-next-item]= しか探されない。
-
-実装は =warashi-agent-shell= に切り出している。remap の有無で挙動が変わるうえ、
-壊れても例外にはならず「入力した文字が少しおかしい」としてしか出ないので、ert で
-固定する。
-
-#+begin_src emacs-lisp
-(setup (:package warashi-agent-shell)
-  (:with-feature agent-shell
-    (:when-loaded
-      (require 'warashi-agent-shell)
-      (warashi-agent-shell-install-self-insert-advice))))
-#+end_src
-
+*** 起動コマンド
 model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
 その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
 
@@ -701,7 +677,8 @@ picker が minibuffer を奪う。eshell で起動を投げてから別の作業
 #+begin_src emacs-lisp
 ;; マクロ展開は byte-compile 時に走るので、compile 時にも読ませる。
 (eval-when-compile (require 'warashi-agent-shell))
-(require 'warashi-agent-shell)
+(setup (:package warashi-agent-shell)
+  (:require warashi-agent-shell))
 
 ;; MODEL-ID は agent-shell 起動時に "Available models" に出る ID。
 ;; sonnet-xhigh だけ 200k なのは、sonnet に 1M context 版の ID が無いため。
