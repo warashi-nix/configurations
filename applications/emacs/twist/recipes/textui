@@ -1,2 +1,2 @@
-(md-mode :fetcher github
-	 :repo "yibie/textui")
+(textui :fetcher github
+        :repo "yibie/textui")
