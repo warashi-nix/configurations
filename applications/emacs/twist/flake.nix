@@ -54,17 +54,11 @@
           extraRecipeDir = ./recipes;
           localPackages = [
             "consult-git-wit"
-            "nskk-corfu-henkan"
             "sekken"
             "spectreshell"
             "warashi-agent-shell"
             "warashi-agent-shell-list"
-            "warashi-nskk-cursor"
-            "warashi-nskk-im"
-            "warashi-nskk-marker"
-            "warashi-nskk-sticky"
             "warashi-pkm-capture"
-            "warashi-nskk-map"
             "warashi-init"
             "warashi-early-init"
           ];
@@ -72,26 +66,11 @@
             consult-git-wit = _: _: {
               src = ./packages/consult-git-wit;
             };
-            nskk-corfu-henkan = _: _: {
-              src = ./packages/nskk-corfu-henkan;
-            };
             warashi-agent-shell = _: _: {
               src = ./packages/warashi-agent-shell;
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;
-            };
-            warashi-nskk-cursor = _: _: {
-              src = ./packages/warashi-nskk-cursor;
-            };
-            warashi-nskk-im = _: _: {
-              src = ./packages/warashi-nskk-im;
-            };
-            warashi-nskk-marker = _: _: {
-              src = ./packages/warashi-nskk-marker;
-            };
-            warashi-nskk-map = _: _: {
-              src = ./packages/warashi-nskk-map;
             };
             org = _: prev: {
               # org-version.el はリポジトリに無く make autoloads が生成するが、
@@ -177,9 +156,6 @@
                   cp -r ${built}/share/terminfo zig-out/share/terminfo
                 '';
               };
-            warashi-nskk-sticky = _: _: {
-              src = ./packages/warashi-nskk-sticky;
-            };
             warashi-pkm-capture = _: _: {
               src = ./packages/warashi-pkm-capture;
             };
@@ -238,9 +214,9 @@
             config.allowUnfree = true;
           };
           # テストは twist がビルドした env の Emacs で走らせる。
-          # nskk-corfu-henkan のテストは nskk を本物として駆動するので、
-          # 素の Emacs にスタブを積む方式では成立しない。env は host 構成が
-          # どのみちビルドするものなので、CI 上の追加コストはほぼ無い。
+          # 契約テストは agent-shell などの上流を本物として require するので、
+          # 素の Emacs では成立しない。env は host 構成がどのみちビルドする
+          # ものなので、CI 上の追加コストはほぼ無い。
           emacs = packages.${system}.default;
           allPackages = builtins.attrNames (builtins.readDir ./packages);
           hasTest = name: builtins.pathExists (./packages + "/${name}/${name}-test.el");
