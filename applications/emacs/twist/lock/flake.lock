@@ -419,11 +419,11 @@
     "justl": {
       "flake": false,
       "locked": {
-        "lastModified": 1782793168,
-        "narHash": "sha256-aKKPNzxSypY4qsVQrBCsnd0Yxi6PsAS1fazKnnlHP9Y=",
+        "lastModified": 1789446966,
+        "narHash": "sha256-GzSncJwgt8rP389D9bGQhMGo1UjKDxGP7gS5/Z8IYLk=",
         "owner": "psibi",
         "repo": "justl.el",
-        "rev": "2603c5b45105514dc3190a00278879688d34cbc3",
+        "rev": "25ce659d99cd0ca3a1696db1a08315aa4d1e7e1c",
         "type": "github"
       },
       "original": {
