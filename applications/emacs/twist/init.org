@@ -832,9 +832,11 @@ fish から乗り換えて失われた、実行前にコマンドの存在が分
   (:after-init eshell-syntax-highlighting-global-mode))
 #+end_src
 
-pcomplete がビルトインで知っているコマンドは限られていて、just のように
-補完関数のないコマンドは引数が一切出ない。fish は補完定義を持っているので、
-pcomplete が解決できなかったぶんだけ fish に委譲する。
+引数の補完は fish に任せる。pcomplete がビルトインで持つ =pcomplete/git= の
+ような定義は、git alias や =git-*= 拡張の引数を知らないなど fish より粗い。
+pcomplete は =pcomplete/COMMAND= があると既定関数に降りてこないので、汎用の
+定義は無視して fish に落とし、eshell 固有の =pcomplete/eshell-mode/COMMAND=
+(alias, export, set など)だけ残す。
 
 #+begin_src emacs-lisp
 (setup (:package fish-completion)
@@ -848,7 +850,24 @@ pcomplete が解決できなかったぶんだけ fish に委譲する。
   ;; eshell でしか使わないが globalized 版を使う。fish-completion-mode は
   ;; pcomplete-default-completion-function をグローバルに差し替えるので、
   ;; eshell-mode-hook から直接呼ぶと初回セッションの module 初期化に負ける。
-  (:after-init global-fish-completion-mode))
+  (:after-init global-fish-completion-mode)
+  (:when-loaded
+    (defun warashi-fish-completion--find-completion-function (orig command)
+      "fish が使える場所では汎用の `pcomplete/COMMAND' を無視する。
+`pcomplete/MAJOR-MODE/COMMAND' はそのまま返す。remote では
+`fish-completion-shell-complete' が旧関数に戻すので、ここも元の探索に戻す。"
+      (if (and fish-completion-mode
+               fish-completion-command
+               (not (file-remote-p default-directory)))
+          (let ((sym (intern-soft
+                      (concat "pcomplete/" (symbol-name major-mode) "/" command))))
+            (and sym (fboundp sym) sym))
+        (funcall orig command)))
+
+    (unless (advice-member-p #'warashi-fish-completion--find-completion-function
+                             #'pcomplete-find-completion-function)
+      (advice-add #'pcomplete-find-completion-function :around
+                  #'warashi-fish-completion--find-completion-function))))
 #+end_src
 
 ** tramp
