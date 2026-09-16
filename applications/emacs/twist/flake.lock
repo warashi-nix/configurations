@@ -5,6 +5,7 @@
         "emacs-spectreshell": [],
         "nixpkgs": [],
         "org-babel": [],
+        "sekken": [],
         "twist": []
       }
     }
