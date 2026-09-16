@@ -1,6 +1,6 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   home = {
-    packages = [
+    packages = lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
       pkgs.lima
       pkgs.podman
     ];
