@@ -10,8 +10,9 @@
       ];
     };
     extensions = with pkgs; [
-      gh-poi
       gh-dash
+      gh-poi
+      gh-stack
     ];
   };
 }
