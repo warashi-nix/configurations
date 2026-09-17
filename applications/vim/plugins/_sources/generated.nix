@@ -20,15 +20,15 @@
   };
   skkeleton = {
     pname = "skkeleton";
-    version = "cf4938602d184a4217f3e22f1e47c36f4cf485c8";
+    version = "f0868eca6a902847186882c40581a9139ea08cee";
     src = fetchFromGitHub {
-      owner = "Warashi";
+      owner = "vim-skk";
       repo = "skkeleton";
-      rev = "cf4938602d184a4217f3e22f1e47c36f4cf485c8";
+      rev = "f0868eca6a902847186882c40581a9139ea08cee";
       fetchSubmodules = false;
-      sha256 = "sha256-pCZct5wM5l/oy+7XnIyr0rnyf/9RCXE5sibaBMw0qu4=";
+      sha256 = "sha256-2ubwhj6Udwkt8fhafYIkIDR3TGvrumm7BAX6oobIM5M=";
     };
-    date = "2026-09-10";
+    date = "2026-09-17";
   };
   vim-lsp = {
     pname = "vim-lsp";
