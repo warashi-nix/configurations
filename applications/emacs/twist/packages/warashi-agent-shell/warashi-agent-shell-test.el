@@ -147,7 +147,7 @@
       (should (equal '("test/model") args)))))
 
 (ert-deftest warashi-agent-shell-test-start-copilot-config ()
-  "Copilot は CLI に model と effort を渡し、作業場所を変えず割り込み無しで起動する。"
+  "Copilot は ACP で model と effort を設定し、作業場所を変えず割り込み無しで起動する。"
   (let* ((default-directory "/ssh:athena:/work/project/")
          (agent-shell-github-default-model-id "other-model")
          (agent-shell-github-acp-command '("custom-copilot" "--acp" "--no-color"))
@@ -159,7 +159,9 @@
     (should (plist-get captured :new-session))
     (should (eq 'new (plist-get captured :session-strategy)))
     (should (plist-get captured :no-focus))
-    (should-not (funcall (alist-get :default-model-id config)))
+    (should (equal "gpt-5.6-luna" (funcall (alist-get :default-model-id config))))
+    (should (equal '(("reasoning_effort" . "low"))
+                   (funcall (alist-get :default-config-options config))))
     (should-not (alist-get :warashi-thought-level config))
     (cl-letf (((symbol-function 'agent-shell--make-acp-client)
                (lambda (&rest args)
@@ -167,7 +169,7 @@
                  (setq client-args args))))
       (funcall (alist-get :client-maker config) (current-buffer)))
     (should (equal "custom-copilot" (plist-get client-args :command)))
-    (should (equal '("--acp" "--no-color" "--model" "gpt-5.6-luna" "--effort" "low")
+    (should (equal '("--acp" "--no-color")
                    (plist-get client-args :command-params)))
     (should (equal '("TEST=value") (plist-get client-args :environment-variables)))
     (should (eq (current-buffer) (plist-get client-args :context-buffer)))
@@ -175,7 +177,7 @@
                    agent-shell-github-acp-command))))
 
 (ert-deftest warashi-agent-shell-test-start-copilot-keeps-settings-per-shell ()
-  "遅延生成する client でも、model と effort は他の shell の起動に影響されない。"
+  "session 確立後に読む model と effort は他の shell の起動に影響されない。"
   (let* ((agent-shell-github-acp-command '("copilot" "--acp"))
          (first (plist-get (warashi-agent-shell-test--capture-start
                             (warashi-agent-shell--start-copilot "gpt-5.6-luna" "low"))
@@ -186,10 +188,12 @@
     (cl-letf (((symbol-function 'agent-shell--make-acp-client) #'list))
       (dolist (case `((,second "gpt-6-astra" "medium")
                       (,first "gpt-5.6-luna" "low")))
-        (let ((client (funcall (alist-get :client-maker (car case)) (current-buffer))))
-          (should (equal (append '("--acp" "--model")
-                                 (list (cadr case) "--effort" (caddr case)))
-                         (plist-get client :command-params))))))))
+        (let* ((config (car case))
+               (client (funcall (alist-get :client-maker config) (current-buffer))))
+          (should (equal (cadr case) (funcall (alist-get :default-model-id config))))
+          (should (equal (list (cons "reasoning_effort" (caddr case)))
+                         (funcall (alist-get :default-config-options config))))
+          (should (equal '("--acp") (plist-get client :command-params))))))))
 
 (ert-deftest warashi-agent-shell-test-define-copilot-variants ()
   "Copilot の variant は M-x と eshell から同じ設定で起動し、再定義で候補が増えない。"
@@ -209,6 +213,74 @@
       (setq args nil)
       (funcall 'eshell/copilot-warashi-agent-shell-test-variant)
       (should (equal '("gpt-6-astra" "medium") args)))))
+
+(ert-deftest warashi-agent-shell-test-copilot-settings-before-prompts ()
+  "初期表示が指定値でも ACP 設定を送り、両方の応答を待ってから初回 prompt を送る。"
+  (dolist (model '("gpt-5.6-luna" "gpt-5.6-terra" "gpt-5.6-sol" "gpt-6-astra"))
+    (dolist (effort '("low" "medium"))
+      (let ((config (plist-get (warashi-agent-shell-test--capture-start
+                                (warashi-agent-shell--start-copilot model effort))
+                              :config))
+            (requests nil)
+            (prompts nil)
+            (actual-model "auto")
+            (actual-effort "high"))
+        (with-temp-buffer
+          (setq-local major-mode 'agent-shell-mode)
+          (setq-local agent-shell--state
+                      (agent-shell--make-state :agent-config config :buffer (current-buffer)))
+          (map-put! agent-shell--state :client
+                    '((:request-handlers . t) (:notification-handlers . t) (:error-handlers . t)))
+          (map-put! agent-shell--state :initialized t)
+          (map-put! (map-elt agent-shell--state :session) :id "copilot-test")
+          (agent-shell--save-config-options
+           :state agent-shell--state
+           :acp-config-options
+           `[((id . "model") (name . "Model") (category . "model")
+              (type . "select") (currentValue . ,model)
+              (options . [((value . ,model) (name . ,model))]))
+             ((id . "reasoning_effort") (name . "Reasoning effort")
+              (category . "thought_level") (type . "select") (currentValue . ,effort)
+              (options . [((value . "low") (name . "Low"))
+                          ((value . "medium") (name . "Medium"))]))])
+          (cl-letf (((symbol-function 'shell-maker--current-request-id) (lambda () 1))
+                    ((symbol-function 'agent-shell--update-bootstrapping-fragment) #'ignore)
+                    ((symbol-function 'agent-shell--update-header-and-mode-line) #'ignore)
+                    ((symbol-function 'agent-shell--emit-event) #'ignore)
+                    ((symbol-function 'agent-shell--send-request)
+                     (lambda (&rest args) (push args requests)))
+                    ((symbol-function 'agent-shell--send-command)
+                     (lambda (&rest args)
+                       (push (list (plist-get args :prompt) actual-model actual-effort) prompts))))
+            (agent-shell--handle :command "first" :shell-buffer (current-buffer))
+            (should-not prompts)
+            (should (= 1 (length requests)))
+            (let* ((pending (pop requests))
+                   (request (plist-get pending :request)))
+              (should (equal "session/set_config_option" (map-elt request :method)))
+              (should (equal "model" (map-nested-elt request '(:params configId))))
+              (should (equal model (map-nested-elt request '(:params value))))
+              (setq actual-model model)
+              (funcall (plist-get pending :on-success) nil))
+            (should-not prompts)
+            (should (= 1 (length requests)))
+            (let* ((pending (pop requests))
+                   (request (plist-get pending :request)))
+              (should (equal "session/set_config_option" (map-elt request :method)))
+              (should (equal "reasoning_effort" (map-nested-elt request '(:params configId))))
+              (should (equal effort (map-nested-elt request '(:params value))))
+              (setq actual-effort effort)
+              (funcall (plist-get pending :on-success) nil))
+            (should (equal (list (list "first" model effort)) prompts))
+            (agent-shell--handle :command "second" :shell-buffer (current-buffer))
+            (should (equal (list (list "second" model effort)
+                                 (list "first" model effort))
+                           prompts))
+            (setq actual-model "manually-selected-model"
+                  actual-effort "high")
+            (agent-shell--handle :command "third" :shell-buffer (current-buffer))
+            (should (equal '("third" "manually-selected-model" "high") (car prompts)))
+            (should-not requests)))))))
 
 ;;;; project-switch からの起動
 

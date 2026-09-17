@@ -69,6 +69,14 @@
     (should (equal '("--acp" "--model" "gpt-6-astra" "--effort" "low")
                    (map-elt client :command-params)))))
 
+(ert-deftest warashi-agent-shell-contract-test-copilot-default-config-options ()
+  "Copilot config が初期化中に順次適用する追加設定を保持できる。"
+  (should (assq :default-config-options (agent-shell-github-make-copilot-config)))
+  (let ((keywords (warashi-agent-shell-contract-test--keywords
+                   'agent-shell--set-default-config-options)))
+    (dolist (keyword '(:config-options :on-options-set))
+      (should (memq keyword keywords)))))
+
 ;;;; thought level の適用
 
 (ert-deftest warashi-agent-shell-contract-test-state-is-function-and-variable ()

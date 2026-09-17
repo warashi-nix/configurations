@@ -697,8 +697,11 @@ pi も同じ形で用意する。軽い作業を athena のローカルモデル
 #+end_src
 
 Copilot CLI の ACP も =copilot-luna-low= などで起動できる。GPT-5.6 系と
-GPT-6 Astra に low / medium を用意する。model と effort は CLI 引数で渡し、
-ACP のモデル一覧や thought level の設定項目が無い場合にも起動時に指定する。
+GPT-6 Astra に low / medium を用意する。CLI の =--model= だけでは ACP の初期
+表示と初回送信時の実モデルが食い違うため、session 確立後に ACP で model、
+=reasoning_effort= を順に設定し、両方の応答を待ってからメッセージを送る。
+設定を拒否された場合や effort の設定項目が無い場合は、agent-shell が警告を
+表示する。設定は初期化時だけ適用し、起動後の手動での選び直しは上書きしない。
 
 #+begin_src emacs-lisp
 (warashi-agent-shell-define-copilot-variants

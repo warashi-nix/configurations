@@ -4,7 +4,7 @@
 
 ;; Author: Shinnosuke Sawada-Dazai <shin@warashi.dev>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (agent-shell "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (agent-shell "0.77.2"))
 ;; Keywords: convenience, tools
 
 ;;; Commentary:
@@ -13,7 +13,8 @@
 ;;
 ;; - model と effort を固定した起動コマンド。Claude、pi-acp 経由の pi、
 ;;   Copilot CLI の三系統がある。Claude の effort は session 確立後に ACP
-;;   の config option として送り、Copilot は CLI 引数で渡す。
+;;   の config option として送る。Copilot は初期化中に ACP で model、
+;;   effort を順に設定し、応答を待ってから prompt を送る。
 ;;   起動は `agent-shell--dwim' ではなく `agent-shell--start' に session strategy
 ;;   new を渡して行う。起動を投げた後に picker や window の切り替えで割り込ませないため。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
@@ -158,18 +159,13 @@ VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
 (defun warashi-agent-shell--start-copilot (model-id thought-level)
   "MODEL-ID と THOUGHT-LEVEL を指定して Copilot agent-shell を起動する。"
   (require 'agent-shell-github)
-  (let* ((config (agent-shell-github-make-copilot-config))
-         (client-maker (alist-get :client-maker config)))
-    ;; CLI で指定するので、ACP のモデル一覧が無い場合にも動くよう
-    ;; session 確立後の default model 設定は行わない。
-    (setcdr (assq :default-model-id config) #'ignore)
-    ;; client 生成は遅延し得るため、起動関数全体ではなく生成時に束縛する。
-    (setcdr (assq :client-maker config)
-            (lambda (buffer)
-              (let ((agent-shell-github-acp-command
-                     (append agent-shell-github-acp-command
-                             (list "--model" model-id "--effort" thought-level))))
-                (funcall client-maker buffer))))
+  (let ((config (agent-shell-github-make-copilot-config)))
+    ;; CLI の --model は ACP の初期表示だけに反映され、初回送信時の実モデルと
+    ;; 異なり得る。init-finished の hook では prompt と競合するため、
+    ;; 初期化の設定待ちに載せ、model を切り替えてから effort を適用する。
+    (setcdr (assq :default-model-id config) (lambda () model-id))
+    (setcdr (assq :default-config-options config)
+            (lambda () (list (cons "reasoning_effort" thought-level))))
     (warashi-agent-shell--start-shell config)))
 
 (defmacro warashi-agent-shell-define-copilot-variants (&rest variants)
