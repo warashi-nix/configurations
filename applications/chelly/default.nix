@@ -111,6 +111,8 @@ in
         };
         container = {
           build = [
+            "--build-arg=UID=${toString cfg.uid}"
+            "--build-arg=GID=${toString cfg.gid}"
             "--dns=1.1.1.1"
           ];
           run = [

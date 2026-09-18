@@ -367,6 +367,22 @@ if [ -n "${CHELLY_NIX_BIN:-}" ]; then
   export PATH
 fi
 
+# named volume の所有者をコンテナのユーザーに合わせる。podman はイメージ側のマウント先の
+# 所有者を新規 volume に引き継ぐが、apple/container は ext4 を作ったままの root 所有で
+# マウントする (apple/container#729, #745)。root 所有のままだと nix インストーラも
+# cache も書けない。再帰しないのは、volume の中身は既に自分の所有で作られているため。
+# ホストの store を read-only で共有しているときは /nix は root 所有のままでよく、
+# chown も通らないので対象から外す。
+chelly_volume_dirs="${HOME}/.cache/go-build ${HOME}/.cache/nix ${HOME}/go/pkg/mod"
+if [ -z "${CHELLY_NIX_BIN:-}" ]; then
+  chelly_volume_dirs="/nix ${chelly_volume_dirs}"
+fi
+for chelly_dir in ${chelly_volume_dirs}; do
+  if [ -d "${chelly_dir}" ] && [ "$(stat -c %u "${chelly_dir}")" != "$(id -u)" ]; then
+    sudo chown "$(id -u):$(id -g)" "${chelly_dir}"
+  fi
+done
+
 # volume モードでは nix の profile 実体は home 側にあってコンテナごとに消えるため、
 # インストーラは実質毎回走る。store は /nix の named volume に残っているので、追加されるのは差分だけ。
 # flock で直列化しているのは、volume を共有する複数コンテナが同時に起動したときに
