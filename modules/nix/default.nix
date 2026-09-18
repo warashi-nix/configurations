@@ -47,6 +47,19 @@ in
           "pipe-operators"
         ];
         sandbox = if pkgs.stdenv.hostPlatform.isDarwin then "relaxed" else true;
+        # flake.nix の nixConfig と同じ内容。untrusted user (chelly コンテナなど) の
+        # --accept-flake-config は無視されるため、daemon 側にも持たせる。
+        # cache.nixos.org は NixOS / nix-darwin のモジュールが既定で入れるので書かない。
+        substituters = [
+          "https://nix-community.cachix.org"
+          "https://fenix.cachix.org"
+          "https://warashi.cachix.org"
+        ];
+        trusted-public-keys = [
+          "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+          "fenix.cachix.org-1:ecJhr+RdYEdcVgUkjruiYhjbBloIEGov7bos90cZi0Q="
+          "warashi.cachix.org-1:rtCm332XStmyk6/izNzI4hvpj5+14lMCIFbwEAgwAyw="
+        ];
         trusted-users = (
           [
             "root"
