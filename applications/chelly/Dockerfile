@@ -335,9 +335,16 @@ RUN mkdir -p \
 # Git・Claude・Copilot・Nixの設定
 # --------------------------------------------------------
 # Git初期設定
+# apple/container は VM 起動から数秒間、virtiofs のマウント点だけを root 所有に見せる
+# (中のファイルはユーザー所有)。その間は git も nix の libgit2 も所有者チェックで
+# リポジトリを開けず、entrypoint の devShell 判定が黙って素のシェルに落ちる。
+# コンテナは単一ユーザーで、マウントされるのは自分のディレクトリだけなので、
+# 所有者チェックが守るものはない。環境変数 GIT_CONFIG_* は libgit2 が読まないので
+# gitconfig に書く。
 RUN mkdir -p /home/warashi/.config/git && \
     git config --global core.untrackedcache false && \
     git config --global gc.worktreePruneExpire never && \
+    git config --global safe.directory '*' && \
     git config --global user.name 'Shinnosuke Sawada-Dazai' && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
