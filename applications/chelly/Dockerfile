@@ -383,6 +383,15 @@ for chelly_dir in ${chelly_volume_dirs}; do
   fi
 done
 
+# 入れ子の rootless podman が使う tun (pasta) と fuse (fuse-overlayfs) を一般ユーザーに開ける。
+# podman の --device はホスト側の 0666 をそのまま渡すが、apple/container はノードを
+# 0600 root で置くだけなので、ここで直す。
+for chelly_dev in /dev/net/tun /dev/fuse; do
+  if [ -c "${chelly_dev}" ] && [ ! -w "${chelly_dev}" ]; then
+    sudo chmod 0666 "${chelly_dev}"
+  fi
+done
+
 # volume モードでは nix の profile 実体は home 側にあってコンテナごとに消えるため、
 # インストーラは実質毎回走る。store は /nix の named volume に残っているので、追加されるのは差分だけ。
 # flock で直列化しているのは、volume を共有する複数コンテナが同時に起動したときに
