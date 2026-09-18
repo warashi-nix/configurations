@@ -365,12 +365,16 @@ COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entryp
 # 古い判定結果のまま走ってしまうので、判定ごとロック内に入れている。
 # 出力を溜めて失敗時だけ stderr へ流すのは、成功時に進捗表示で画面を汚さず、かつ
 # stdout でプロトコルを話す ACP エージェントへ何も漏らさないため。
-if ! chelly_nix_install_log="$(flock /nix/.chelly-install.lock sh -c '
-    nix --version >/dev/null 2>&1 ||
-      /opt/nix-installer/install --no-daemon --no-channel-add --no-modify-profile
-  ' 2>&1)"; then
-  printf '%s\n' "${chelly_nix_install_log}" >&2
-  exit 1
+# ロックの外にも判定があるのは、/nix が read-only でロックファイル自体を作れない
+# 場合 (ホストの store を共有しているとき) に flock で落ちないようにするため。
+if ! command -v nix >/dev/null 2>&1; then
+  if ! chelly_nix_install_log="$(flock /nix/.chelly-install.lock sh -c '
+      nix --version >/dev/null 2>&1 ||
+        /opt/nix-installer/install --no-daemon --no-channel-add --no-modify-profile
+    ' 2>&1)"; then
+    printf '%s\n' "${chelly_nix_install_log}" >&2
+    exit 1
+  fi
 fi
 
 # 入れる開発環境があるかは flake.nix の存在ではなく属性を引けるかで判定する。flake.nix は
