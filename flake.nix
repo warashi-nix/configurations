@@ -79,6 +79,10 @@
     my-emacs-pkgs = {
       url = "path:./applications/emacs/twist/lock";
     };
+    nix-mac-app-identity = {
+      url = "github:natsukium/nix-mac-app-identity";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };

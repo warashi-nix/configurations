@@ -1098,6 +1098,26 @@
       },
       "parent": []
     },
+    "nix-mac-app-identity": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789748373,
+        "narHash": "sha256-LRXWnVNCaL2Q+5s5wctCjPyYaN9FzqVoMW1ujShnQfs=",
+        "owner": "natsukium",
+        "repo": "nix-mac-app-identity",
+        "rev": "f9b3523c42c987f712304fc8ab2fa14191b91072",
+        "type": "github"
+      },
+      "original": {
+        "owner": "natsukium",
+        "repo": "nix-mac-app-identity",
+        "type": "github"
+      }
+    },
     "nix-ts-mode": {
       "flake": false,
       "locked": {
@@ -1322,6 +1342,7 @@
         "home-manager": "home-manager",
         "my-emacs": "my-emacs",
         "my-emacs-pkgs": "my-emacs-pkgs",
+        "nix-mac-app-identity": "nix-mac-app-identity",
         "nixpkgs": "nixpkgs",
         "org-babel": "org-babel",
         "sekken": "sekken",

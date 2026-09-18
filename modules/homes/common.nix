@@ -23,6 +23,7 @@ in
           inputs.agent-skills.homeManagerModules.default
           inputs.direnv-instant.homeModules.direnv-instant
           inputs.emacs-twist.homeModules.emacs-twist
+          inputs.nix-mac-app-identity.homeManagerModules.default
           inputs.sops-nix.homeManagerModules.sops
           # keep-sorted end
 
