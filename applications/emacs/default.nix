@@ -63,7 +63,11 @@ in
     createInitFile = true;
     createManifestFile = true;
     config = inputs.my-emacs.packages.${system}.default;
+    # Emacs.app は appIdentity 側で署名してから入れるので、twist からは入れない。
+    appBundle.enable = false;
   };
+
+  targets.darwin.appIdentity.apps = lib.optional pkgs.stdenv.hostPlatform.isDarwin config.programs.emacs-twist.appBundle.package;
   systemd.user.services.emacs = {
     Service = {
       Environment = [
