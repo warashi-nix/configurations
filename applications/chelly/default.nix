@@ -20,6 +20,8 @@ let
   );
 in
 {
+  imports = [ ./host-store.nix ];
+
   options.warashi.chelly = {
     enable = mkOption {
       type = types.bool;
@@ -48,6 +50,19 @@ in
     gid = mkOption {
       type = types.int;
       description = "gid for container user.";
+    };
+    nix-store = mkOption {
+      type = types.enum [
+        "volume"
+        "host"
+      ];
+      default = "volume";
+      description = ''
+        コンテナの /nix をどこから持ってくるか。
+        volume: named volume に single-user の nix を入れる。ホストに nix が無くても動く。
+        host: ホストの /nix を read-only で見せ、ビルドはホストの daemon に任せる。
+              host-store.nix が実装し、NixOS 側で warashi.chelly-nix-proxy が要る。
+      '';
     };
     runtime_options = mkOption {
       type = types.attrsOf (types.attrsOf (types.listOf types.str));
@@ -113,12 +128,12 @@ in
             "${config.home.homeDirectory}/.pi:/home/warashi/.pi"
             "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
-            "chelly-nix:/nix"
             "go-cache:/home/warashi/.cache/go-build"
             "go-mod:/home/warashi/go/pkg/mod"
             "nix-cache:/home/warashi/.cache/nix"
             # keep-sorted end
-          ];
+          ]
+          ++ optional (cfg.nix-store == "volume") "chelly-nix:/nix";
           inherit_env = [
             "COLORTERM"
             "TERM"

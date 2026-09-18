@@ -117,7 +117,7 @@ RUN set -eu; \
     rm -f "/tmp/${archive}" /tmp/node_checksums.txt
 
 # claude-agent-acp (ACP エージェント) インストール
-# /nix は named volume で覆われるためイメージ側の /nix は実行時に見えない。
+# /nix は実行時に named volume かホストの store で覆われ、イメージ側の /nix は見えない。
 # nix profile に入れてもイメージ再ビルド時に volume 側と食い違うため、npm で
 # /usr/local 配下に入れる。
 ARG CLAUDE_AGENT_ACP_VERSION="latest"
@@ -162,6 +162,8 @@ RUN mkdir -p /etc/containers && touch /etc/containers/nodocker
 # --------------------------------------------------------
 # Nix インストーラの同梱
 # --------------------------------------------------------
+# インストーラを使うのは /nix を named volume に持つ構成のとき。ホストの store を
+# read-only で共有する構成では nix はホストから渡され、インストーラは走らない。
 # /nix は named volume で永続化されるため、実行時にはイメージ側の /nix が隠れる。
 # ビルド時に nix を /nix へ入れると、profile の実体 (~/.local/state/nix 配下にあり
 # イメージレイヤーに残る) が新しい store path を指す一方で volume には古い store しか
@@ -358,8 +360,15 @@ RUN mkdir -p ~/.config/nixpkgs && \
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
-# nix の profile 実体は home 側にあってコンテナごとに消えるため、インストーラは実質
-# 毎回走る。store は /nix の named volume に残っているので、追加されるのは差分だけ。
+# ホストの store を共有しているときは、ホストと同じ版の nix が store path で渡される。
+# イメージ側には nix が無く、~/.nix-profile も無いので、ここで PATH に足す。
+if [ -n "${CHELLY_NIX_BIN:-}" ]; then
+  PATH="${CHELLY_NIX_BIN}:${PATH}"
+  export PATH
+fi
+
+# volume モードでは nix の profile 実体は home 側にあってコンテナごとに消えるため、
+# インストーラは実質毎回走る。store は /nix の named volume に残っているので、追加されるのは差分だけ。
 # flock で直列化しているのは、volume を共有する複数コンテナが同時に起動したときに
 # 同じ store へ並行に書き込ませないため。判定をロックの外に出すと、待たされた側が
 # 古い判定結果のまま走ってしまうので、判定ごとロック内に入れている。
