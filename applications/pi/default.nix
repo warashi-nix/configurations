@@ -35,7 +35,8 @@ in
       default = {
         providers = {
           athena = {
-            # 実体の IP は Lima 固有なので、chelly の --add-host で athena-llama に注入する
+            # athena-llama はホスト側の名前解決に委ねる。apple/container に移してからは
+            # 解決手段を用意しておらず、pi からは届かない (使っていないので後回し)。
             baseUrl = "http://athena-llama:11435/v1";
             api = "openai-completions";
             # llama-server は検証しないダミー。無いとモデルが選択肢に出ない

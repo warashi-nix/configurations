@@ -7,7 +7,8 @@
       cleanup = "zap";
     };
     brews = [
-      # "container"
+      # chelly は PATH に container があれば podman より優先して使う
+      "container"
       "mas"
     ];
     casks = [
