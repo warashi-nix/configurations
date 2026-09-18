@@ -8,7 +8,7 @@
 let
   # agent はコンテナ内で動いていてプロセス名からは見えないため、
   # コンテナ実行コマンドかどうかで Coding Agent の pane を判定する
-  agentCommandPattern = "^\\.?(chelly|podman|docker|nerdctl)(-wrapped)?$";
+  agentCommandPattern = "^\\.?(chelly|container|podman|docker|nerdctl)(-wrapped)?$";
 
   # Coding Agent pane の入力待ち状態を判定して pane option @agent_state に保存する
   # コンテナ内の agent からは hook 等で tmux に状態を通知できないため、
