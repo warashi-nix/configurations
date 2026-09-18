@@ -349,7 +349,7 @@ RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
 
 # Nix 設定（インストール自体は entrypoint が volume 側の /nix に対して行う）
 RUN mkdir -p ~/.config/nix && \
-    echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+    echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/nix/nix.conf
 
 # shell.nix から unfree パッケージを使えるようにする
 RUN mkdir -p ~/.config/nixpkgs && \
