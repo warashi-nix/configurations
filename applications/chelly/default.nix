@@ -36,7 +36,17 @@ in
     dockerfile = mkOption {
       type = types.path;
       description = "Dockerfile for Chelly.";
-      default = ./Dockerfile;
+      # apple/container は Dockerfile を gRPC ヘッダで builder に渡すため 16 KiB までしか
+      # 受け付けない (apple/container#735)。説明のコメントだけでその半分以上を占めるので、
+      # コメントは repo 側の Dockerfile に残し、渡す方からは shebang と hadolint 指示以外の
+      # コメント行を落とす。行継続の途中のコメントは Dockerfile でも sh でも無いので、
+      # 行単位で落として構わない。
+      default = pkgs.runCommand "chelly-Dockerfile" { } ''
+        ${lib.getExe pkgs.gnused} -E \
+          -e '/^[[:space:]]*#(!|[[:space:]]*hadolint)/b' \
+          -e '/^[[:space:]]*#/d' \
+          ${./Dockerfile} > "$out"
+      '';
     };
     envfiles = mkOption {
       type = types.listOf types.path;
