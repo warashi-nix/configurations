@@ -218,7 +218,7 @@ RUN mkdir -p /nix && chmod 0755 /nix && chown "${UID}:${GID}" /nix
 # コンテナ固有の前提はそこには書けない。Claude Code が enterprise policy memory として
 # 読む /etc/claude-code/CLAUDE.md はイメージ側にしか無く、コンテナ内だけに効く。
 # mount 先は下流の flake で追加・変更されうるため、具体的なパスは列挙せず確認方法だけを書く。
-COPY --chmod=0644 <<'EOF' /etc/claude-code/CLAUDE.md
+COPY --chmod=u=rwX,go=rX <<'EOF' /etc/claude-code/CLAUDE.md
 - この環境はコンテナであり、コンテナのファイルシステム自体は終了時に破棄される
 - ただし mount されたディレクトリはホスト側の実体または volume であり、コンテナ終了後も残る
 - 起動時の作業ディレクトリはホストと同一のパスで mount されている
