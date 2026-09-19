@@ -38,6 +38,10 @@ let
       expr = macHome.home.activation ? chelly-git-ignore;
       expected = true;
     };
+    test-mac-installs-read-only-git-ignore = {
+      expr = lib.hasInfix "/bin/install -D -m 0444" macHome.home.activation.chelly-git-ignore.data;
+      expected = true;
+    };
     test-remote-build-uses-dockerfile-source = {
       expr = lib.elem "--file=${macHome.warashi.chelly.dockerfile}" macHome.warashi.chelly.runtime_options.podman.build;
       expected = true;

@@ -107,7 +107,7 @@ in
     # VM に共有するホームから Mac の /nix/store へのリンクは解決できないため、実体を渡す。
     home.activation.chelly-git-ignore = mkIf pkgs.stdenv.hostPlatform.isDarwin (
       lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.coreutils}/bin/install -D -m 0644 \
+        run ${pkgs.coreutils}/bin/install -D -m 0444 \
           ${escapeShellArg (toString config.xdg.configFile."git/ignore".source)} \
           ${escapeShellArg gitIgnorePath}
       ''

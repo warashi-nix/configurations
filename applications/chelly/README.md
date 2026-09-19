@@ -39,7 +39,8 @@ Podman の bind mount 元は VM 側のパスなので、リポジトリ、Git wo
 ホーム外のリポジトリは、このホーム共有だけでは使えない。
 
 `~/.config/git/ignore` は Home Manager が Mac の `/nix/store` へのリンクとして
-生成するため、activation で `~/.local/share/chelly/git-ignore` に実体を配置する。
+生成するため、activation で `~/.local/share/chelly/git-ignore` に実体を
+read-only（モード `0444`）で配置する。内容の更新も activation で行う。
 コンテナにはその実体を渡し、Mac の `/nix` は共有しない。
 その他の追加マウントにホーム外へのリンクを足す場合も、VM からの解決を確認する。
 Dockerfile も Nix store へのリンクなので、Podman の build には `--file` で
