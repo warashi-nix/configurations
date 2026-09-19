@@ -9,6 +9,11 @@ with lib;
 let
   cfg = config.warashi.chelly;
   tomlFormat = pkgs.formats.toml { };
+  gitIgnorePath =
+    if pkgs.stdenv.hostPlatform.isDarwin then
+      "${config.xdg.dataHome}/chelly/git-ignore"
+    else
+      "${config.xdg.configHome}/git/ignore";
   # 既定値をまとめて mkDefault すると定義全体が捨てられて一部だけの上書きができなくなるため、葉ごとに mkDefault する
   # リストは同一優先度の定義同士が結合されるようにするため mkDefault を付けない
   mkDefaultLeaves = mapAttrsRecursive (_path: value: if isList value then value else mkDefault value);
@@ -99,13 +104,24 @@ in
     sops.secrets.chelly-dotenv = { };
     home.packages = [ cfg.package ];
 
+    # VM に共有するホームから Mac の /nix/store へのリンクは解決できないため、実体を渡す。
+    home.activation.chelly-git-ignore = mkIf pkgs.stdenv.hostPlatform.isDarwin (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${pkgs.coreutils}/bin/install -D -m 0644 \
+          ${escapeShellArg (toString config.xdg.configFile."git/ignore".source)} \
+          ${escapeShellArg gitIgnorePath}
+      ''
+    );
+
     warashi.chelly = {
       runtime_options = {
         podman = {
           build = [
             "--build-arg=UID=${toString cfg.uid}"
             "--build-arg=GID=${toString cfg.gid}"
-          ];
+          ]
+          # remote build の context はリンクのまま送られるため、Mac 側の実体を別途渡す。
+          ++ optional pkgs.stdenv.hostPlatform.isDarwin "--file=${cfg.dockerfile}";
           run = [
             # keep-sorted start
             "--cap-add=SYS_ADMIN,SETUID,SETGID"
@@ -152,7 +168,7 @@ in
             "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
             "${config.home.homeDirectory}/.pi:/home/warashi/.pi"
             "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
-            "${config.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore"
+            "${gitIgnorePath}:/home/warashi/.config/git/ignore"
             "go-cache:/home/warashi/.cache/go-build"
             "go-mod:/home/warashi/go/pkg/mod"
             "nix-cache:/home/warashi/.cache/nix"

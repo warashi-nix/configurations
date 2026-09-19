@@ -168,9 +168,16 @@
             # host が居る system に絞るのは、テストを走らせるのに twist の env
             # 一式が要るため。host の無い system では誰も使わない env を
             # 毎日ビルドし直すことになる割に、elisp のテスト結果は変わらない。
-            checks = lib.optionalAttrs (lib.any (host: host.system == system) (
-              lib.attrValues topLevel.config.hosts
-            )) inputs'.my-emacs.checks;
+            checks =
+              lib.optionalAttrs (lib.any (host: host.system == system) (
+                lib.attrValues topLevel.config.hosts
+              )) inputs'.my-emacs.checks
+              // {
+                chelly-config = pkgs.callPackage ./applications/chelly/checks.nix {
+                  athena = self.darwinConfigurations.athena.config;
+                  workbench = self.nixosConfigurations.workbench.config;
+                };
+              };
             apps = inputs'.my-emacs.packages.default.makeApps {
               lockDirName = "applications/emacs/twist/lock";
             };
