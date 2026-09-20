@@ -9,7 +9,6 @@
     brews = [
       "container"
       "mas"
-      "podman"
     ];
     casks = [
       # keep-sorted start

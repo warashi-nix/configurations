@@ -12,11 +12,16 @@ let
       expr = macHome.warashi.chelly.settings.container_cmd or null;
       expected = "podman";
     };
-    test-mac-installs-podman-alongside-container = {
-      expr = lib.all (name: lib.elem name (map (brew: brew.name) athena.homebrew.brews)) [
-        "container"
-        "podman"
-      ];
+    test-mac-installs-podman-with-nix = {
+      expr = lib.any (package: (package.pname or "") == "podman") macHome.home.packages;
+      expected = true;
+    };
+    test-mac-does-not-install-podman-with-homebrew = {
+      expr = lib.elem "podman" (map (brew: brew.name) athena.homebrew.brews);
+      expected = false;
+    };
+    test-mac-keeps-container = {
+      expr = lib.elem "container" (map (brew: brew.name) athena.homebrew.brews);
       expected = true;
     };
     test-mac-shares-all-caches = {
