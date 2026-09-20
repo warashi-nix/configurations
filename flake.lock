@@ -1731,11 +1731,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788977680,
-        "narHash": "sha256-3vgICcen5N2oAlQrijqJhxn8HEsnXASGPxQLJVYzX0Q=",
+        "lastModified": 1789872114,
+        "narHash": "sha256-yvn1xRRAR2IHuKqejmngftjBm/x/h/RspOg0ol4B5dw=",
         "owner": "jcollie",
         "repo": "zon2nix",
-        "rev": "7b9c43312de08e176097b8c8920f0dd1a46982be",
+        "rev": "723bddc9c51c5873965a17f922e4139d587764c1",
         "type": "github"
       },
       "original": {
