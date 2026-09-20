@@ -1540,11 +1540,11 @@
     "textui": {
       "flake": false,
       "locked": {
-        "lastModified": 1788742613,
-        "narHash": "sha256-n64ntywOG3b4EdLsMJSrfcUYX2ef+JP1IO6B8yLJlWo=",
+        "lastModified": 1789871393,
+        "narHash": "sha256-3WY/dPfcssviC73AP4hF4v1kyM1IlI3PgWW/ZHHH1pE=",
         "owner": "yibie",
         "repo": "textui",
-        "rev": "ce37202ec910e03008bd50472b2df1217b5f1a7e",
+        "rev": "8b3010d0f251b52dd1867c741d18bf66e405922d",
         "type": "github"
       },
       "original": {
