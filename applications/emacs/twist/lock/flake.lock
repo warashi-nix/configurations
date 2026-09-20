@@ -19,11 +19,11 @@
     "age": {
       "flake": false,
       "locked": {
-        "lastModified": 1754501019,
-        "narHash": "sha256-cO3GpmI71XaA/l3e6wZjZvnzdGWhIXucY+pJGVWaLic=",
+        "lastModified": 1789844511,
+        "narHash": "sha256-Pzb5ixENWDieVg+PjmD6ifSQccF/6HSyEKZaoELq2yE=",
         "owner": "anticomputer",
         "repo": "age.el",
-        "rev": "e99165ef5274bc4512b8d77ba2ac208c59b5d456",
+        "rev": "afe3bf43fab7ff988419762f851129048c396ccc",
         "type": "github"
       },
       "original": {
