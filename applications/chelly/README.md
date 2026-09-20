@@ -19,15 +19,19 @@ athena 上で設定を適用した後、VM を一度だけ作る。既存の mac
 
 ```sh
 just switch-for athena
-podman machine init --provider applehv --cpus 4 --memory 8192 \
+export CONTAINERS_MACHINE_PROVIDER=applehv
+podman machine init --cpus 4 --memory 8192 \
   --rootful=false --volume "$HOME:$HOME" chelly
-podman machine start --update-connection chelly
+podman machine start chelly
+podman system connection default chelly
 podman info
 chelly config get container_cmd
 chelly build
 ```
 
-`--update-connection` は Mac の Podman の既定接続先をこの VM に変更する。
+固定した nixpkgs の Podman 5.8.6 では `--provider` と `--update-connection` は
+使えない。プロバイダは `CONTAINERS_MACHINE_PROVIDER` で指定し、
+`podman system connection default chelly` でこの VM の rootless 接続を既定にする。
 CPU 4 個・メモリ 8 GiB はコンテナごとではなく VM 全体の割り当て。
 rootless の接続を使い、VM 内の `id` とコンテナ内の `id` を確認する。
 athena のイメージ内ユーザーは UID 501 / GID 1000 を前提にしている。
@@ -40,6 +44,9 @@ chelly run -- id
 Podman の bind mount 元は VM 側のパスなので、リポジトリ、Git worktree の
 共通ディレクトリ、追加マウント元は VM からも同じ絶対パスで見える必要がある。
 ホーム外のリポジトリは、このホーム共有だけでは使えない。
+ホーム全体ではなく共有範囲を限定する場合は、既定の追加マウント元である
+`~/.claude`、`~/.copilot`、`~/.pi`、`~/.local/share/chelly`、
+`~/ghq/github.com/Warashi/brainium` と、利用する worktree のディレクトリも共有する。
 
 `~/.config/git/ignore` は Home Manager が Mac の `/nix/store` へのリンクとして
 生成するため、activation で `~/.local/share/chelly/git-ignore` に実体を
@@ -54,7 +61,9 @@ VM から Mac の Nix store をマウントする必要はない。
 
 ```sh
 # 作業開始時
-podman machine start --update-connection chelly
+export CONTAINERS_MACHINE_PROVIDER=applehv
+podman machine start chelly
+podman system connection default chelly
 
 # 全コンテナの作業が終わった後
 podman ps
