@@ -102,7 +102,7 @@ in
 
   config = mkIf cfg.enable {
     sops.secrets.chelly-dotenv = { };
-    home.packages = [ cfg.package ];
+    home.packages = [ cfg.package ] ++ optional pkgs.stdenv.hostPlatform.isDarwin pkgs.podman;
 
     # VM に共有するホームから Mac の /nix/store へのリンクは解決できないため、実体を渡す。
     home.activation.chelly-git-ignore = mkIf pkgs.stdenv.hostPlatform.isDarwin (

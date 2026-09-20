@@ -5,7 +5,8 @@
 複数の chelly から Nix store とビルドキャッシュを同時に使うため、
 athena は `podman machine` の共有 Linux VM でコンテナを動かす。
 `hosts/athena/homes/chelly.nix` で Podman を明示選択し、
-CLI は Home Manager の `pkgs.podman` で管理する。macOS 用パッケージには
+CLI は共通の chelly モジュールで `isDarwin` の場合に `pkgs.podman` を導入する。
+macOS 用パッケージには
 VM 起動用の vfkit とネットワーク用の gvproxy も組み込まれている。
 apple/container は比較・切り戻し用に残す。
 コンテナ間は VM ではなく Linux の namespace で分離される。

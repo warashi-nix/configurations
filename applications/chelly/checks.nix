@@ -12,9 +12,13 @@ let
       expr = macHome.warashi.chelly.settings.container_cmd or null;
       expected = "podman";
     };
-    test-mac-installs-podman-with-nix = {
+    test-darwin-installs-podman-with-nix = {
       expr = lib.any (package: (package.pname or "") == "podman") macHome.home.packages;
       expected = true;
+    };
+    test-linux-does-not-install-podman-in-home = {
+      expr = lib.any (package: (package.pname or "") == "podman") linuxHome.home.packages;
+      expected = false;
     };
     test-mac-does-not-install-podman-with-homebrew = {
       expr = lib.elem "podman" (map (brew: brew.name) athena.homebrew.brews);

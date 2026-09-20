@@ -1,7 +1,4 @@
-{ pkgs, ... }:
 {
-  home.packages = [ pkgs.podman ];
-
   warashi.chelly = {
     uid = 501;
     gid = 1000;
