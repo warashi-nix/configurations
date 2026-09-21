@@ -122,7 +122,7 @@ brainium は本人の CLAUDE.md が `~/ghq/github.com/Warashi/brainium` を指�
 説明を書き分けずに済むよう handoff clone を同じ path に見せる。本人の brainium で
 `chelly-handoff create brainium` を一度実行すると `/srv/chelly-workspaces/brainium/brainium`
 に clone ができ、コンテナ内では `~/ghq/github.com/Warashi/brainium` になる。
-clone が無ければ path は空で、agent は本人に create を依頼する。project の clone と違い
+clone が無ければ path は空で、agent は本人に create を依頼する。mount 元の `/srv/chelly-workspaces/brainium` は podman が作らないので runner が毎回用意する。project の clone と違い
 長く置いて使い、agent の capture は `chelly-handoff fetch brainium` で受け取り Magit で
 取り込む。本人の brainium が進んだら `chelly-handoff update brainium` で clone を本人の
 main の先端に合わせ直す。update は未取得の commit や未コミット変更があれば止まるので、

@@ -10,6 +10,8 @@ let
   username = "chelly-agent";
   home = "/var/lib/chelly-agent";
   workspaces = "/srv/chelly-workspaces";
+  # brainium の handoff clone の親。コンテナ内では本人の CLAUDE.md が指す path に見せる。
+  brainiumWorkspace = "${workspaces}/brainium";
   owner = config.warashi.username;
   ownerHome = config.users.users.${owner}.home;
   homeConfig = config.home-manager.users.${owner};
@@ -43,7 +45,7 @@ let
       "${homeConfig.xdg.configFile."git/ignore".source}:/home/warashi/.config/git/ignore:ro"
       # brainium は本人の clone ではなく、chelly-handoff で専用領域に作った clone を
       # 本人の CLAUDE.md が指すのと同じ path に見せる。clone が無ければ空のまま。
-      "${workspaces}/brainium:/home/warashi/ghq/github.com/Warashi"
+      "${brainiumWorkspace}:/home/warashi/ghq/github.com/Warashi"
       "claude-state:/home/warashi/.claude"
       "copilot-state:/home/warashi/.copilot"
       "go-cache:/home/warashi/.cache/go-build"
@@ -97,6 +99,10 @@ let
           exit 1
           ;;
       esac
+      # podman は bind mount の元を作らず statfs で落ちる。clone を remove した後も
+      # 起動できるよう、ここで毎回用意する。mode は chelly-handoff create が作る project
+      # ディレクトリと同じで、親の setgid で本人のグループから閲覧できる。
+      [[ -d ${brainiumWorkspace} ]] || mkdir -m 2750 ${brainiumWorkspace}
       runtime_dir="/run/user/$(id -u)"
       if [[ ! -d "$runtime_dir" ]]; then
         echo "chelly-agent: user runtime directory is missing; check the lingering user manager" >&2

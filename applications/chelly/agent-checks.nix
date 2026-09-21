@@ -171,6 +171,8 @@ runCommand "chelly-agent-config-check"
     fi
     test ! -s stdout
     grep -Fxq "chelly-agent: run through the chelly-agent launcher" stderr
+    # podman は bind mount の元を作らないので、brainium の mount 元は runner が毎回用意する。
+    grep -Fq 'mkdir -m 2750 /srv/chelly-workspaces/brainium' ${runnerCommand}
 
     python3 - \
       ${workbench.environment.etc."chelly-agent/chelly/config.toml".source} \
