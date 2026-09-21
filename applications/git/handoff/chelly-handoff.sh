@@ -10,10 +10,12 @@ usage() {
   cat >&2 <<'EOF'
 usage: chelly-handoff create [NAME]
        chelly-handoff fetch [NAME]
+       chelly-handoff update [NAME]
        chelly-handoff remove [NAME] [--force]
 
 create  現在の HEAD から専用領域の <repo 名>/NAME に clone を作り、remote handoff-NAME を追加する
 fetch   専用 clone の commit を remote handoff-NAME に取り込み、新規追跡ファイルを検査する
+update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 
 NAME を省略すると現在の branch 名を使う。
@@ -95,6 +97,28 @@ git rev-parse --verify HEAD^{commit}
 git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all | wc -l
 '
 
+# 取り込みで SHA が変わるので rebase はせず、clone をそのまま本人の先端に置き換える。
+# 捨ててよいことは本人側で probe の結果を見て判断済みで、ここでは clean であることだけ再確認する。
+update_script='
+umask 0027
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
+parent=$1 workspace=$2 branch=$3 tip=$4
+case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
+case "$workspace" in *..*) exit 90 ;; esac
+cd "$workspace"
+test "$(git symbolic-ref --quiet --short HEAD)" = "$branch" ||
+  { echo "agent workspace is not on branch $branch" >&2; exit 1; }
+test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all)" ||
+  { echo "agent workspace is not clean; commit or discard first" >&2; exit 1; }
+bundle="${workspace}.bundle.$$"
+trap "rm -f -- \"$bundle\"" EXIT
+cat >"$bundle"
+git bundle verify --quiet "$bundle"
+git -c core.hooksPath=/dev/null fetch --quiet --no-tags "$bundle" "refs/heads/$branch"
+test "$(git rev-parse --verify FETCH_HEAD^{commit})" = "$tip"
+git -c core.hooksPath=/dev/null reset --quiet --hard "$tip"
+'
+
 remove_script='
 parent=$1 workspace=$2
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
@@ -164,6 +188,35 @@ fetch() {
   git-check-new-ignored --object-repo "$gitdir" --policy-repo "$toplevel" "$base" "$tip"
 }
 
+# 専用 clone の HEAD が本人の repo にあり、未コミット変更も無いときだけ、clone を捨ててよい。
+require_agent_work_collected() {
+  probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null)
+  [[ $probe != missing ]] || fail "agent workspace $workspace is missing; run create"
+  head=${probe%%$'\n'*}
+  dirty=${probe##*$'\n'}
+  git cat-file -e "$head^{commit}" 2>/dev/null ||
+    fail "agent commit $head is not in this repository; run fetch first"
+  [[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; commit and fetch, or discard them first"
+}
+
+update() {
+  resolve_name "$1"
+  repo_paths
+  recorded_paths
+  tip=$(git rev-parse --verify "refs/heads/$branch^{commit}") || fail "branch $branch does not exist here"
+  require_agent_work_collected
+  if [[ $head == "$tip" ]]; then
+    echo "$remote is up to date at $(git rev-parse --short "$tip")"
+    return
+  fi
+  git bundle create --quiet - "^$base" "refs/heads/$branch" |
+    agent "$update_script" "$workspaces" "$workspace" "$branch" "$tip"
+  git config "remote.$remote.chelly-base" "$tip"
+  git update-ref -d "refs/remotes/$remote/$branch"
+  rm -f -- "$bundle" "$bundle.tmp"
+  echo "updated $remote to $(git rev-parse --short "$tip"); previous base was $(git rev-parse --short "$base")"
+}
+
 remove() {
   resolve_name "$1"
   repo_paths
@@ -199,6 +252,10 @@ create)
 fetch)
   [[ $# -le 2 ]] || usage
   fetch "${2:-}"
+  ;;
+update)
+  [[ $# -le 2 ]] || usage
+  update "${2:-}"
   ;;
 remove)
   if [[ ${2:-} == --force ]]; then

@@ -235,6 +235,54 @@ class HandoffTest(unittest.TestCase):
             1,
         )
 
+    def test_update_moves_workspace_to_owner_branch_tip(self):
+        self.handoff("create", "fix")
+        self.write(self.repo, "tracked", "owner\n")
+        owner_tip = self.commit(self.repo, "owner work")
+        result = self.handoff("update", "fix")
+        self.assertIn(b"updated", result.stdout)
+        self.assertEqual(self.rev(self.workspace), owner_tip)
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-base").stdout.decode().strip(),
+            owner_tip,
+        )
+        self.assertEqual(self.git("-C", self.workspace, "status", "--porcelain").stdout, b"")
+        # 取得済みの agent commit は捨ててよく、本人側で取り込んだ形に揃う。
+        self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+        self.git("-C", self.repo, "cherry-pick", "refs/remotes/handoff-fix/main")
+        # 同じ親・tree・時刻だと cherry-pick が同一 SHA になるので、取り込み側で書き換わった形にする。
+        self.git("-C", self.repo, "commit", "-q", "--amend", "--no-verify", "-m", "integrated")
+        integrated = self.rev(self.repo)
+        self.assertNotEqual(integrated, self.rev(self.repo, "refs/remotes/handoff-fix/main"))
+        # 本人が別 branch にいても、記録した branch の先端に追従する。
+        self.git("-C", self.repo, "switch", "-q", "-c", "elsewhere")
+        result = self.handoff("update", "fix")
+        self.assertEqual(self.rev(self.workspace), integrated)
+        self.assertEqual((self.workspace / "feature").read_text(), "done\n")
+        self.assertEqual(
+            self.git("-C", self.repo, "rev-parse", "--verify", "-q", "refs/remotes/handoff-fix/main",
+                     check=False).returncode,
+            1,
+        )
+        result = self.handoff("update", "fix")
+        self.assertIn(b"up to date", result.stdout)
+
+    def test_update_refuses_unfetched_or_uncommitted_agent_work(self):
+        self.handoff("create", "fix")
+        self.agent_commit("feature", "done\n")
+        self.write(self.repo, "tracked", "owner\n")
+        self.commit(self.repo, "owner work")
+        result = self.handoff("update", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"run fetch first", result.stderr)
+        self.handoff("fetch", "fix")
+        self.write(self.workspace, "scratch", "x\n")
+        result = self.handoff("update", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"uncommitted", result.stderr)
+        self.assertNotEqual(self.rev(self.workspace), self.rev(self.repo))
+
     def test_remove_cleans_up_after_fetch_without_force(self):
         self.handoff("create", "fix")
         self.agent_commit("feature", "done\n")

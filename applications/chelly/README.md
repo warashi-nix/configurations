@@ -124,10 +124,10 @@ brainium は本人の CLAUDE.md が `~/ghq/github.com/Warashi/brainium` を指�
 に clone ができ、コンテナ内では `~/ghq/github.com/Warashi/brainium` になる。
 clone が無ければ path は空で、agent は本人に create を依頼する。project の clone と違い
 長く置いて使い、agent の capture は `chelly-handoff fetch brainium` で受け取り Magit で
-取り込む。handoff は agent から本人への一方向で、本人の brainium が進んでも clone には
-届かない。task や refile の結果を agent に読ませたいときは `fetch` → 取り込み →
-`remove brainium` → `create brainium` で作り直す。`remove` は未取得の commit があれば
-止まるので取りこぼさない。
+取り込む。本人の brainium が進んだら `chelly-handoff update brainium` で clone を本人の
+main の先端に合わせ直す。update は未取得の commit や未コミット変更があれば止まるので、
+日常は「agent が capture → `fetch brainium` → Magit で取り込む → `update brainium`」の
+3 手になる。
 
 ホストでの受け入れ確認では、専用ユーザーが本人の home に入れないこと、
 外側の Podman が rootless であること、コンテナ内の `nix store info --json` が
@@ -272,6 +272,7 @@ Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/READM
 | 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]` |
 | 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。基点は `remote.handoff-名前.chelly-base` |
 | 取り込み | Magit の cherry-pick や merge。既存設定で SSH 署名され、本人の hooks が動く |
+| 追従 | 本人側が進んだら `chelly-handoff update [名前]`。未取得の commit や未コミット変更があれば止まる |
 | 後片付け | `chelly-handoff remove [名前]`。未取得の commit や未コミット変更があれば止まる |
 
 `create` は現在の HEAD だけを bundle で渡し、専用ユーザーが `origin` も hooks も

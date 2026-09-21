@@ -75,6 +75,7 @@ the owner's repository is the only record.
 cd /absolute/project            # on the branch the agent should start from
 chelly-handoff create [fix-issue-123]
 chelly-handoff fetch [fix-issue-123]
+chelly-handoff update [fix-issue-123]
 chelly-handoff remove [fix-issue-123] [--force]
 ```
 
@@ -99,6 +100,15 @@ fetches it into `refs/remotes/handoff-NAME/branch`, and finally runs
 repository. The exit status is the checker's, so findings return `1` while the
 fetched ref stays available for inspection. Repeat `fetch` after the agent
 adds commits.
+
+`update` moves the agent workspace to the current tip of the recorded branch in
+the owner's repository, for long-lived workspaces such as a knowledge base that
+the owner keeps changing. It refuses when the workspace has uncommitted changes
+or a commit the owner has not fetched yet, so nothing is lost; run `fetch` and
+integrate first. Integration rewrites commit IDs, so the workspace is not
+rebased but replaced by the owner's tip, the recorded base moves to that tip,
+and the stale remote-tracking ref is dropped. The owner's checked-out branch
+does not matter; the recorded branch is sent.
 
 `remove` deletes the agent workspace, the remote, its remote-tracking refs, and
 the bundle. Without `--force` it refuses when the workspace has uncommitted
