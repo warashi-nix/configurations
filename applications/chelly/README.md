@@ -351,5 +351,13 @@ VM は自動起動・自動停止しない。停止は実行中の全コンテ�
 remote build の Dockerfile 指定、workbench の既存設定の維持を検査するもので、
 Mac 実機の動作確認の代わりではない。
 
+Podman インストールの有無 (Darwin では入る/Linux では入らない) だけは、
+host の完全な設定 (athena/workbench の `config`) を辿らず、chelly の
+home-manager モジュールと対応する `hosts/*/homes/chelly.nix` だけを
+取り込んだ最小構成で評価する。host 全体をたどると emacs-twist 等の
+無関係なパッケージまで評価されて Darwin 向け IFD ビルドを要求してしまい、
+aarch64-linux では `nix flake check` が失敗するため。この最小構成での
+評価は、Darwin ホスト全体のビルドを Linux 上で検証したことを意味しない。
+
 切り戻し時は `CHELLY_CONTAINER_CMD=container chelly run` で既存の Apple 側
 イメージ・volume を使える。ただし、元の named volume の同時利用制約も戻る。

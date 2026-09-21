@@ -176,6 +176,14 @@
                 chelly-config = pkgs.callPackage ./applications/chelly/checks.nix {
                   athena = self.darwinConfigurations.athena.config;
                   workbench = self.nixosConfigurations.workbench.config;
+                  # Podman インストールの有無だけを見るテストは、host の完全な
+                  # pkgs/home-manager lib を使いつつも chelly モジュールだけを
+                  # 評価する最小構成を組み立てるため、それぞれの pkgs だけを渡す
+                  # (athena.config / workbench.config そのものは渡さない)。
+                  athenaPkgs = self.darwinConfigurations.athena.pkgs;
+                  workbenchPkgs = self.nixosConfigurations.workbench.pkgs;
+                  homeManagerLib = inputs.home-manager.lib;
+                  chellyModuleInputs = inputs;
                 };
               }
               //
