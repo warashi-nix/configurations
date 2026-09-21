@@ -1,5 +1,33 @@
 # chelly
 
+## 起動時の開発環境
+
+`flake.nix` がある場合は、Nix 2.34.8 の `nix develop` と同じ順序で
+`devShells.<system>.default`、`devShell.<system>`、
+`packages.<system>.default`、`defaultPackage.<system>` を探す。
+純粋評価を維持し、最初に見つかった候補を使う。
+
+候補が無ければ無音で `shell.nix`、通常のコマンド／bash の順に進む。
+評価失敗や候補の型不正は Nix のエラーと `chelly:` の診断を stderr に出し、
+修復作業ができるよう同じフォールバックで起動を続ける。
+判定の出力は stdout に流さず、ACP の通信を妨げない。
+選択後の環境ビルドに失敗した場合は `nix develop` のエラーで終了し、
+環境に入れたように見せて通常コマンドを実行し直すことはしない。
+
+### 会話の再開とコンテナの再作成
+
+コンテナ内の共通説明を `/etc/chelly/AGENTS.md` に置き、Claude Code は
+`/etc/claude-code/CLAUDE.md` のリンクから、Copilot CLI は
+`COPILOT_CUSTOM_INSTRUCTIONS_DIRS` から読む。entrypoint は既存の追加
+instruction directory を残したまま `/etc/chelly` を加える。
+ホストの instruction ファイルにはコンテナ固有の説明を書き込まない。
+
+会話を再開しても、前回のコンテナ内にだけ入れたツールや実行中のプロセスは
+復元されない。永続化されたファイルと実行環境の継続を区別し、使用前の状態確認と
+既存の devShell／セットアップ手順での再現を両 agent に伝える。
+新たな永続領域や全環境の自動復元は追加しない。
+この説明は agent の判断を助けるもので、隔離や操作禁止を強制する境界ではない。
+
 ## workbench: ホストの Nix store の共用
 
 workbench は native rootless Podman と `nix-store = "host"` を使い、

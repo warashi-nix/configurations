@@ -212,23 +212,28 @@ RUN set -eu; \
 RUN mkdir -p /nix && chmod 0755 /nix && chown "${UID}:${GID}" /nix
 
 # --------------------------------------------------------
-# コンテナ内の Claude 向けメモリ
+# コンテナ内の agent 向けメモリ
 # --------------------------------------------------------
-# ~/.claude はホストから bind mount されてホスト側の Claude と共有されるため、
-# コンテナ固有の前提はそこには書けない。Claude Code が enterprise policy memory として
-# 読む /etc/claude-code/CLAUDE.md はイメージ側にしか無く、コンテナ内だけに効く。
+# ~/.claude と ~/.copilot はホストと共有されるため、コンテナ固有の前提はイメージ側に置く。
+# Claude の policy memory と Copilot の追加 instruction directory から同じ内容を読む。
 # mount 先は下流の flake で追加・変更されうるため、具体的なパスは列挙せず確認方法だけを書く。
 # ディレクトリを先に作るのは、BuildKit (apple/container) が COPY で自動作成する親ディレクトリ
 # にも --chmod を適用して 0644 のディレクトリを作る一方、buildah (podman) は記号モードの
 # --chmod を解釈できないため。既存ディレクトリならどちらもモードを触らない。
-RUN mkdir -p /etc/claude-code
-COPY --chmod=0644 <<'EOF' /etc/claude-code/CLAUDE.md
+RUN mkdir -p /etc/chelly /etc/claude-code
+COPY --chmod=0644 <<'EOF' /etc/chelly/AGENTS.md
 - この環境はコンテナであり、コンテナのファイルシステム自体は終了時に破棄される
 - ただし mount されたディレクトリはホスト側の実体または volume であり、コンテナ終了後も残る
 - 起動時の作業ディレクトリはホストと同一のパスで mount されている
 - git worktree から起動した場合は、メインリポジトリ側のディレクトリも同一のパスで mount されている
 - 実際に mount されているディレクトリは /proc/self/mountinfo で確認できる
+- 会話の再開は、前回のコンテナ、一時的に入れたツール、DB やプロセスの復元を意味しない
+- 必要なツール、DB、プロセスの状態は使用前に確認し、会話履歴だけを根拠に存在すると扱わない
+- 繰り返し必要な環境はリポジトリの devShell や既存のセットアップ手順で再現する
+- コンテナが起動しても devShell に入れたとは限らない。期待した環境が無ければ起動時の診断や nix develop で原因を確かめる
 EOF
+
+RUN ln -s /etc/chelly/AGENTS.md /etc/claude-code/CLAUDE.md
 
 # --------------------------------------------------------
 # git worktree の破壊的操作を止める shim
@@ -371,6 +376,9 @@ RUN mkdir -p ~/.config/nixpkgs && \
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
+COPILOT_CUSTOM_INSTRUCTIONS_DIRS="/etc/chelly${COPILOT_CUSTOM_INSTRUCTIONS_DIRS:+,${COPILOT_CUSTOM_INSTRUCTIONS_DIRS}}"
+export COPILOT_CUSTOM_INSTRUCTIONS_DIRS
+
 # ホストの store を共有しているときは、ホストと同じ版の nix が store path で渡される。
 # イメージ側には nix が無く、~/.nix-profile も無いので、ここで PATH に足す。
 if [ -n "${CHELLY_NIX_BIN:-}" ]; then
@@ -422,22 +430,47 @@ if ! command -v nix >/dev/null 2>&1; then
   fi
 fi
 
-# 入れる開発環境があるかは flake.nix の存在ではなく属性を引けるかで判定する。flake.nix は
-# あっても devShell を持たない、あるいは flake が壊れているリポジトリがあり、そこで
-# nix develop が落ちるとコンテナごと起動できなくなるため。壊れた flake を直す作業も
-# コンテナ内で行うので、引けなかったときは止めずに素のシェルまで落とす。
-# 属性の探索を自前で書かず installable を引くのは、引数なしの nix develop 自身と同じ
-# 規則で解決させるため。
-# 引けなかった理由は出さない。devShell を持たないリポジトリでは毎回の起動が雑音になり、
-# flake が壊れているかどうかは nix develop を直接叩けば分かる。
-# devShell の評価は通るがビルドだけ失敗する場合は拾えない。拾うには exec の前に
-# nix develop を通す必要があり、成功する毎回の起動が倍近く遅くなるため取らない。
+# .#. は既定の package ではなく outputs 全体を選ぶ。getFlake の impure 評価や
+# store path への置き換えを避け、nix develop と同じ純粋評価・Git メタデータを使う。
+# 評価に失敗しても、壊れた flake をコンテナ内で直せるように起動は続ける。
 chelly_flake_has_shell=false
 if [ -f flake.nix ]; then
-  chelly_system="$(nix config show system)"
-  if nix eval --accept-flake-config --raw ".#devShells.${chelly_system}.default.type" >/dev/null 2>&1 ||
-    nix eval --accept-flake-config --raw ".#packages.${chelly_system}.default.type" >/dev/null 2>&1; then
-    chelly_flake_has_shell=true
+  if ! chelly_system="$(nix config show system)"; then
+    echo "chelly: unable to inspect development environment; starting without it" >&2
+  elif ! chelly_system_expr="$(
+    printf '%s' "${chelly_system}" | jq -Rrs '@json | gsub("\\$\\{"; "\\${")'
+  )"; then
+    echo "chelly: unable to inspect development environment; starting without it" >&2
+  else
+    if ! chelly_flake_shell_type="$(
+      nix eval --accept-flake-config --raw '.#.' --apply "
+      flake:
+      let
+        system = ${chelly_system_expr};
+        candidates =
+          if flake ? devShells && builtins.hasAttr system flake.devShells &&
+            flake.devShells.\${system} ? default then
+            [ flake.devShells.\${system}.default ]
+          else if flake ? devShell && flake.devShell ? \${system} then
+            [ flake.devShell.\${system} ]
+          else if flake ? packages && builtins.hasAttr system flake.packages &&
+            flake.packages.\${system} ? default then
+            [ flake.packages.\${system}.default ]
+          else if flake ? defaultPackage && flake.defaultPackage ? \${system} then
+            [ flake.defaultPackage.\${system} ]
+          else
+            [];
+        shell = builtins.head candidates;
+      in
+        if candidates == [] then \"none\"
+        else if builtins.isAttrs shell && (shell.type or null) == \"derivation\" then \"derivation\"
+        else throw \"default development environment is not a derivation\"
+      "
+    )"; then
+      echo "chelly: unable to evaluate default development environment; starting without it" >&2
+    elif [ "${chelly_flake_shell_type}" != none ]; then
+      chelly_flake_has_shell=true
+    fi
   fi
 fi
 

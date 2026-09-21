@@ -1,8 +1,14 @@
 {
   lib,
   runCommand,
+  bash,
+  coreutils,
+  gawk,
+  jq,
+  nix,
   athena,
   workbench,
+  stdenv,
 }:
 let
   macHome = athena.home-manager.users.warashi;
@@ -72,6 +78,16 @@ let
   };
 in
 assert lib.assertMsg (tests == [ ]) (builtins.toJSON tests);
-runCommand "chelly-config-check" { } ''
-  touch "$out"
-''
+runCommand "chelly-config-check"
+  {
+    nativeBuildInputs = [
+      bash
+      coreutils
+      gawk
+      jq
+      nix
+    ];
+  }
+  ''
+    ${bash}/bin/bash ${./entrypoint-test.sh} ${./Dockerfile} "$out" ${nix}/bin/nix ${stdenv.hostPlatform.system}
+  ''
