@@ -522,10 +522,16 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 #+end_src
 
 ** consult
+=C-x p p= は ghq の repository を選び、その後段で作業場所 (本人の checkout、
+git-wit の worktree、専用ユーザーの clone) を一つの prompt から選ぶ。候補に無い
+名前を打てば、その名前で worktree か専用 clone を作ってそこへ移る。worktree や
+clone を作ったかどうかを覚えていなくても、同じ操作で辿り着けるようにするため。
+
 #+begin_src emacs-lisp
 (setup (:package consult
                  consult-ghq
-                 consult-git-wit)
+                 warashi-project-workspace)
+  (:opt consult-ghq-switch-project-function #'warashi-project-workspace-switch)
   (:global-keymap "M-g M-g" #'consult-goto-line
                   "M-g o" #'consult-outline
                   "C-x b" #'consult-buffer
@@ -731,9 +737,9 @@ Pi は専用 runner に対応していないため、専用領域では起動を
 認証設定や clone の dir-local variables も適用しない。Emacs 側の自動
 transcript 保存は無効にし、会話の保存は agent 側の専用 volume に任せる。
 
-専用 clone の作成と成果の受け取りは、shell から =chelly-handoff= で行い、差分の
-確認と取り込みは Magit の通常操作に任せる。手順は configurations の
-=applications/chelly/README.md= にある。
+専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
+受け取りは shell から =chelly-handoff= で行い、差分の確認と取り込みは Magit の
+通常操作に任せる。手順は configurations の =applications/chelly/README.md= にある。
 
 session の累積コストを context usage indicator の隣に常設する。ターン終了時の
 ボックス (=agent-shell-show-usage-at-turn-end=) ではなく常設にするのは、走らせて
@@ -919,7 +925,6 @@ project のディスパッチに戻るので、続けて =g= で magit を開け
                                   (consult-project-buffer "Switch buffer" ?b)
                                   (consult-ripgrep "Ripgrep" ?r)
                                   (warashi-agent-shell-project-switch "Agent shell" ?a)
-                                  (consult-git-wit-switch "Switch project" ?w)
                                   (magit-project-status "Magit status" ?g)
                                   (project-eshell "Eshell" ?e)
                                   (project-dired "Dired" ?d)
