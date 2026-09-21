@@ -10,6 +10,7 @@ let
   owner = workbench.users.users.warashi;
   runnerRules = lib.filter (rule: rule.runAs == "chelly-agent") workbench.security.sudo.extraRules;
   runnerCommand = (lib.head (lib.head runnerRules).commands).command;
+  ownerHome = workbench.home-manager.users.warashi;
   tests = lib.runTests {
     test-disabled-agent-keeps-existing-proxy-access = {
       expr =
@@ -154,6 +155,13 @@ runCommand "chelly-agent-config-check"
   }
   ''
     test -f ${workbench.environment.etc.sudoers.source}
+
+    # 専用環境へ配る設定は、本人の home-manager が host の ~/.claude に書くものと同じ生成物だけ。
+    test -f ${ownerHome.warashi.claude.bundle}/CLAUDE.md
+    test -f ${ownerHome.warashi.claude.bundle}/settings.json
+    test -f ${ownerHome.warashi.claude.bundle}/output-styles/grilling.md
+    test -f ${ownerHome.warashi.claude.bundle}/skills/pair-programming/SKILL.md
+    grep -Fq '"outputStyle": "grilling"' ${ownerHome.warashi.claude.bundle}/settings.json
     if ${runnerCommand} run >stdout 2>stderr; then
       echo "agent runner accepted a different account" >&2
       exit 1
