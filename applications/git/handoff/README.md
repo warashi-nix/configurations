@@ -67,8 +67,8 @@ trusted rule origin, line, and pattern. A successful check prints fixed
 `chelly-handoff` moves Git bundles between the owner's repository and a named
 clone owned by the dedicated `chelly-agent` account. Review and integration are
 ordinary Git operations on a remote-tracking branch, so Magit or any Git client
-can show the diff, cherry-pick, or merge with the owner's usual signing
-configuration. The command keeps no state file: the remote `handoff-NAME` in
+can show the diff, cherry-pick the whole `BASE..handoff-NAME/branch` range in
+one step, or merge with the owner's usual signing configuration. The command keeps no state file: the remote `handoff-NAME` in
 the owner's repository is the only record.
 
 ```console

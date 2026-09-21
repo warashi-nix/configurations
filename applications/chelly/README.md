@@ -126,8 +126,8 @@ clone が無ければ path は空で、agent は本人に create を依頼する
 長く置いて使い、agent の capture は `chelly-handoff fetch brainium` で受け取り Magit で
 取り込む。本人の brainium が進んだら `chelly-handoff update brainium` で clone を本人の
 main の先端に合わせ直す。update は未取得の commit や未コミット変更があれば止まるので、
-日常は「agent が capture → `fetch brainium` → Magit で取り込む → `update brainium`」の
-3 手になる。
+日常は「agent が capture → `fetch brainium` → Magit で範囲を cherry-pick → `update brainium`」の
+3 手になる。brainium も本人の署名で取り込む。
 
 ホストでの受け入れ確認では、専用ユーザーが本人の home に入れないこと、
 外側の Podman が rootless であること、コンテナ内の `nix store info --json` が
@@ -271,7 +271,7 @@ Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/READM
 | 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` で既存の `warashi-agent-shell-claude-*` / `copilot-*` を使う。会話は `C-c a` から開く |
 | 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]` |
 | 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。基点は `remote.handoff-名前.chelly-base` |
-| 取り込み | Magit の cherry-pick や merge。既存設定で SSH 署名され、本人の hooks が動く |
+| 取り込み | Magit の log で `基点..handoff-名前/branch` の region を選んで `A A` (範囲の cherry-pick)。commit 数に関わらず 1 回で、既存設定で SSH 署名され、本人の hooks が動く。署名が要らない repo なら `git merge --ff-only` でもよい |
 | 追従 | 本人側が進んだら `chelly-handoff update [名前]`。未取得の commit や未コミット変更があれば止まる |
 | 後片付け | `chelly-handoff remove [名前]`。未取得の commit や未コミット変更があれば止まる |
 
