@@ -406,11 +406,11 @@
     "ellama": {
       "flake": false,
       "locked": {
-        "lastModified": 1786570562,
-        "narHash": "sha256-DMKlyeLvE9QvKg44apJC7+mSi3aeJnlCZ4XkNLO6rl0=",
+        "lastModified": 1789929714,
+        "narHash": "sha256-YPh6fXvU0iUqgR35ZyitEE/rTDf5KwKd3s/IlicRiOo=",
         "owner": "s-kostyaev",
         "repo": "ellama",
-        "rev": "a86e9154ae88907d3de2710195810cda986ef0d8",
+        "rev": "b98cb4a904b70def4f21050d5d202005ee00b3b4",
         "type": "github"
       },
       "original": {
