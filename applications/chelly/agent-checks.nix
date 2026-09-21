@@ -175,6 +175,7 @@ runCommand "chelly-agent-config-check"
     python3 - \
       ${workbench.environment.etc."chelly-agent/chelly/config.toml".source} \
       ${workbench.environment.etc."chelly-agent/chelly/Dockerfile".source} <<'PY'
+    import os
     import sys
     import tomllib
 
@@ -197,6 +198,15 @@ runCommand "chelly-agent-config-check"
     assert "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude" in run, run
     assert "--env=IS_DEMO=1" in run, run
     assert "--pull=never" in run, run
+    # 配布 bundle は /nix の read-only mount 越しに store path で渡す。
+    config_env = [arg for arg in run if arg.startswith("--env=CHELLY_AGENT_CONFIG=")]
+    assert len(config_env) == 1, run
+    bundle = config_env[0].split("=", 2)[2]
+    assert bundle.startswith("/nix/store/"), bundle
+    for path in ("claude/CLAUDE.md", "claude/settings.json", "claude/output-styles/grilling.md",
+                 "copilot/copilot-instructions.md", "copilot/settings.json",
+                 "copilot/skills/pair-programming/SKILL.md"):
+        assert os.path.isfile(os.path.join(bundle, path)), path
     PY
     touch "$out"
   ''

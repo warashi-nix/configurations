@@ -16,6 +16,19 @@ let
   chellyConfig = homeConfig.warashi.chelly;
   chelly = inputs.chelly.packages.${pkgs.stdenv.hostPlatform.system}.chelly;
   proxy = config.warashi.chelly-nix-proxy;
+  # 本人の home-manager が host の ~/.claude と ~/.copilot に書くものと同じ生成物。
+  # /nix は read-only で mount 済みなので store path をそのまま渡し、image の
+  # entrypoint が volume へ写す。本人の実 home や認証状態は含まれない。
+  agentConfig = pkgs.linkFarm "chelly-agent-config" [
+    {
+      name = "claude";
+      path = homeConfig.warashi.claude.bundle;
+    }
+    {
+      name = "copilot";
+      path = homeConfig.warashi.copilot.bundle;
+    }
+  ];
   agentGroups = [
     config.users.users.${username}.group
   ]
@@ -53,6 +66,7 @@ let
         args =
           lib.filter (arg: !(lib.hasPrefix "--userns=" arg)) chellyConfig.runtime_options.podman.run
           ++ [
+            "--env=CHELLY_AGENT_CONFIG=${agentConfig}"
             "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
             "--env=IS_DEMO=1"
             "--pull=never"
