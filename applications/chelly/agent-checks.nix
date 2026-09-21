@@ -188,7 +188,11 @@ runCommand "chelly-agent-config-check"
     assert "/run/chelly-nix:/nix/var/nix/daemon-socket:ro" in mounts, mounts
     assert "claude-state:/home/warashi/.claude" in mounts, mounts
     assert "copilot-state:/home/warashi/.copilot" in mounts, mounts
-    assert not any(mount.startswith("/home/") or "brainium" in mount for mount in mounts), mounts
+    # 本人の home は専用ユーザーに見せない。brainium は本人の clone ではなく
+    # 専用領域の handoff clone を、コンテナ内では本人の CLAUDE.md と同じ path に見せる。
+    assert not any(mount.startswith("/home/") for mount in mounts), mounts
+    assert "/srv/chelly-workspaces/brainium:/home/warashi/ghq/github.com/Warashi" in mounts, mounts
+    assert not any("brainium" in mount and not mount.startswith("/srv/chelly-workspaces/") for mount in mounts), mounts
     assert config["env_files"] == ["/run/secrets/chelly-agent-dotenv"], config["env_files"]
     assert config["inherit_env"] == ["COLORTERM", "TERM", "TERM_PROGRAM", "TERM_PROGRAM_VERSION"]
     run = next(item["args"] for item in config["runtime_options"]

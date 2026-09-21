@@ -67,7 +67,8 @@ native Podman を VM と同等とは扱わない。
 | 作業 clone | `/srv/chelly-workspaces` 以下。本人の clone と Git メタデータを共有しない |
 | 本人からの閲覧 | `chelly-workspaces` グループ経由。親ディレクトリは `2750` で書き込み権限を渡さない |
 | Nix store | ホストの store を read-only 共有。既存 proxy の専用グループ経由で接続 |
-| Claude・Copilot の状態 | `.claude`・`.copilot` を専用ユーザーの Podman named volume に保存。本人の状態や brainium はマウントしない |
+| Claude・Copilot の状態 | `.claude`・`.copilot` を専用ユーザーの Podman named volume に保存。本人の状態はマウントせず、Nix が生成する設定だけを起動時に写す |
+| brainium | 本人の clone はマウントしない。`/srv/chelly-workspaces/brainium` を `~/ghq/github.com/Warashi` に見せ、そこに置いた handoff clone を本人と同じ path で使う |
 | Git ignore | Home Manager のルールを read-only で渡す。Git 設定全体・署名鍵は渡さない |
 | 環境変数 | 呼び出し元の環境を捨て、端末情報と専用環境のパスだけを再設定 |
 
@@ -108,7 +109,25 @@ agent が変更した ignore ルールではなく、信頼する base と本人
 これは差分の確認や機密情報の検査全般を代替しない。署名は本人側の既存設定で行い、
 署名鍵・socket は専用環境へ渡さない。検査コマンドは署名・取り込み・公開を自動実行しない。
 
-agent の個人設定・skills・global hooks の選別した配布と private module の取得経路も未実装。
+Claude/Copilot の設定は、本人の home-manager が `~/.claude` と `~/.copilot` に書く生成物
+(CLAUDE.md、settings の override、output-styles、skills、copilot-instructions.md) を
+`warashi.claude.bundle` と `warashi.copilot.bundle` で束ね、専用入口の `podman run` に
+`CHELLY_AGENT_CONFIG` として store path で渡す。image の entrypoint がそれを volume へ写し、
+settings は volume にある runtime の値を残して override を重ねる。認証状態・履歴・
+host の runtime にある `extraSettingsSources` は含めない。設定を変えたら switch と
+次回のコンテナ起動で反映され、image の再 build は要らない。global hooks の配布と
+private module の取得経路は未実装。
+
+brainium は本人の CLAUDE.md が `~/ghq/github.com/Warashi/brainium` を指すので、
+説明を書き分けずに済むよう handoff clone を同じ path に見せる。本人の brainium で
+`chelly-handoff create brainium` を一度実行すると `/srv/chelly-workspaces/brainium/brainium`
+に clone ができ、コンテナ内では `~/ghq/github.com/Warashi/brainium` になる。
+clone が無ければ path は空で、agent は本人に create を依頼する。project の clone と違い
+長く置いて使い、agent の capture は `chelly-handoff fetch brainium` で受け取り Magit で
+取り込む。handoff は agent から本人への一方向で、本人の brainium が進んでも clone には
+届かない。task や refile の結果を agent に読ませたいときは `fetch` → 取り込み →
+`remove brainium` → `create brainium` で作り直す。`remove` は未取得の commit があれば
+止まるので取りこぼさない。
 
 ホストでの受け入れ確認では、専用ユーザーが本人の home に入れないこと、
 外側の Podman が rootless であること、コンテナ内の `nix store info --json` が

@@ -41,6 +41,9 @@ let
       "/nix:/nix:ro"
       "${proxy.socket-dir}:/nix/var/nix/daemon-socket:ro"
       "${homeConfig.xdg.configFile."git/ignore".source}:/home/warashi/.config/git/ignore:ro"
+      # brainium は本人の clone ではなく、chelly-handoff で専用領域に作った clone を
+      # 本人の CLAUDE.md が指すのと同じ path に見せる。clone が無ければ空のまま。
+      "${workspaces}/brainium:/home/warashi/ghq/github.com/Warashi"
       "claude-state:/home/warashi/.claude"
       "copilot-state:/home/warashi/.copilot"
       "go-cache:/home/warashi/.cache/go-build"
