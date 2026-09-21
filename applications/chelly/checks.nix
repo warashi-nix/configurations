@@ -174,6 +174,10 @@ runCommand "chelly-config-check"
       nix
     ];
   }
+  # 作業場所を $out ではなく $TMPDIR に置くのは、実 nix の入れ子 store や cache、
+  # 実 nix の store path を埋め込んだラッパーを check の出力に残さないため。
+  # 判定に使う出力は失敗時に build log へ出るので、$out には何も写さない。
   ''
-    ${bash}/bin/bash ${./entrypoint-test.sh} ${./Dockerfile} "$out" ${nix}/bin/nix ${stdenv.hostPlatform.system}
+    ${bash}/bin/bash ${./entrypoint-test.sh} ${./Dockerfile} "$TMPDIR/entrypoint-test" ${nix}/bin/nix ${stdenv.hostPlatform.system}
+    mkdir "$out"
   ''
