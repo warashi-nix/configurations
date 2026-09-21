@@ -146,7 +146,10 @@ case "\$1" in
     done
     printf '\n'
     ;;
-  *) exec "${real_nix}" --extra-experimental-features "nix-command flakes" "\$@" ;;
+  # store を明示するのは、sandbox 内で /nix/store に書けないときの既定の振る舞いが
+  # OS で違うため。Linux は \$HOME 配下の chroot store に切り替わるが、darwin は
+  # daemon socket を触ろうとして sandbox に拒まれる。
+  *) exec "${real_nix}" --extra-experimental-features "nix-command flakes" --store "${case_dir}/store" "\$@" ;;
 esac
 EOF
   chmod +x "${case_dir}/bin/nix"
