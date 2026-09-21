@@ -17,6 +17,8 @@
 ;;   effort を順に設定し、応答を待ってから prompt を送る。
 ;;   起動は `agent-shell--dwim' ではなく `agent-shell--start' に session strategy
 ;;   new を渡して行う。起動を投げた後に picker や window の切り替えで割り込ませないため。
+;;   Claude/Copilot は /srv/chelly-workspaces 以下では同じ variant の設定を
+;;   chelly-agent に渡す。専用 runner 非対応の pi は同領域で起動を拒否する。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても shell には飛ばず、同じ project のメニューを開き直す。
 ;; - session の累積コストを context usage indicator の隣に常設する。実行中は
@@ -40,6 +42,9 @@
 ;; agent-shell を実行時に require しないのは、起動コマンドを呼ぶまで agent-shell
 ;; を読む必要が無いため。compile 時だけ読ませる。
 (eval-when-compile (require 'agent-shell))
+(declare-function warashi-agent-shell-chelly--route-config
+                  "warashi-agent-shell-chelly"
+                  (agent provider-config directory))
 
 ;;;; 起動コマンド
 
@@ -88,6 +93,7 @@
 (defun warashi-agent-shell--start-claude (model-id thought-level)
   "MODEL-ID と THOUGHT-LEVEL を指定して Claude agent-shell を起動する。"
   (require 'agent-shell-anthropic)
+  (require 'warashi-agent-shell-chelly)
   (let ((config (agent-shell-anthropic-make-claude-code-config)))
     ;; :default-model-id は session 確立後に funcall されるので、動的束縛では
     ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
@@ -97,7 +103,9 @@
     ;; ため。
     ;; config は state の :agent-config に保存されるので、そこから読ませる。
     (push (cons :warashi-thought-level thought-level) config)
-    (warashi-agent-shell--start-shell config)))
+    (warashi-agent-shell--start-shell
+     (warashi-agent-shell-chelly--route-config
+      'claude config default-directory))))
 
 (defmacro warashi-agent-shell-define-claude-variants (&rest variants)
   "VARIANTS から Claude agent-shell の起動コマンドを定義する。
@@ -127,10 +135,13 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
 (defun warashi-agent-shell--start-pi (model-id)
   "MODEL-ID を指定して pi agent-shell を起動する。"
   (require 'agent-shell-pi)
+  (require 'warashi-agent-shell-chelly)
   (let ((config (agent-shell-pi-make-agent-config)))
     ;; claude 側と同じく、MODEL-ID を lexical に閉じ込めた関数へ差し替える。
     (setcdr (assq :default-model-id config) (lambda () model-id))
-    (warashi-agent-shell--start-shell config)))
+    (warashi-agent-shell--start-shell
+     (warashi-agent-shell-chelly--route-config
+      'pi config default-directory))))
 
 (defmacro warashi-agent-shell-define-pi-variants (&rest variants)
   "VARIANTS から pi agent-shell の起動コマンドを定義する。
@@ -159,6 +170,7 @@ VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
 (defun warashi-agent-shell--start-copilot (model-id thought-level)
   "MODEL-ID と THOUGHT-LEVEL を指定して Copilot agent-shell を起動する。"
   (require 'agent-shell-github)
+  (require 'warashi-agent-shell-chelly)
   (let ((config (agent-shell-github-make-copilot-config)))
     ;; CLI の --model は ACP の初期表示だけに反映され、初回送信時の実モデルと
     ;; 異なり得る。init-finished の hook では prompt と競合するため、
@@ -166,7 +178,9 @@ VARIANTS の各要素は (NAME MODEL-ID)。NAME ごとに
     (setcdr (assq :default-model-id config) (lambda () model-id))
     (setcdr (assq :default-config-options config)
             (lambda () (list (cons "reasoning_effort" thought-level))))
-    (warashi-agent-shell--start-shell config)))
+    (warashi-agent-shell--start-shell
+     (warashi-agent-shell-chelly--route-config
+      'copilot config default-directory))))
 
 (defmacro warashi-agent-shell-define-copilot-variants (&rest variants)
   "VARIANTS から Copilot agent-shell の起動コマンドを定義する。

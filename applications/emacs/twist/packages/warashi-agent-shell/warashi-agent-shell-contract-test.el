@@ -106,6 +106,31 @@
     (should (equal '(0 . 0) (func-arity make)))
     (should (assq :default-model-id (funcall make)))))
 
+(ert-deftest warashi-agent-shell-contract-test-chelly-decorates-provider-config ()
+  "実物の provider config を専用化しても model/effort の設定点を保持する。"
+  (let* ((root (make-temp-file "chelly-acp-contract-" t))
+         (warashi-agent-shell-chelly--workspace-root root))
+    (unwind-protect
+        (dolist (case
+                 `((claude ,#'agent-shell-anthropic-make-claude-code-config)
+                   (copilot ,#'agent-shell-github-make-copilot-config)))
+          (let* ((agent (car case))
+                 (config (funcall (cadr case)))
+                 (model (lambda () "selected-model"))
+                 (options (lambda () '(("reasoning_effort" . "medium"))))
+                 decorated)
+            (setf (alist-get :default-model-id config) model)
+            (when (eq agent 'copilot)
+              (setf (alist-get :default-config-options config) options))
+            (setq decorated
+                  (warashi-agent-shell-chelly--config agent root config))
+            (should (eq model (alist-get :default-model-id decorated)))
+            (when (eq agent 'copilot)
+              (should (eq options
+                          (alist-get :default-config-options decorated))))
+            (should (alist-get :chelly-agent decorated))))
+      (delete-directory root t))))
+
 (ert-deftest warashi-agent-shell-contract-test-copilot-client-maker ()
   "Copilot の client-maker は buffer を受け、生成時の command 設定を参照する。"
   (let* ((config (agent-shell-github-make-copilot-config))
@@ -184,6 +209,7 @@ session を確立していないので値は 0 だが、キーが揃っている
   (should (equal '(0 . 0) (func-arity 'shell-maker-busy)))
   (with-temp-buffer
     (should-error (shell-maker-busy))))
+
 
 (provide 'warashi-agent-shell-contract-test)
 ;;; warashi-agent-shell-contract-test.el ends here

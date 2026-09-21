@@ -57,7 +57,7 @@ native Podman を VM と同等とは扱わない。
 ### 専用ユーザーの入口
 
 `modules/nixos/chelly-agent.nix` を workbench で有効にし、`chelly-agent` を追加する。
-既存の `chelly` と Emacs の起動設定はまだ切り替えない。以下は設定適用後の手順であり、
+通常の `chelly` は変更せず、Emacs は `/srv/chelly-workspaces` 内の起動だけを専用入口に向ける。以下は設定適用後の手順であり、
 実機での起動確認が済むまでは、自律作業環境全体の移行完了とは扱わない。
 
 | 対象 | 専用環境での扱い |
@@ -187,8 +187,8 @@ chelly-agent run -- copilot --continue
 目印をもう一度入力せずに答えられることと、以前の会話が表示されることを確認する。
 Claude は初回ログインを求められずに進めること、Copilot も引き続き応答することを
 確認する。これは CLI の会話保存の確認で、プロセスや一時ファイルの復元ではない。
-ACP の新規会話／再開は別途確認し、必要な確認が済むまで通常の `chelly` と
-Emacs の入口は切り替えない。
+ACP の新規会話／再開は別途確認する。通常の `chelly` と専用領域外の
+Emacs の起動は変更しない。
 
 ### Emacs/ACP の専用検証入口
 

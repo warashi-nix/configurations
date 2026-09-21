@@ -167,6 +167,110 @@
               (should (alist-get :chelly-agent (plist-get captured :config))))))
       (delete-directory root t))))
 
+(defmacro warashi-agent-shell-test--capture-start (&rest body)
+  "BODY 中の `agent-shell--start' の引数を返す。"
+  (declare (indent 0))
+  `(let ((captured nil))
+     (cl-letf (((symbol-function 'agent-shell-anthropic-make-claude-code-config)
+                (lambda (&rest _) (list (cons :default-model-id #'ignore))))
+               ((symbol-function 'agent-shell-pi-make-agent-config)
+                (lambda (&rest _) (list (cons :default-model-id #'ignore))))
+               ((symbol-function 'agent-shell--start)
+                (lambda (&rest args) (setq captured args))))
+       ,@body)
+     captured))
+
+(ert-deftest warashi-agent-shell-test-ordinary-variants-route-inside-chelly-workspace ()
+  "通常の Claude/Copilot variant も専用領域では設定を保ったまま専用 runner を使う。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (clone (expand-file-name "owner/repository/clone" root))
+         (alias-parent (make-temp-file "chelly-alias-" t))
+         (alias (expand-file-name "workspace" alias-parent))
+         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+    (unwind-protect
+        (progn
+          (make-directory clone t)
+          (make-symbolic-link root alias)
+          (dolist (directory (list root clone
+                                   (expand-file-name "owner/repository/clone"
+                                                     alias)))
+            (let ((default-directory (file-name-as-directory directory)))
+              (dolist (case '((claude "opus[1m]" "low")
+                              (copilot "gpt-6-astra" "medium")))
+                (let* ((agent (nth 0 case))
+                       (model (nth 1 case))
+                       (effort (nth 2 case))
+                       (captured
+                        (warashi-agent-shell-test--capture-start
+                          (if (eq agent 'claude)
+                              (warashi-agent-shell--start-claude model effort)
+                            (warashi-agent-shell--start-copilot model effort))))
+                       (config (plist-get captured :config))
+                       (client (with-temp-buffer
+                                 (funcall (alist-get :client-maker config)
+                                          (current-buffer)))))
+                  (should (plist-get captured :no-focus))
+                  (should (eq 'new (plist-get captured :session-strategy)))
+                  (should (alist-get :chelly-agent config))
+                  (should (equal model
+                                 (funcall (alist-get :default-model-id config))))
+                  (if (eq agent 'claude)
+                      (should (equal effort
+                                     (alist-get :warashi-thought-level config)))
+                    (should
+                     (equal `(("reasoning_effort" . ,effort))
+                            (funcall
+                             (alist-get :default-config-options config)))))
+                  (should (equal "chelly-agent" (map-elt client :command))))))))
+      (delete-directory alias-parent t)
+      (delete-directory root t))))
+
+(ert-deftest warashi-agent-shell-test-ordinary-variants-refuse-chelly-symlink-escape ()
+  "専用領域に見えて実体が外なら個人 credential へ fallback しない。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (outside (make-temp-file "chelly-outside-" t))
+         (escape (expand-file-name "escape" root))
+         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+    (unwind-protect
+        (progn
+          (make-symbolic-link outside escape)
+          (let ((default-directory (file-name-as-directory escape)))
+            (should-error
+             (warashi-agent-shell-test--capture-start
+               (warashi-agent-shell--start-claude "opus[1m]" "low"))
+             :type 'user-error)
+            (should-error
+             (warashi-agent-shell-test--capture-start
+               (warashi-agent-shell--start-copilot "gpt-6-astra" "medium"))
+             :type 'user-error)))
+      (delete-directory root t)
+      (delete-directory outside t))))
+
+(ert-deftest warashi-agent-shell-test-dedicated-routing-is-linux-only ()
+  "専用領域は Linux 以外で個人 provider へ fallback しない。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (warashi-agent-shell-chelly--workspace-root root)
+         (default-directory (file-name-as-directory root))
+         (system-type 'darwin))
+    (unwind-protect
+        (should-error
+         (warashi-agent-shell-test--capture-start
+           (warashi-agent-shell--start-claude "opus[1m]" "low"))
+         :type 'user-error)
+      (delete-directory root t))))
+
+(ert-deftest warashi-agent-shell-test-pi-refuses-dedicated-workspace ()
+  "専用 runner 非対応の Pi は個人 credential で起動しない。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (warashi-agent-shell-chelly--workspace-root root)
+         (default-directory (file-name-as-directory root)))
+    (unwind-protect
+        (should-error
+         (warashi-agent-shell-test--capture-start
+           (warashi-agent-shell--start-pi "athena/ornith-1-5-9b"))
+         :type 'user-error)
+      (delete-directory root t))))
+
 (defvar warashi-agent-shell-test--state nil
   "テスト用の `agent-shell--state' の戻り値。")
 
@@ -211,19 +315,6 @@
 
 ;;;; 起動コマンド
 
-(defmacro warashi-agent-shell-test--capture-start (&rest body)
-  "BODY 中の `agent-shell--start' の引数を返す。"
-  (declare (indent 0))
-  `(let ((captured nil))
-     (cl-letf (((symbol-function 'agent-shell-anthropic-make-claude-code-config)
-                (lambda (&rest _) (list (cons :default-model-id #'ignore))))
-               ((symbol-function 'agent-shell-pi-make-agent-config)
-                (lambda (&rest _) (list (cons :default-model-id #'ignore))))
-               ((symbol-function 'agent-shell--start)
-                (lambda (&rest args) (setq captured args))))
-       ,@body)
-     captured))
-
 (ert-deftest warashi-agent-shell-test-start-claude-config ()
   "model と thought level が config に載り、新規 session を割り込み無しで起動する。"
   (let* ((captured (warashi-agent-shell-test--capture-start
@@ -237,7 +328,8 @@
     (should (plist-get captured :no-focus))
     ;; :default-model-id は session 確立後に funcall される。
     (should (equal "opus[1m]" (funcall (alist-get :default-model-id config))))
-    (should (equal "low" (alist-get :warashi-thought-level config)))))
+    (should (equal "low" (alist-get :warashi-thought-level config)))
+    (should-not (alist-get :chelly-agent config))))
 
 (ert-deftest warashi-agent-shell-test-start-claude-keeps-model-per-shell ()
   "先に起動した shell の model が、後の起動で書き換わらない。
@@ -305,8 +397,12 @@
          (agent-shell-github-default-model-id "other-model")
          (agent-shell-github-acp-command '("custom-copilot" "--acp" "--no-color"))
          (agent-shell-github-environment '("TEST=value"))
-         (captured (warashi-agent-shell-test--capture-start
-                     (warashi-agent-shell--start-copilot "gpt-5.6-luna" "low")))
+         (captured
+          (cl-letf (((symbol-function 'file-truename)
+                     (lambda (&rest _)
+                       (ert-fail "TRAMP routing resolved a remote path"))))
+            (warashi-agent-shell-test--capture-start
+              (warashi-agent-shell--start-copilot "gpt-5.6-luna" "low"))))
          (config (plist-get captured :config))
          (client-args nil))
     (should (plist-get captured :new-session))
@@ -316,6 +412,7 @@
     (should (equal '(("reasoning_effort" . "low"))
                    (funcall (alist-get :default-config-options config))))
     (should-not (alist-get :warashi-thought-level config))
+    (should-not (alist-get :chelly-agent config))
     (cl-letf (((symbol-function 'agent-shell--make-acp-client)
                (lambda (&rest args)
                  (should (equal default-directory "/ssh:athena:/work/project/"))
@@ -673,6 +770,7 @@ header は再描画のたびに project 名を引くので、都度 process を�
     (let ((default-directory "/ssh:host:/home/me/src/other/"))
       (should (equal "other"
                      (warashi-agent-shell--project-name-with-memo "other"))))))
+
 
 (provide 'warashi-agent-shell-test)
 ;;; warashi-agent-shell-test.el ends here

@@ -27,6 +27,41 @@
       (user-error "chelly-agent ACP must start inside %s" root))
     directory))
 
+(defun warashi-agent-shell-chelly--route-config
+    (agent provider-config directory)
+  "専用領域なら AGENT の PROVIDER-CONFIG を保護して返す。
+ローカルの DIRECTORY だけ実体を確認し、リモートと専用領域外では元の設定を返す。"
+  (if (file-remote-p directory)
+      provider-config
+    (let* ((lexical-directory
+            (file-name-as-directory (expand-file-name directory)))
+           (lexical-root
+            (file-name-as-directory
+             (expand-file-name warashi-agent-shell-chelly--workspace-root)))
+           (canonical-directory
+            (file-name-as-directory (file-truename lexical-directory)))
+           (canonical-root
+            (file-name-as-directory (file-truename lexical-root)))
+           (apparent-dedicated
+            (or (equal lexical-directory lexical-root)
+                (string-prefix-p lexical-root lexical-directory)))
+           (dedicated
+            (or (equal canonical-directory canonical-root)
+                (file-in-directory-p canonical-directory canonical-root))))
+      (cond
+       ((and apparent-dedicated (not dedicated))
+        (user-error "chelly-agent ACP path escapes dedicated workspace: %s"
+                    lexical-directory))
+       ((not dedicated) provider-config)
+       ((not (eq system-type 'gnu/linux))
+        (user-error "chelly-agent ACP is only available on the workbench Linux host"))
+       ((not (memq agent '(claude copilot)))
+        (user-error "chelly-agent ACP does not support %s; refusing owner credentials"
+                    agent))
+       (t
+        (warashi-agent-shell-chelly--config
+         agent canonical-directory provider-config))))))
+
 (defun warashi-agent-shell-chelly--on-request (original &rest args)
   "専用 STATE の要求だけ制限し、それ以外は ORIGINAL に ARGS を渡す。"
   (let* ((state (plist-get args :state))
@@ -61,20 +96,25 @@
 ;; restart/reload は公開入口を通らず、client-maker より前に dir-local を読む。
 (advice-add 'agent-shell--start :around #'warashi-agent-shell-chelly--start)
 
-(defun warashi-agent-shell-chelly--config (agent directory)
-  "AGENT を専用 DIRECTORY で起動する config を作る。"
+(defun warashi-agent-shell-chelly--config (agent directory &optional provider-config)
+  "AGENT を専用 DIRECTORY で起動する config を作る。
+PROVIDER-CONFIG が非 nil なら model/effort を含むその設定を保護して使う。"
   (let* ((directory (warashi-agent-shell-chelly--directory directory))
-         (config (pcase agent
-                   ('claude
-                    (require 'agent-shell-anthropic)
-                    (agent-shell-anthropic-make-claude-code-config))
-                   ('copilot
-                    (require 'agent-shell-github)
-                    (agent-shell-github-make-copilot-config))
-                   (_ (user-error "Unsupported chelly-agent ACP agent: %s" agent))))
+         (config
+          (or provider-config
+              (pcase agent
+                ('claude
+                 (require 'agent-shell-anthropic)
+                 (agent-shell-anthropic-make-claude-code-config))
+                ('copilot
+                 (require 'agent-shell-github)
+                 (agent-shell-github-make-copilot-config))
+                (_ (user-error "Unsupported chelly-agent ACP agent: %s" agent)))))
          (command (if (eq agent 'claude)
                       '("run" "--" "claude-agent-acp")
                     '("run" "--" "copilot" "--acp"))))
+    (unless (memq agent '(claude copilot))
+      (user-error "Unsupported chelly-agent ACP agent: %s" agent))
     (setf (alist-get :chelly-agent config) directory)
     (dolist (key '(:buffer-name :mode-line-name))
       (setf (alist-get key config) (concat (alist-get key config) " [chelly-agent]")))

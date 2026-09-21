@@ -720,10 +720,13 @@ GPT-6 Astra に low / medium を用意する。CLI の =--model= だけでは AC
 定義した variant は =warashi-agent-shell-project-switch= から名前で選べる。
 =project-switch-commands= への登録は [[*project.el][project.el]] にある。
 
-workbench の専用環境を検証するときだけ、ホストの =/srv/chelly-workspaces=
-以下を =default-directory= にして =M-x warashi-agent-shell-chelly-start=
-を使う。Claude / Copilot を選び、=C-u M-x= なら専用環境の既存会話を選んで
-再開する。通常の起動コマンドや =agent-shell-command-prefix= は変更しない。
+workbench の =/srv/chelly-workspaces= 内では、上の Claude / Copilot の
+起動コマンドが同じ model・effort のまま専用 =chelly-agent= を使う。
+表示や focus を奪わない挙動も同じで、会話は既存の =C-c a= の一覧から開く。
+専用領域外の通常起動や =agent-shell-command-prefix= は変更しない。
+Pi は専用 runner に対応していないため、専用領域では起動を拒否する。
+明示的に専用 agent を選ぶ =M-x warashi-agent-shell-chelly-start= も残し、
+=C-u M-x= なら専用環境の既存会話を選んで再開する。
 この入口はホストのファイル・端末操作を ACP で代理実行せず、本人の MCP・
 認証設定や clone の dir-local variables も適用しない。Emacs 側の自動
 transcript 保存は無効にし、会話の保存は agent 側の専用 volume に任せる。
