@@ -150,6 +150,7 @@
 
 (ert-deftest warashi-agent-shell-test-chelly-start-and-resume ()
   "専用入口は新規 buffer で起動し、再開時だけ既存 session の選択を行う。"
+  (skip-unless (eq system-type 'gnu/linux))
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (warashi-chelly-workspace-root (file-name-as-directory root))
          (default-directory root)
@@ -182,6 +183,7 @@
 
 (ert-deftest warashi-agent-shell-test-ordinary-variants-route-inside-chelly-workspace ()
   "通常の Claude/Copilot variant も専用領域では設定を保ったまま専用 runner を使う。"
+  (skip-unless (eq system-type 'gnu/linux))
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (clone (expand-file-name "owner/repository/clone" root))
          (alias-parent (make-temp-file "chelly-alias-" t))
