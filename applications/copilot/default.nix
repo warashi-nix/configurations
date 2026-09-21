@@ -64,9 +64,30 @@ let
     + builtins.readFile ./copilot-instructions.md
     + config.warashi.agent-instructions.grilling
   );
+
+  # activation が ~/.copilot に書くものを、別環境へ持ち出せる形で束ねる。
+  # skills は agent-skills が copilot 向けに選別した bundle をそのまま使う。
+  skillsBundle = config.programs.agent-skills.targetBundlePaths.copilot or null;
+  bundle = pkgs.runCommand "copilot-config-bundle" { } ''
+    mkdir -p "$out"
+    cp ${instructions} "$out/copilot-instructions.md"
+    cp ${settings-overrides} "$out/settings.json"
+    ${if skillsBundle == null then ''mkdir "$out/skills"'' else ''cp -r ${skillsBundle} "$out/skills"''}
+  '';
 in
 {
-  home = {
+  options.warashi.copilot.bundle = lib.mkOption {
+    type = lib.types.package;
+    readOnly = true;
+    description = ''
+      copilot-instructions.md、settings の override、skills を束ねた store path。
+      activation が ~/.copilot に書く生成物と同じもので、認証状態や履歴は含まない。
+    '';
+  };
+
+  config.warashi.copilot.bundle = bundle;
+
+  config.home = {
     activation = {
       warashi-copilot-settings-merger = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         merge() {

@@ -162,6 +162,9 @@ runCommand "chelly-agent-config-check"
     test -f ${ownerHome.warashi.claude.bundle}/output-styles/grilling.md
     test -f ${ownerHome.warashi.claude.bundle}/skills/pair-programming/SKILL.md
     grep -Fq '"outputStyle": "grilling"' ${ownerHome.warashi.claude.bundle}/settings.json
+    test -f ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
+    test -f ${ownerHome.warashi.copilot.bundle}/settings.json
+    test -f ${ownerHome.warashi.copilot.bundle}/skills/pair-programming/SKILL.md
     if ${runnerCommand} run >stdout 2>stderr; then
       echo "agent runner accepted a different account" >&2
       exit 1
