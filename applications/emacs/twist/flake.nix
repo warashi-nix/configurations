@@ -61,6 +61,7 @@
             "warashi-chelly-workspace"
             "warashi-git-wit"
             "warashi-pkm-capture"
+            "warashi-project-workspace"
             "warashi-init"
             "warashi-early-init"
           ];
@@ -166,6 +167,9 @@
               };
             warashi-pkm-capture = _: _: {
               src = ./packages/warashi-pkm-capture;
+            };
+            warashi-project-workspace = _: _: {
+              src = ./packages/warashi-project-workspace;
             };
             warashi-init =
               _: _:

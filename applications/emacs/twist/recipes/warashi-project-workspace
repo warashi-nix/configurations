@@ -1,0 +1,2 @@
+(warashi-project-workspace :fetcher github
+                           :repo "Warashi/configurations")
