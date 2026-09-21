@@ -26,6 +26,8 @@ extract_file() {
 }
 
 extract_file /home/warashi/.local/bin/chelly-entrypoint "${entrypoint}"
+extract_file /home/warashi/.local/bin/chelly-apply-agent-config "${work}/chelly-apply-agent-config"
+chmod +x "${work}/chelly-apply-agent-config"
 extract_file /etc/chelly/AGENTS.md "${work}/container-instructions"
 grep -Fxq 'RUN ln -s /etc/chelly/AGENTS.md /etc/claude-code/CLAUDE.md' "${dockerfile}"
 chmod +x "${entrypoint}"
@@ -199,3 +201,69 @@ run_real_case wrong-type \
 run_real_case impure \
   "{ outputs = { self }: { devShells.\"${system}\".default = if builtins.currentSystem == \"${system}\" then ${derivation} else null; }; }" \
   "ACP response <one two> <three*>" "currentSystem"
+
+# 専用環境では CHELLY_AGENT_CONFIG が指す bundle を volume 側の設定に適用する。
+# 通常入口は本人の実 ~/.claude を mount しているので、変数が無ければ何も触らない。
+run_config_case() {
+  name="$1"
+  config_env="$2"
+  case_dir="${work}/config-${name}"
+  bundle="${case_dir}/bundle"
+  mkdir -p "${case_dir}/bin" "${case_dir}/home/.claude/skills/stale" "${case_dir}/home/.copilot" \
+    "${bundle}/claude/skills/pair/nested" "${bundle}/claude/output-styles" "${bundle}/copilot/skills/pair"
+  make_agent "${case_dir}/bin"
+  cat >"${case_dir}/bin/nix" <<'EOF'
+#!/bin/sh
+case "$1" in config) printf 'x86_64-linux\n' ;; eval) printf 'none\n' ;; esac
+EOF
+  chmod +x "${case_dir}/bin/nix"
+  printf 'memory\n' >"${bundle}/claude/CLAUDE.md"
+  printf '{"outputStyle":"grilling","env":{"A":"bundle","B":"bundle"},"permissions":{"allow":["b"]}}\n' \
+    >"${bundle}/claude/settings.json"
+  printf 'style\n' >"${bundle}/claude/output-styles/grilling.md"
+  printf 'skill\n' >"${bundle}/claude/skills/pair/SKILL.md"
+  printf 'deep\n' >"${bundle}/claude/skills/pair/nested/file"
+  printf 'instructions\n' >"${bundle}/copilot/copilot-instructions.md"
+  printf '{"theme":"auto","disabledSkills":["b"],"footer":{"showAgent":true}}\n' >"${bundle}/copilot/settings.json"
+  printf 'skill\n' >"${bundle}/copilot/skills/pair/SKILL.md"
+  printf '{"runtime":"kept","env":{"A":"runtime","C":"runtime"},"permissions":{"allow":["a"]}}\n' \
+    >"${case_dir}/home/.claude/settings.json"
+  printf 'old\n' >"${case_dir}/home/.claude/skills/stale/SKILL.md"
+  printf 'old\n' >"${case_dir}/home/.claude/skills/pair-old-file"
+  printf '{"runtime":"kept","disabledSkills":["a"],"footer":{"showBranch":true}}\n' \
+    >"${case_dir}/home/.copilot/settings.json"
+
+  (
+    cd "${case_dir}"
+    CHELLY_AGENT_CONFIG="${config_env}" CLAUDE_CONFIG_DIR="${case_dir}/home/.claude" \
+      CHELLY_NIX_BIN="${case_dir}/bin" HOME="${case_dir}/home" PATH="${case_dir}/bin:${PATH}" \
+      "${entrypoint}" agent one
+  ) >"${case_dir}/stdout" 2>"${case_dir}/stderr"
+  expect_output "${case_dir}/stdout" "ACP response <one>"
+  expect_output "${case_dir}/stderr" ""
+}
+
+run_config_case applied "${work}/config-applied/bundle"
+expect_output "${work}/config-applied/home/.claude/CLAUDE.md" "memory"
+expect_output "${work}/config-applied/home/.claude/output-styles/grilling.md" "style"
+expect_output "${work}/config-applied/home/.claude/skills/pair/nested/file" "deep"
+test -f "${work}/config-applied/home/.claude/skills/stale/SKILL.md"
+expect_output "${work}/config-applied/home/.copilot/copilot-instructions.md" "instructions"
+expect_output "${work}/config-applied/home/.copilot/skills/pair/SKILL.md" "skill"
+# Claude は host の activation と同じ jq の * で、object は深く、配列は bundle 側で置き換える。
+jq -e '.runtime == "kept" and .outputStyle == "grilling"
+  and .env == {A: "bundle", B: "bundle", C: "runtime"} and .permissions.allow == ["b"]' \
+  "${work}/config-applied/home/.claude/settings.json" >/dev/null
+# Copilot は host の deep_merge と同じで、配列は和集合にする。
+jq -e '.runtime == "kept" and .theme == "auto" and (.disabledSkills | sort) == ["a", "b"]
+  and .footer == {showAgent: true, showBranch: true}' \
+  "${work}/config-applied/home/.copilot/settings.json" >/dev/null
+test ! -e "${work}/config-applied/home/.claude/settings.json.tmp"
+test ! -e "${work}/config-applied/home/.copilot/settings.json.tmp"
+
+run_config_case untouched ""
+test ! -e "${work}/config-untouched/home/.claude/CLAUDE.md"
+test ! -e "${work}/config-untouched/home/.copilot/copilot-instructions.md"
+expect_output "${work}/config-untouched/home/.claude/skills/pair-old-file" "old"
+jq -e '. == {runtime: "kept", env: {A: "runtime", C: "runtime"}, permissions: {allow: ["a"]}}' \
+  "${work}/config-untouched/home/.claude/settings.json" >/dev/null

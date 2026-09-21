@@ -374,6 +374,74 @@ RUN mkdir -p ~/.config/nix && \
 RUN mkdir -p ~/.config/nixpkgs && \
     echo "{ allowUnfree = true; }" > ~/.config/nixpkgs/config.nix
 
+# 専用環境の ~/.claude と ~/.copilot は Podman volume なので、ホストの home-manager の
+# activation では書けない。同じ生成物 (CLAUDE.md、settings の override、output-styles、
+# skills、copilot-instructions.md) を起動時に volume へ写す。呼ぶのは CHELLY_AGENT_CONFIG が
+# 指す bundle があるときだけで、通常入口は本人の実 ~/.claude を mount しているため触らない。
+# settings は volume にある runtime の値を残して bundle を重ねる。Claude は host と同じ
+# jq の * (配列は置き換え)、Copilot は host の deep_merge と同じ配列の和集合にする。
+COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-apply-agent-config
+#!/bin/sh
+set -eu
+
+bundle="$1"
+claude_dir="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
+copilot_dir="${HOME}/.copilot"
+
+copy_tree() {
+  rm -rf "$2"
+  mkdir -p "$(dirname "$2")"
+  cp -R "$1" "$2"
+}
+
+merge_settings() {
+  filter="$1" target="$2" override="$3"
+  mkdir -p "$(dirname "${target}")"
+  if [ ! -s "${target}" ]; then
+    printf '{}\n' >"${target}"
+  fi
+  jq -s "${filter}" "${target}" "${override}" >"${target}.tmp"
+  mv "${target}.tmp" "${target}"
+}
+
+if [ -f "${bundle}/claude/CLAUDE.md" ]; then
+  mkdir -p "${claude_dir}"
+  cp "${bundle}/claude/CLAUDE.md" "${claude_dir}/CLAUDE.md"
+fi
+if [ -d "${bundle}/claude/output-styles" ]; then
+  copy_tree "${bundle}/claude/output-styles" "${claude_dir}/output-styles"
+fi
+for skill in "${bundle}"/claude/skills/*/; do
+  [ -d "${skill}" ] || continue
+  copy_tree "${skill}" "${claude_dir}/skills/$(basename "${skill}")"
+done
+if [ -f "${bundle}/claude/settings.json" ]; then
+  merge_settings '.[0] * .[1]' "${claude_dir}/settings.json" "${bundle}/claude/settings.json"
+fi
+
+if [ -f "${bundle}/copilot/copilot-instructions.md" ]; then
+  mkdir -p "${copilot_dir}"
+  cp "${bundle}/copilot/copilot-instructions.md" "${copilot_dir}/copilot-instructions.md"
+fi
+for skill in "${bundle}"/copilot/skills/*/; do
+  [ -d "${skill}" ] || continue
+  copy_tree "${skill}" "${copilot_dir}/skills/$(basename "${skill}")"
+done
+if [ -f "${bundle}/copilot/settings.json" ]; then
+  merge_settings '
+    def deep_merge($a; $b):
+      if ($a | type == "object") and ($b | type == "object") then
+        reduce ($b | keys_unsorted[]) as $k ($a; .[$k] = deep_merge($a[$k]; $b[$k]))
+      elif ($a | type == "array") and ($b | type == "array") then
+        ($a + $b) | unique
+      else
+        $b
+      end;
+    deep_merge(.[0]; .[1])
+  ' "${copilot_dir}/settings.json" "${bundle}/copilot/settings.json"
+fi
+EOF
+
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
@@ -385,6 +453,12 @@ export COPILOT_CUSTOM_INSTRUCTIONS_DIRS
 if [ -n "${CHELLY_NIX_BIN:-}" ]; then
   PATH="${CHELLY_NIX_BIN}:${PATH}"
   export PATH
+fi
+
+# 専用環境の volume に、ホストと同じ Claude/Copilot の設定を写す。失敗は nix の
+# インストールと同じく起動を止める。設定が無いまま agent が動くと本人の指示が効かない。
+if [ -n "${CHELLY_AGENT_CONFIG:-}" ]; then
+  "$(dirname "$0")/chelly-apply-agent-config" "${CHELLY_AGENT_CONFIG}" || exit 1
 fi
 
 # named volume の所有者をコンテナのユーザーに合わせる。podman はイメージ側のマウント先の
