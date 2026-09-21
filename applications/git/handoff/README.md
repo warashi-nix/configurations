@@ -73,20 +73,24 @@ the owner's repository is the only record.
 
 ```console
 cd /absolute/project            # on the branch the agent should start from
-chelly-handoff create fix-issue-123
-chelly-handoff fetch fix-issue-123
-chelly-handoff remove fix-issue-123 [--force]
+chelly-handoff create [fix-issue-123]
+chelly-handoff fetch [fix-issue-123]
+chelly-handoff remove [fix-issue-123] [--force]
 ```
 
 `create` bundles the current `HEAD` and lets `chelly-agent` clone it into
-`/srv/chelly-workspaces/handoff-NAME` on a branch with the owner's current
-branch name, without `origin`, hooks, or the owner's Git configuration. It then
-adds the remote `handoff-NAME` whose URL is a bundle file under
-`.git/chelly-handoff/`, and records the fixed base in
-`remote.handoff-NAME.chelly-base`. `NAME` starts with an ASCII letter or digit
-and then contains only ASCII letters, digits, `.`, `_`, or `-`. An existing
-remote or workspace is rejected without changes. Uncommitted owner changes are
-not transferred.
+`/srv/chelly-workspaces/PROJECT/NAME` on a branch with the owner's current
+branch name, without `origin`, hooks, or the owner's Git configuration.
+`PROJECT` is the directory name of the owner's repository, so the same `NAME`
+can be in use for different projects at once. `NAME` defaults to the current
+branch name; pass it explicitly to run several workspaces from one branch or
+when the branch name contains `/`. It starts with an ASCII letter or digit and
+then contains only ASCII letters, digits, `.`, `_`, or `-`. `create` then adds
+the remote `handoff-NAME` whose URL is a bundle file under
+`.git/chelly-handoff/`, and records the fixed base and workspace path in
+`remote.handoff-NAME.chelly-base` and `remote.handoff-NAME.chelly-workspace`.
+An existing remote or workspace is rejected without changes. Uncommitted owner
+changes are not transferred.
 
 `fetch` requires the agent workspace to be clean, on the expected branch, and
 ahead of the base. It streams `BASE..branch` back as a bundle, verifies it,

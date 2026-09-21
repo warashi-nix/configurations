@@ -67,7 +67,7 @@ class HandoffTest(unittest.TestCase):
         self.write(self.repo, "tracked", "base\n")
         self.commit(self.repo, "base")
         self.base = self.rev(self.repo)
-        self.workspace = self.agent_root / "handoff-fix"
+        self.workspace = self.agent_root / "source" / "fix"
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -126,12 +126,35 @@ class HandoffTest(unittest.TestCase):
             self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-base").stdout.decode().strip(),
             self.base,
         )
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-workspace").stdout.decode().strip(),
+            str(self.workspace),
+        )
         duplicate = self.handoff("create", "fix", check=False)
         self.assertEqual(duplicate.returncode, 1)
         self.assertIn(b"already exists", duplicate.stderr)
 
+    def test_create_defaults_name_to_branch_and_scopes_by_project(self):
+        result = self.handoff("create")
+        self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / "source" / "main"))
+        self.assertEqual(self.rev(self.agent_root / "source" / "main"), self.base)
+        self.assertTrue(self.git("-C", self.repo, "config", "remote.handoff-main.url").stdout)
+        # 別 project では同じ名前をそのまま使える。
+        other = self.root / "other"
+        self.git("clone", "-q", self.repo, other)
+        result = subprocess.run(
+            ["bash", str(HANDOFF), "create"], cwd=other, stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, check=True,
+        )
+        self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / "other" / "main"))
+        self.assertTrue((self.agent_root / "source" / "main").is_dir())
+        self.git("-C", self.repo, "switch", "-q", "-c", "feature/x")
+        result = self.handoff("create", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"NAME", result.stderr)
+
     def test_create_rejects_bad_names_and_detached_head(self):
-        for name in ("-x", "a/b", "", "a b"):
+        for name in ("-x", "a/b", "a b", "..", ".hidden"):
             result = self.handoff("create", name, check=False)
             self.assertNotEqual(result.returncode, 0, name)
         self.assertFalse(self.workspace.exists())
@@ -193,6 +216,7 @@ class HandoffTest(unittest.TestCase):
 
         self.handoff("remove", "fix", "--force")
         self.assertFalse(self.workspace.exists())
+        self.assertFalse(self.workspace.parent.exists())
         self.assertEqual(self.git("-C", self.repo, "remote").stdout, b"")
         self.assertFalse((self.repo / ".git" / "chelly-handoff" / "fix.bundle").exists())
         self.assertEqual(
