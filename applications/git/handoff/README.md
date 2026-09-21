@@ -7,9 +7,11 @@ run hooks, sign commits, publish refs, or change either repository.
 
 ## Trust and policy
 
-The object repository must be an independently initialized, trusted bare
-receiver. This command is not a sandbox for an attacker-created `.git`
-directory. The policy repository must be the owner's trusted non-bare checkout.
+The object repository must be a trusted Git directory that the owner controls,
+such as the owner's own `.git` after fetching the candidate objects into it, or
+an independently initialized bare receiver. This command is not a sandbox for
+an attacker-created `.git` directory. The policy repository must be the owner's
+trusted non-bare checkout.
 
 Policy is fixed before checking:
 
@@ -59,3 +61,47 @@ additions, and `2` for invalid input, unsupported history, unreadable policy, or
 Git errors. Findings include the fixed candidate commit, JSON-quoted path,
 trusted rule origin, line, and pattern. A successful check prints fixed
 `BASE`/`TIP` IDs and the checked commit count.
+
+## `chelly-handoff`
+
+`chelly-handoff` moves Git bundles between the owner's repository and a named
+clone owned by the dedicated `chelly-agent` account. Review and integration are
+ordinary Git operations on a remote-tracking branch, so Magit or any Git client
+can show the diff, cherry-pick, or merge with the owner's usual signing
+configuration. The command keeps no state file: the remote `handoff-NAME` in
+the owner's repository is the only record.
+
+```console
+cd /absolute/project            # on the branch the agent should start from
+chelly-handoff create fix-issue-123
+chelly-handoff fetch fix-issue-123
+chelly-handoff remove fix-issue-123 [--force]
+```
+
+`create` bundles the current `HEAD` and lets `chelly-agent` clone it into
+`/srv/chelly-workspaces/handoff-NAME` on a branch with the owner's current
+branch name, without `origin`, hooks, or the owner's Git configuration. It then
+adds the remote `handoff-NAME` whose URL is a bundle file under
+`.git/chelly-handoff/`, and records the fixed base in
+`remote.handoff-NAME.chelly-base`. `NAME` starts with an ASCII letter or digit
+and then contains only ASCII letters, digits, `.`, `_`, or `-`. An existing
+remote or workspace is rejected without changes. Uncommitted owner changes are
+not transferred.
+
+`fetch` requires the agent workspace to be clean, on the expected branch, and
+ahead of the base. It streams `BASE..branch` back as a bundle, verifies it,
+fetches it into `refs/remotes/handoff-NAME/branch`, and finally runs
+`git-check-new-ignored` with the owner's own Git directory as the object
+repository. The exit status is the checker's, so findings return `1` while the
+fetched ref stays available for inspection. Repeat `fetch` after the agent
+adds commits.
+
+`remove` deletes the agent workspace, the remote, its remote-tracking refs, and
+the bundle. Without `--force` it refuses when the workspace has uncommitted
+changes or a `HEAD` that this repository has not fetched yet.
+
+The owner's SSH agent and Git identity variables are not passed to the
+transport, and nothing is ever pushed. `chelly-agent` must be on the host
+`PATH`; it is started from `/srv/chelly-workspaces` so candidate development
+shells are never evaluated for transport. `CHELLY_HANDOFF_WORKSPACES` overrides
+that directory for tests only.

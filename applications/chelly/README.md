@@ -101,8 +101,8 @@ chelly-agent build &&
 閲覧のためにホストの `safe.directory = "*"` を設定したり、
 作業 clone の Git 設定・hooks を信頼する clone にコピーしたりしない。
 
-成果は固定した commit の Git objects だけを、本人側で初期化した独立の検証用
-clone に受け取る。新規追跡ファイルの履歴検査には
+成果は Git bundle 経由で commit の objects だけを本人の repo の remote-tracking
+branch に受け取る。新規追跡ファイルの履歴検査には
 [`git-check-new-ignored`](../git/handoff/README.md) を使う。
 agent が変更した ignore ルールではなく、信頼する base と本人側のルールで判定する。
 これは差分の確認や機密情報の検査全般を代替しない。署名は本人側の既存設定で行い、
@@ -239,6 +239,32 @@ Copilot は上の `'claude` を `'copilot` に置き換えて同じ確認を行�
 再開は `C-u M-x warashi-agent-shell-chelly-start` でも実行できる。
 接続・認証・会話一覧取得が失敗したら、ホストのファイル能力や通常ログインを
 追加して回避せず、token を伏せたエラーを確認する。
+
+### 依頼から取り込みまで
+
+専用の会話管理画面や取り込み画面は作らず、いつもの agent-shell と Magit を使う。
+Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/README.md) が補助し、
+状態は本人の repo の remote `handoff-名前` だけに置く。
+
+| 段階 | 操作 |
+| --- | --- |
+| clone 作成 | 本人の repo で基点の branch を checkout し、`chelly-handoff create 名前` |
+| 起動・対話 | `/srv/chelly-workspaces/handoff-名前` で既存の `warashi-agent-shell-claude-*` / `copilot-*` を使う。会話は `C-c a` から開く |
+| 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch 名前` |
+| 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。基点は `remote.handoff-名前.chelly-base` |
+| 取り込み | Magit の cherry-pick や merge。既存設定で SSH 署名され、本人の hooks が動く |
+| 後片付け | `chelly-handoff remove 名前`。未取得の commit や未コミット変更があれば止まる |
+
+`create` は現在の HEAD だけを bundle で渡し、専用ユーザーが `origin` も hooks も
+持たない clone を作る。未コミット変更は転送しない。`fetch` は clone が clean で
+基点より進んでいるときだけ bundle を受け取り、`git-check-new-ignored` で
+新規追跡ファイルを検査する。検査に引っかかっても ref は残るので Magit で確認できるが、
+取り込む前に agent に直させる。修正後は `fetch` を繰り返す。
+
+専用領域内では同じ model・effort のまま `chelly-agent` を使い、領域外の通常起動は
+変えない。Pi は専用 runner 非対応のため領域内では拒否する。
+署名鍵・socket・本人の Git 設定は専用環境へ渡さず、agent の Git 設定・hooks も
+本人側に持ち込まない。macOS/TRAMP、push・PR 作成は対象外。
 
 ### proxy socket に旧権限が残っている場合
 

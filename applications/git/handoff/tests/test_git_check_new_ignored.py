@@ -52,7 +52,7 @@ class IntakeTest(unittest.TestCase):
 
     def git(self, *args, check=True, input=None):
         return subprocess.run(
-            ["git", *args],
+            ["git", "-c", "maintenance.auto=false", *args],
             env=self.env,
             input=input,
             stdout=subprocess.PIPE,
@@ -137,6 +137,15 @@ class IntakeTest(unittest.TestCase):
         self.assertIn(f"BASE {self.base}", result.stdout.decode())
         self.assertIn(f"TIP {tip}", result.stdout.decode())
         self.assertIn("commits 1", result.stdout.decode())
+
+    def test_owner_git_directory_can_serve_as_object_repository(self):
+        self.set_base_ignore("*.secret\n")
+        self.write(self.candidate, "leak.secret", "x")
+        tip = self.commit(self.candidate, "fetched into owner repo")
+        self.git("-C", str(self.policy), "fetch", "-q", str(self.candidate), f"{tip}:refs/remotes/agent/main")
+        result = self.check(tip="refs/remotes/agent/main", objects=self.policy / ".git")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn('"leak.secret"', result.stdout.decode())
 
     def test_global_root_nested_and_info_rules_with_negation(self):
         self.set_base_ignore("*.log\n!root.log\nbuild/\n", "*.tmp\n!keep.tmp\n")

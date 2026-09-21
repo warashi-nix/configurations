@@ -129,13 +129,7 @@ def require_absolute(path, label):
 
 
 def validate_repositories(object_repo, policy_repo):
-    object_bare = git(
-        object_repo,
-        ["rev-parse", "--is-bare-repository"],
-        object_repo=True,
-    ).stdout.strip()
-    if object_bare != b"true":
-        raise IntakeError("object repository must be bare")
+    git(object_repo, ["rev-parse", "--git-dir"], object_repo=True)
     policy_bare = git(policy_repo, ["rev-parse", "--is-bare-repository"]).stdout.strip()
     if policy_bare != b"false":
         raise IntakeError("policy repository must be a non-bare checkout")
