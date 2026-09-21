@@ -4,7 +4,7 @@
 
 ;; Author: Shinnosuke Sawada-Dazai <shin@warashi.dev>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (agent-shell "0.77.2"))
+;; Package-Requires: ((emacs "29.1") (agent-shell "0.77.2") (warashi-chelly-workspace "0.1.0"))
 ;; Keywords: convenience, tools
 
 ;;; Commentary:

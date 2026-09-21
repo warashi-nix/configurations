@@ -18,7 +18,7 @@
 (ert-deftest warashi-agent-shell-test-chelly-start-guard-keeps-normal-dir-locals ()
   "実際の dir-local 設定は専用起動だけ無効にし、通常起動では維持する。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
-         (warashi-agent-shell-chelly--workspace-root root)
+         (warashi-chelly-workspace-root root)
          (enable-local-variables t))
     (unwind-protect
         (progn
@@ -38,7 +38,7 @@
 (ert-deftest warashi-agent-shell-test-chelly-restart-disables-dir-locals-before-client ()
   "上流の restart/reload でも新しい buffer の dir-local 適用前から無効にする。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
-         (warashi-agent-shell-chelly--workspace-root root)
+         (warashi-chelly-workspace-root root)
          (enable-local-variables t)
          (enable-local-eval t))
     (unwind-protect
@@ -101,7 +101,7 @@
   "TRAMP、対象外のパス、対象外へ向く symlink は入口で拒否する。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (outside (make-temp-file "chelly-outside-" t))
-         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+         (warashi-chelly-workspace-root (file-name-as-directory root)))
     (unwind-protect
         (progn
           (should (equal (file-name-as-directory (file-truename root))
@@ -118,7 +118,7 @@
 (ert-deftest warashi-agent-shell-test-chelly-client-keeps-isolation-on-recreation ()
   "client 再生成でも専用入口と buffer-local な制限を保持し、個人の設定を渡さない。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
-         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root))
+         (warashi-chelly-workspace-root (file-name-as-directory root))
          (agent-shell-command-prefix '("personal-launcher"))
          (agent-shell-text-file-capabilities t)
          (agent-shell-mcp-servers '(((name . "personal")))))
@@ -151,7 +151,7 @@
 (ert-deftest warashi-agent-shell-test-chelly-start-and-resume ()
   "専用入口は新規 buffer で起動し、再開時だけ既存 session の選択を行う。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
-         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root))
+         (warashi-chelly-workspace-root (file-name-as-directory root))
          (default-directory root)
          (agent-shell-command-prefix '("personal-launcher")))
     (unwind-protect
@@ -186,7 +186,7 @@
          (clone (expand-file-name "owner/repository/clone" root))
          (alias-parent (make-temp-file "chelly-alias-" t))
          (alias (expand-file-name "workspace" alias-parent))
-         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+         (warashi-chelly-workspace-root (file-name-as-directory root)))
     (unwind-protect
         (progn
           (make-directory clone t)
@@ -230,7 +230,7 @@
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (outside (make-temp-file "chelly-outside-" t))
          (escape (expand-file-name "escape" root))
-         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+         (warashi-chelly-workspace-root (file-name-as-directory root)))
     (unwind-protect
         (progn
           (make-symbolic-link outside escape)
@@ -251,7 +251,7 @@
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (outside (make-temp-file "chelly-outside-" t))
          (clone (expand-file-name "configurations/main" root))
-         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+         (warashi-chelly-workspace-root (file-name-as-directory root)))
     (unwind-protect
         (progn
           (dolist (directory (list clone
@@ -284,7 +284,7 @@
 (ert-deftest warashi-agent-shell-test-dedicated-routing-is-linux-only ()
   "専用領域は Linux 以外で個人 provider へ fallback しない。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
-         (warashi-agent-shell-chelly--workspace-root root)
+         (warashi-chelly-workspace-root root)
          (default-directory (file-name-as-directory root))
          (system-type 'darwin))
     (unwind-protect
@@ -297,7 +297,7 @@
 (ert-deftest warashi-agent-shell-test-pi-refuses-dedicated-workspace ()
   "専用 runner 非対応の Pi は個人 credential で起動しない。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
-         (warashi-agent-shell-chelly--workspace-root root)
+         (warashi-chelly-workspace-root root)
          (default-directory (file-name-as-directory root)))
     (unwind-protect
         (should-error

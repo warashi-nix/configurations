@@ -34,7 +34,7 @@
   (let ((root (make-temp-file "chelly-acp-contract-" t)))
     (unwind-protect
         (with-temp-buffer
-          (let* ((warashi-agent-shell-chelly--workspace-root root)
+          (let* ((warashi-chelly-workspace-root root)
                  (config (warashi-agent-shell-chelly--config 'claude root))
                  (client (funcall (alist-get :client-maker config) (current-buffer)))
                  (state (agent-shell--make-state :agent-config config :buffer (current-buffer)))
@@ -61,7 +61,7 @@
   (let ((root (make-temp-file "chelly-acp-contract-" t)))
     (unwind-protect
         (with-temp-buffer
-          (let* ((warashi-agent-shell-chelly--workspace-root root)
+          (let* ((warashi-chelly-workspace-root root)
                  (config (warashi-agent-shell-chelly--config 'copilot root)))
             (funcall (alist-get :client-maker config) (current-buffer))
             (let ((caps (map-nested-elt
@@ -109,7 +109,7 @@
 (ert-deftest warashi-agent-shell-contract-test-chelly-decorates-provider-config ()
   "実物の provider config を専用化しても model/effort の設定点を保持する。"
   (let* ((root (make-temp-file "chelly-acp-contract-" t))
-         (warashi-agent-shell-chelly--workspace-root root))
+         (warashi-chelly-workspace-root root))
     (unwind-protect
         (dolist (case
                  `((claude ,#'agent-shell-anthropic-make-claude-code-config)

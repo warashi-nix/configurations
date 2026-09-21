@@ -11,9 +11,7 @@
 (require 'acp)
 (require 'map)
 (require 'project)
-
-(defconst warashi-agent-shell-chelly--workspace-root "/srv/chelly-workspaces/"
-  "専用ユーザーの作業領域。NixOS の chelly-agent runner と対になる。")
+(require 'warashi-chelly-workspace)
 
 (defun warashi-agent-shell-chelly--directory (directory)
   "DIRECTORY がローカルの専用作業領域なら実体の絶対パスを返す。"
@@ -21,7 +19,7 @@
     (user-error "chelly-agent ACP must be started from the workbench host, not TRAMP"))
   (let ((directory (file-name-as-directory (file-truename directory)))
         (root (file-name-as-directory
-               (file-truename warashi-agent-shell-chelly--workspace-root))))
+               (file-truename warashi-chelly-workspace-root))))
     (unless (and (file-directory-p directory)
                  (or (equal directory root)
                      (file-in-directory-p directory root)))
@@ -38,7 +36,7 @@
             (file-name-as-directory (expand-file-name directory)))
            (lexical-root
             (file-name-as-directory
-             (expand-file-name warashi-agent-shell-chelly--workspace-root)))
+             (expand-file-name warashi-chelly-workspace-root)))
            (canonical-directory
             (file-name-as-directory (file-truename lexical-directory)))
            (canonical-root
@@ -99,7 +97,6 @@
 
 (defun warashi-agent-shell-chelly--workspace-name ()
   "`default-directory' が専用 clone の中なら \"<repo> / <handoff 名>\" を返す。
-専用 clone は chelly-handoff が <専用領域>/<repo 名>/<handoff 名> に置く。
 それ以外の場所では nil。"
   ;; project root から取るのは、clone の下のディレクトリから起動しても同じ
   ;; 名前にするため。git からは repo 名を引けない。clone は本人の repo と
@@ -107,14 +104,8 @@
   (when-let* ((default-directory)
               ((not (file-remote-p default-directory)))
               (project (project-current))
-              (root (file-name-as-directory (file-truename (project-root project))))
-              (workspace-root
-               (file-name-as-directory
-                (file-truename warashi-agent-shell-chelly--workspace-root)))
-              ((string-prefix-p workspace-root root))
-              (parts (split-string (string-remove-prefix workspace-root root) "/" t))
-              ((= 2 (length parts))))
-    (format "%s / %s" (car parts) (cadr parts))))
+              (workspace (warashi-chelly-workspace-parse (project-root project))))
+    (format "%s / %s" (car workspace) (cdr workspace))))
 
 (defun warashi-agent-shell-chelly--project-name (name)
   "専用 clone なら project 名 NAME を repo 名付きに置き換える。"

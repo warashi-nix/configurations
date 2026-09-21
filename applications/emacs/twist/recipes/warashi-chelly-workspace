@@ -1,0 +1,2 @@
+(warashi-chelly-workspace :fetcher github
+                          :repo "Warashi/configurations")

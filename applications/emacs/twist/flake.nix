@@ -58,6 +58,7 @@
             "spectreshell"
             "warashi-agent-shell"
             "warashi-agent-shell-list"
+            "warashi-chelly-workspace"
             "warashi-pkm-capture"
             "warashi-init"
             "warashi-early-init"
@@ -71,6 +72,9 @@
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;
+            };
+            warashi-chelly-workspace = _: _: {
+              src = ./packages/warashi-chelly-workspace;
             };
             org = _: prev: {
               # org-version.el はリポジトリに無く make autoloads が生成するが、
