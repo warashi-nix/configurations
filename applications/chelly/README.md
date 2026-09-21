@@ -97,9 +97,16 @@ chelly-agent build &&
 `chelly:latest` が無い場合に同名の外部イメージを取得して代用しない。
 
 作業用 clone は専用ユーザーの所有でこの領域に用意する。
-本人の clone から `git worktree add` で作らない。取り込み・署名・公開の経路は別途整備する。
+本人の clone から `git worktree add` で作らない。
 閲覧のためにホストの `safe.directory = "*"` を設定したり、
 作業 clone の Git 設定・hooks を信頼する clone にコピーしたりしない。
+
+成果は固定した commit の Git objects だけを、本人側で初期化した独立の検証用
+clone に受け取る。新規追跡ファイルの履歴検査には
+[`git-check-new-ignored`](../git/handoff/README.md) を使う。
+agent が変更した ignore ルールではなく、信頼する base と本人側のルールで判定する。
+これは差分の確認や機密情報の検査全般を代替しない。署名は本人側の既存設定で行い、
+署名鍵・socket は専用環境へ渡さない。検査コマンドは署名・取り込み・公開を自動実行しない。
 
 agent の個人設定・skills・global hooks の選別した配布と private module の取得経路も未実装。
 

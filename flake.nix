@@ -173,6 +173,7 @@
                 lib.attrValues topLevel.config.hosts
               )) inputs'.my-emacs.checks
               // {
+                git-check-new-ignored = pkgs.callPackage ./applications/git/handoff/package.nix { };
                 chelly-config = pkgs.callPackage ./applications/chelly/checks.nix {
                   athena = self.darwinConfigurations.athena.config;
                   workbench = self.nixosConfigurations.workbench.config;
