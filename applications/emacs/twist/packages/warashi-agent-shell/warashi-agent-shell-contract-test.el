@@ -27,6 +27,53 @@
 (require 'agent-shell-github)
 (require 'agent-shell-mock-agent)
 (require 'warashi-agent-shell)
+(require 'warashi-agent-shell-chelly)
+
+(ert-deftest warashi-agent-shell-contract-test-chelly-denies-through-subscription ()
+  "実物の購読経路でも専用 agent の要求はホストのファイルを読み書きしない。"
+  (let ((root (make-temp-file "chelly-acp-contract-" t)))
+    (unwind-protect
+        (with-temp-buffer
+          (let* ((warashi-agent-shell-chelly--workspace-root root)
+                 (config (warashi-agent-shell-chelly--config 'claude root))
+                 (client (funcall (alist-get :client-maker config) (current-buffer)))
+                 (state (agent-shell--make-state :agent-config config :buffer (current-buffer)))
+                 (target (expand-file-name "must-not-be-created" root))
+                 responses)
+            (map-put! state :client client)
+            (map-put! client :response-sender
+                      (lambda (&rest args) (push (plist-get args :response) responses)))
+            (agent-shell--subscribe-to-client-events :state state)
+            (dolist (method '("fs/read_text_file" "fs/write_text_file"
+                              "terminal/create" "session/push" "unknown/method"))
+              (with-temp-buffer
+                (dolist (handler (map-elt client :request-handlers))
+                  (funcall handler `((id . 9) (method . ,method)
+                                     (params . ((path . ,target) (content . "unexpected")))))))
+              (should (equal -32601 (map-nested-elt (car responses) '(:error code))))
+              (should-not (map-contains-key (car responses) :result))
+              (should-not (file-exists-p target)))
+            (should (= 5 (length responses)))))
+      (delete-directory root t))))
+
+(ert-deftest warashi-agent-shell-contract-test-chelly-capability-shape ()
+  "専用 buffer の設定を ACP の initialize に渡すと fs は false、端末能力は無い。"
+  (let ((root (make-temp-file "chelly-acp-contract-" t)))
+    (unwind-protect
+        (with-temp-buffer
+          (let* ((warashi-agent-shell-chelly--workspace-root root)
+                 (config (warashi-agent-shell-chelly--config 'copilot root)))
+            (funcall (alist-get :client-maker config) (current-buffer))
+            (let ((caps (map-nested-elt
+                         (acp-make-initialize-request
+                          :protocol-version 1
+                          :read-text-file-capability agent-shell-text-file-capabilities
+                          :write-text-file-capability agent-shell-text-file-capabilities)
+                         '(:params clientCapabilities))))
+              (should (eq :false (map-nested-elt caps '(fs readTextFile))))
+              (should (eq :false (map-nested-elt caps '(fs writeTextFile))))
+              (should-not (map-elt caps 'terminal)))))
+      (delete-directory root t))))
 
 (defun warashi-agent-shell-contract-test--keywords (fn)
   "FN の定義をソースから読み、`&key' に並ぶキーワードの一覧を返す。

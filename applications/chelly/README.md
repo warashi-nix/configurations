@@ -183,6 +183,56 @@ Claude は初回ログインを求められずに進めること、Copilot も�
 ACP の新規会話／再開は別途確認し、必要な確認が済むまで通常の `chelly` と
 Emacs の入口は切り替えない。
 
+### Emacs/ACP の専用検証入口
+
+ホストの Emacs では `warashi-agent-shell-chelly-start` を使う。
+通常の agent-shell の `("chelly" "run")` は変更しない。
+専用入口は `chelly-agent run -- claude-agent-acp` または
+`chelly-agent run -- copilot --acp` を起動し、buffer 名に `[chelly-agent]` を付ける。
+ローカルの `/srv/chelly-workspaces` 以下に限定し、TRAMP や領域外へ向く
+symlink は拒否する。起動後・再接続時も同じ専用 client-maker を使う。
+
+ACP のファイル読み書き能力は無効として通知する。それだけでは上流の要求処理を
+止められないため、専用セッションでは権限確認の UI 要求以外を実際に拒否する。
+ファイル・端末操作、`session/push`、未知の要求は JSON-RPC エラーにし、
+Emacs の `*Messages*` に拒否を表示する。agent 自身のコンテナ内ツールまで
+無効化する設定ではない。ホストの認証 getter・MCP 設定・自動権限応答は使わない。
+AI 所有の clone の dir-local variables は適用せず、Emacs の自動 transcript
+保存も無効にする。会話は agent 側の専用 volume に保存する。
+これは ACP のホスト操作委譲を制限する入口で、Emacs 全体のサンドボックスではない。
+検証中はファイルの手動添付や agent が提示するリンクを開く操作は行わない。
+
+新しい Emacs 設定を読み込んでから、ホストの Emacs で次を `M-:` から評価する。
+既存の Emacs にこの入口だけを読み込む場合は、`M-x load-file` で
+`applications/emacs/twist/packages/warashi-agent-shell/warashi-agent-shell-chelly.el`
+を読み込めばよい。コンテナ image の再ビルドは不要。
+
+```elisp
+(let ((default-directory "/srv/chelly-workspaces/"))
+  (warashi-agent-shell-chelly-start 'claude))
+```
+
+CLI と同じように、ツールを使わず会話の中だけで目印を覚えるよう依頼する。
+応答後に **shell buffer 自体を kill** して接続を終了する。画面を閉じるだけでは
+プロセスを終了したことにならない。その後、次を評価し、会話一覧から対象を選ぶ。
+
+```elisp
+(let ((default-directory "/srv/chelly-workspaces/"))
+  (warashi-agent-shell-chelly-start 'claude t))
+```
+
+目印を再入力せずに回答できることで、会話の文脈が復元されたことを確認する。
+固定した agent-shell の `agent-shell-session-restore-verbosity` は既定で
+`minimal`。agent が `session/resume` をサポートしていれば、過去の発言を
+再表示せずに再開するため、履歴の表示は成功条件に含めない。
+履歴の再表示は `full` などの表示設定と agent の `session/load` 対応に依存し、
+この専用入口では既定の表示設定を変更しない。
+Copilot は上の `'claude` を `'copilot` に置き換えて同じ確認を行う。
+作業領域の buffer からなら `M-x warashi-agent-shell-chelly-start`、
+再開は `C-u M-x warashi-agent-shell-chelly-start` でも実行できる。
+接続・認証・会話一覧取得が失敗したら、ホストのファイル能力や通常ログインを
+追加して回避せず、token を伏せたエラーを確認する。
+
 ### proxy socket に旧権限が残っている場合
 
 `nix store info` が socket の `Permission denied` で止まったら、ホストで

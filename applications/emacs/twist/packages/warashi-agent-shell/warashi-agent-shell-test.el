@@ -13,6 +13,159 @@
 (require 'agent-shell)
 (require 'agent-shell-github)
 (require 'warashi-agent-shell)
+(require 'warashi-agent-shell-chelly)
+
+(ert-deftest warashi-agent-shell-test-chelly-start-guard-keeps-normal-dir-locals ()
+  "実際の dir-local 設定は専用起動だけ無効にし、通常起動では維持する。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (warashi-agent-shell-chelly--workspace-root root)
+         (enable-local-variables t))
+    (unwind-protect
+        (progn
+          (with-temp-file (expand-file-name ".dir-locals.el" root)
+            (insert "((nil . ((fill-column . 33))))"))
+          (dolist (dedicated '(nil t))
+            (with-temp-buffer
+              (setq-local default-directory (file-name-as-directory root))
+              (setq-local fill-column 70)
+              (warashi-agent-shell-chelly--start
+               (lambda (&rest _) (hack-dir-local-variables-non-file-buffer))
+               :config (when dedicated
+                         (warashi-agent-shell-chelly--config 'claude root)))
+              (should (= (if dedicated 70 33) fill-column)))))
+      (delete-directory root t))))
+
+(ert-deftest warashi-agent-shell-test-chelly-restart-disables-dir-locals-before-client ()
+  "上流の restart/reload でも新しい buffer の dir-local 適用前から無効にする。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (warashi-agent-shell-chelly--workspace-root root)
+         (enable-local-variables t)
+         (enable-local-eval t))
+    (unwind-protect
+        (dolist (restart '(agent-shell-restart agent-shell-reload))
+          (let ((old (generate-new-buffer " *chelly-old*"))
+                (new (generate-new-buffer " *chelly-new*")))
+            (unwind-protect
+                (with-current-buffer old
+                  (setq-local major-mode 'agent-shell-mode)
+                  (setq-local default-directory (file-name-as-directory root))
+                  (setq-local agent-shell--state
+                              (agent-shell--make-state
+                               :buffer old
+                               :agent-config (warashi-agent-shell-chelly--config 'claude root)))
+                  (map-put! agent-shell--state :session '((:id . "dedicated-session")))
+                  (setq-local enable-local-variables nil)
+                  (setq-local enable-local-eval nil)
+                  (let ((observed
+                         (catch 'dir-locals
+                           (cl-letf (((symbol-function 'shell-maker-start-v2)
+                                      (lambda (&rest _)
+                                        (with-current-buffer new
+                                          (setq-local default-directory root))
+                                        new))
+                                     ((symbol-function 'hack-dir-local-variables-non-file-buffer)
+                                      (lambda ()
+                                        (throw 'dir-locals
+                                               (list enable-local-variables enable-local-eval)))))
+                             (funcall restart)))))
+                    (should (equal '(nil nil) observed))))
+              (when (buffer-live-p old) (kill-buffer old))
+              (when (buffer-live-p new) (kill-buffer new)))))
+      (delete-directory root t))))
+
+(ert-deftest warashi-agent-shell-test-chelly-rejects-host-requests ()
+  "専用セッションは能力を無視した要求も拒否し、ホストの処理へ渡さない。"
+  (dolist (method '("fs/read_text_file" "fs/write_text_file" "terminal/create"
+                    "session/push" "future/operation"))
+    (let ((state '((:agent-config . ((:chelly-agent . t))) (:client . client)))
+          response)
+      (cl-letf (((symbol-function 'acp-send-response)
+                 (lambda (&rest args) (setq response (plist-get args :response)))))
+        (warashi-agent-shell-chelly--on-request
+         (lambda (&rest _) (ert-fail "Host request handler was called"))
+         :state state :acp-request `((id . 42) (method . ,method)))
+        (should (equal 42 (alist-get :request-id response)))
+        (should (equal -32601 (map-nested-elt response '(:error code))))))))
+
+(ert-deftest warashi-agent-shell-test-chelly-keeps-permission-ui-and-normal-clients ()
+  "専用の権限確認 UI と通常セッションの要求は既存の処理を使う。"
+  (dolist (case '((t "session/request_permission") (nil "fs/read_text_file")))
+    (let* ((args (list :state `((:agent-config . ((:chelly-agent . ,(car case)))))
+                       :acp-request `((method . ,(cadr case)))))
+           captured)
+      (apply #'warashi-agent-shell-chelly--on-request
+             (lambda (&rest received) (setq captured received)) args)
+      (should (equal args captured)))))
+
+(ert-deftest warashi-agent-shell-test-chelly-directory-boundary ()
+  "TRAMP、対象外のパス、対象外へ向く symlink は入口で拒否する。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (outside (make-temp-file "chelly-outside-" t))
+         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+    (unwind-protect
+        (progn
+          (should (equal (file-name-as-directory (file-truename root))
+                         (warashi-agent-shell-chelly--directory root)))
+          (should-error (warashi-agent-shell-chelly--directory outside) :type 'user-error)
+          (should-error (warashi-agent-shell-chelly--directory "/ssh:workbench:/srv/chelly-workspaces/")
+                        :type 'user-error)
+          (make-symbolic-link outside (expand-file-name "escape" root))
+          (should-error (warashi-agent-shell-chelly--directory (expand-file-name "escape" root))
+                        :type 'user-error))
+      (delete-directory root t)
+      (delete-directory outside t))))
+
+(ert-deftest warashi-agent-shell-test-chelly-client-keeps-isolation-on-recreation ()
+  "client 再生成でも専用入口と buffer-local な制限を保持し、個人の設定を渡さない。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root))
+         (agent-shell-command-prefix '("personal-launcher"))
+         (agent-shell-text-file-capabilities t)
+         (agent-shell-mcp-servers '(((name . "personal")))))
+    (unwind-protect
+        (dolist (agent '(claude copilot))
+          (let* ((config (warashi-agent-shell-chelly--config agent root))
+                 (make-client (alist-get :client-maker config)))
+            (dotimes (_ 2)
+              (with-temp-buffer
+                (let ((client (funcall make-client (current-buffer))))
+                  (should (equal "chelly-agent" (map-elt client :command)))
+                  (should (equal (if (eq agent 'claude)
+                                     '("run" "--" "claude-agent-acp")
+                                   '("run" "--" "copilot" "--acp"))
+                                 (map-elt client :command-params)))
+                  (should-not (map-elt client :environment-variables))
+                  (should-not agent-shell-text-file-capabilities)
+                  (should-not agent-shell-mcp-servers)
+                  (should-not agent-shell-permission-responder-function)
+                  (should-not agent-shell-transcript-file-path-function)
+                  (should-not enable-local-variables)
+                  (should-not enable-local-eval)
+                  (should (equal (file-name-as-directory (file-truename root))
+                                 (agent-shell-cwd))))))))
+      (delete-directory root t))
+    (should agent-shell-text-file-capabilities)
+    (should agent-shell-mcp-servers)
+    (should (equal '("personal-launcher") agent-shell-command-prefix))))
+
+(ert-deftest warashi-agent-shell-test-chelly-start-and-resume ()
+  "専用入口は新規 buffer で起動し、再開時だけ既存 session の選択を行う。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root))
+         (default-directory root)
+         (agent-shell-command-prefix '("personal-launcher")))
+    (unwind-protect
+        (dolist (resume '(nil t))
+          (let (captured)
+            (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) "/test/chelly-agent"))
+                      ((symbol-function 'agent-shell--start)
+                       (lambda (&rest args)
+                         (setq captured args))))
+              (warashi-agent-shell-chelly-start 'claude resume)
+              (should (plist-get captured :new-session))
+              (should (eq (if resume 'prompt 'new) (plist-get captured :session-strategy)))
+              (should (alist-get :chelly-agent (plist-get captured :config))))))
+      (delete-directory root t))))
 
 (defvar warashi-agent-shell-test--state nil
   "テスト用の `agent-shell--state' の戻り値。")
