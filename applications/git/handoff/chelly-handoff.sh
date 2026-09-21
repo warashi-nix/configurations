@@ -51,7 +51,7 @@ bundle="${dest}.bundle.$$"
 trap "rm -f -- \"$bundle\"" EXIT
 cat >"$bundle"
 mkdir -- "$dest"
-git clone --quiet --no-checkout --template= "$bundle" "$dest"
+git -c init.defaultBranch="$branch" clone --quiet --no-checkout --template= "$bundle" "$dest"
 cd "$dest"
 git remote remove origin
 git -c core.hooksPath=/dev/null switch --quiet -c "$branch" "$base"
