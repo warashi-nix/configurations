@@ -24,6 +24,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'consult)
 (require 'project)
 (require 'seq)
