@@ -1105,11 +1105,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789884629,
-        "narHash": "sha256-aXjuO15A8cuwRzm/wHikz9oVF2BzbxyrhsRVx3JuQZE=",
+        "lastModified": 1790004038,
+        "narHash": "sha256-c5eNvzqDaGHfH/NS0eNZnYPMxXAEVlMy3XIqyCLR5PY=",
         "owner": "natsukium",
         "repo": "nix-mac-app-identity",
-        "rev": "b06b60b4877d188290841d81fb369a3c236ceacf",
+        "rev": "ef92c08e661250b481ec459405235f3756433ad5",
         "type": "github"
       },
       "original": {
