@@ -157,6 +157,11 @@ EOF
       CHELLY_NIX_BIN="${case_dir}/bin" HOME="${case_dir}/home" PATH="${case_dir}/bin:${PATH}" \
       "${entrypoint}" agent "one two" 'three*'
   ) >"${case_dir}/stdout" 2>"${case_dir}/stderr"
+  # 実 nix の失敗理由は stderr にしか出ないので、stdout の不一致時に併せて示す。
+  if [ "$(cat "${case_dir}/stdout")" != "${expected_stdout}" ]; then
+    printf 'stderr of %s:\n' "${case_dir}" >&2
+    cat "${case_dir}/stderr" >&2
+  fi
   expect_output "${case_dir}/stdout" "${expected_stdout}"
   expect_output "${case_dir}/instruction-dirs" "/etc/chelly,/extra instructions,/other"
   if [ -n "${expect_diagnostic}" ]; then
