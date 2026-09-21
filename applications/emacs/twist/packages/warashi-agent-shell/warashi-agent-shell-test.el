@@ -246,6 +246,41 @@
       (delete-directory root t)
       (delete-directory outside t))))
 
+(ert-deftest warashi-agent-shell-test-chelly-project-name-shows-repository ()
+  "専用 clone の project 名は <repo> / <handoff 名> になり、それ以外は変えない。"
+  (let* ((root (make-temp-file "chelly-workspace-" t))
+         (outside (make-temp-file "chelly-outside-" t))
+         (clone (expand-file-name "configurations/main" root))
+         (warashi-agent-shell-chelly--workspace-root (file-name-as-directory root)))
+    (unwind-protect
+        (progn
+          (dolist (directory (list clone
+                                   (expand-file-name "configurations" root)
+                                   (expand-file-name "main" outside)))
+            (make-directory (expand-file-name ".git" directory) t))
+          ;; clone の下のディレクトリから起動しても同じ名前になる。
+          (make-directory (expand-file-name "sub" clone))
+          (dolist (directory (list clone (expand-file-name "sub" clone)))
+            (let ((default-directory (file-name-as-directory directory)))
+              (should (equal "configurations / main"
+                             (agent-shell--project-name)))))
+          ;; 専用領域の 1 段目は repo 名の置き場で clone ではない。
+          (let ((default-directory
+                 (file-name-as-directory (expand-file-name "configurations" root))))
+            (should (equal "configurations" (agent-shell--project-name))))
+          (let ((default-directory
+                 (file-name-as-directory (expand-file-name "main" outside))))
+            (should (equal "main" (agent-shell--project-name)))))
+      (delete-directory root t)
+      (delete-directory outside t))))
+
+(ert-deftest warashi-agent-shell-test-chelly-project-name-skips-remote ()
+  "リモートの default-directory では project の判定に入らず名前をそのまま返す。"
+  (let ((default-directory "/ssh:workbench:/srv/chelly-workspaces/configurations/main/"))
+    (cl-letf (((symbol-function 'project-current)
+               (lambda (&rest _) (ert-fail "project-current was called for a remote directory"))))
+      (should (equal "main" (warashi-agent-shell-chelly--project-name "main"))))))
+
 (ert-deftest warashi-agent-shell-test-dedicated-routing-is-linux-only ()
   "専用領域は Linux 以外で個人 provider へ fallback しない。"
   (let* ((root (make-temp-file "chelly-workspace-" t))

@@ -194,6 +194,25 @@ session を確立していないので値は 0 だが、キーが揃っている
 
 ;;;; buffer 名
 
+(ert-deftest warashi-agent-shell-contract-test-project-name ()
+  "`agent-shell--project-name' を引数なしで呼べ、`default-directory' の project 名を返す。
+git-wit の memo と専用 clone の名前は、この戻り値を :filter-return advice で
+差し替えている。引数を取るようになったり、`default-directory' 以外から
+project を引くようになったりすると、両方とも効かなくなる。"
+  ;; 引数をソースから読むのは、advice が付いた関数の `func-arity' は
+  ;; advice 側の (0 . many) を返すため。
+  (let ((loc (find-function-noselect 'agent-shell--project-name t)))
+    (with-current-buffer (car loc)
+      (goto-char (cdr loc))
+      (should (null (nth 2 (read (current-buffer)))))))
+  (let ((root (make-temp-file "project-name-contract-" t)))
+    (unwind-protect
+        (let ((default-directory (file-name-as-directory root)))
+          (make-directory (expand-file-name ".git" root))
+          (should (equal (file-name-nondirectory root)
+                         (agent-shell--project-name))))
+      (delete-directory root t))))
+
 (ert-deftest warashi-agent-shell-contract-test-buffer-name-prefix ()
   "`agent-shell--buffer-name-prefix' を agent 名 1 つで呼べる。"
   (should (equal '(1 . 1) (func-arity 'agent-shell--buffer-name-prefix))))

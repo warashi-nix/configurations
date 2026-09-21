@@ -215,6 +215,8 @@ Emacs の起動は変更しない。
 通常の agent-shell の `("chelly" "run")` は変更しない。
 専用入口は `chelly-agent run -- claude-agent-acp` または
 `chelly-agent run -- copilot --acp` を起動し、buffer 名に `[chelly-agent]` を付ける。
+専用 clone では project 名を `<repo 名> / <handoff 名>` にし、一覧や header で
+どの repo の作業か分かるようにする。
 ローカルの `/srv/chelly-workspaces` 以下に限定し、TRAMP や領域外へ向く
 symlink は拒否する。起動後・再接続時も同じ専用 client-maker を使う。
 
