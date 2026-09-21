@@ -53,7 +53,6 @@
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
           localPackages = [
-            "consult-git-wit"
             "sekken"
             "spectreshell"
             "warashi-agent-shell"
@@ -66,9 +65,6 @@
             "warashi-early-init"
           ];
           inputOverrides = {
-            consult-git-wit = _: _: {
-              src = ./packages/consult-git-wit;
-            };
             warashi-agent-shell = _: _: {
               src = ./packages/warashi-agent-shell;
             };
