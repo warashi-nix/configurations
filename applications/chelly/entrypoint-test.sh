@@ -131,8 +131,11 @@ run_real_case() {
   expected_stdout="$3"
   expect_diagnostic="$4"
   case_dir="${work}/real-${name}"
-  mkdir -p "${case_dir}/bin" "${case_dir}/home"
-  printf '%s\n' "${flake}" >"${case_dir}/flake.nix"
+  # flake を専用の subdirectory に置くのは、実 nix が flake の directory 全体を
+  # source として store に写すため。bin / home / store と同居させると、書きかけの
+  # store まで source に含まれる。
+  mkdir -p "${case_dir}/bin" "${case_dir}/home" "${case_dir}/flake"
+  printf '%s\n' "${flake}" >"${case_dir}/flake/flake.nix"
   make_agent "${case_dir}/bin"
   cat >"${case_dir}/bin/nix" <<EOF
 #!/bin/sh
@@ -155,7 +158,7 @@ EOF
   chmod +x "${case_dir}/bin/nix"
 
   (
-    cd "${case_dir}"
+    cd "${case_dir}/flake"
     COPILOT_CUSTOM_INSTRUCTIONS_DIRS="/extra instructions,/other" \
       CHELLY_NIX_BIN="${case_dir}/bin" HOME="${case_dir}/home" PATH="${case_dir}/bin:${PATH}" \
       "${entrypoint}" agent "one two" 'three*'
@@ -166,7 +169,7 @@ EOF
     cat "${case_dir}/stderr" >&2
   fi
   expect_output "${case_dir}/stdout" "${expected_stdout}"
-  expect_output "${case_dir}/instruction-dirs" "/etc/chelly,/extra instructions,/other"
+  expect_output "${case_dir}/flake/instruction-dirs" "/etc/chelly,/extra instructions,/other"
   if [ -n "${expect_diagnostic}" ]; then
     case "$(cat "${case_dir}/stderr")" in
     *"${expect_diagnostic}"*) ;;
