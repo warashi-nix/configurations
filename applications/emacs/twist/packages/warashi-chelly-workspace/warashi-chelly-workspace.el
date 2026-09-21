@@ -53,7 +53,12 @@ root の 1 段目は repo 名の置き場で clone ではなく、clone の下�
 
 (defun warashi-chelly-workspace-available-p ()
   "このホストで専用 clone を作れるなら非 nil。"
-  (and (executable-find warashi-chelly-workspace-handoff-program) t))
+  ;; chelly-handoff は git の設定と一緒に全ホストへ入るが、専用領域は
+  ;; workbench にしか無い。実行ファイルだけで判定すると、他のホストで
+  ;; 種類を聞いた末に create が失敗する。
+  (and (executable-find warashi-chelly-workspace-handoff-program)
+       (file-directory-p warashi-chelly-workspace-root)
+       t))
 
 (defun warashi-chelly-workspace--repository-name (repository)
   "本人の REPOSITORY に対応する専用領域の repo 名を返す。
