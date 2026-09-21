@@ -1,4 +1,5 @@
 import os
+import pty
 import subprocess
 import sys
 import tempfile
@@ -11,9 +12,14 @@ CHECKER = Path(__file__).parents[1] / "git_check_new_ignored.py"
 
 # 実機の chelly-agent は sudo と podman を経て同じ引数列を実行する。テストでは
 # 引数の script をそのまま bash に渡し、専用領域だけをテスト用ディレクトリへ向ける。
+# 端末を stdin のまま渡すと実機の podman が終了しなくなるため、その形も拒否する。
 FAKE_AGENT = """#!/bin/sh
 if [ -n "${SSH_AUTH_SOCK-}" ] || [ -n "${GIT_AUTHOR_NAME-}" ]; then
   echo "owner environment leaked into transport" >&2
+  exit 1
+fi
+if [ -t 0 ]; then
+  echo "owner terminal reached transport" >&2
   exit 1
 fi
 test "$1" = run && test "$2" = -- || exit 90
@@ -86,10 +92,16 @@ class HandoffTest(unittest.TestCase):
         return self.git("-C", repo, "rev-parse", "--verify", revision).stdout.decode().strip()
 
     def handoff(self, *args, check=True):
-        return subprocess.run(
-            ["bash", str(HANDOFF), *args], cwd=self.repo,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, check=check,
-        )
+        # 本人は端末から起動するので、stdin を擬似端末にして同じ形で動かす。
+        leader, follower = pty.openpty()
+        try:
+            return subprocess.run(
+                ["bash", str(HANDOFF), *args], cwd=self.repo, stdin=follower,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, check=check,
+            )
+        finally:
+            os.close(follower)
+            os.close(leader)
 
     def agent_commit(self, name, content, message="agent work"):
         self.write(self.workspace, name, content)

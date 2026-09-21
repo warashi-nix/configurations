@@ -25,6 +25,8 @@ fail() {
 }
 
 # 専用ユーザー側で動かすスクリプトは引数だけを受け取り、本人の環境変数を継承しない。
+# stdin は bundle を渡す create 以外では /dev/null にする。端末のまま渡すと
+# podman が --tty 無しで端末を attach したまま終了せず、CPU を使い続ける。
 agent() {
   local script=$1
   shift
@@ -127,7 +129,7 @@ fetch() {
   base=$(git config --get "remote.$remote.chelly-base") || fail "remote $remote was not created by chelly-handoff"
   branch=$(git config --get "remote.$remote.chelly-branch")
   mkdir -p "$gitdir/chelly-handoff"
-  agent "$fetch_script" "$workspaces" "$workspace" "$base" "$branch" >"$bundle.tmp"
+  agent "$fetch_script" "$workspaces" "$workspace" "$base" "$branch" </dev/null >"$bundle.tmp"
   git bundle verify --quiet "$bundle.tmp"
   mv -f -- "$bundle.tmp" "$bundle"
   git fetch --quiet --no-tags "$remote"
@@ -141,7 +143,7 @@ remove() {
   repo_paths "$1"
   force=false
   [[ ${2:-} == --force ]] && force=true
-  probe=$(agent "$probe_script" "$workspaces" "$workspace")
+  probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null)
   if [[ $probe != missing ]] && ! $force; then
     head=${probe%%$'\n'*}
     dirty=${probe##*$'\n'}
@@ -149,7 +151,7 @@ remove() {
       fail "agent commit $head is not in this repository; run fetch first or pass --force"
     [[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; pass --force to discard them"
   fi
-  [[ $probe == missing ]] || agent "$remove_script" "$workspaces" "$workspace"
+  [[ $probe == missing ]] || agent "$remove_script" "$workspaces" "$workspace" </dev/null
   if git config --get "remote.$remote.url" >/dev/null; then
     git remote remove "$remote"
   fi
