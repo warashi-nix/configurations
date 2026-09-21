@@ -177,7 +177,14 @@
                   athena = self.darwinConfigurations.athena.config;
                   workbench = self.nixosConfigurations.workbench.config;
                 };
-              };
+              }
+              //
+                lib.optionalAttrs (system == self.nixosConfigurations.workbench.pkgs.stdenv.hostPlatform.system)
+                  {
+                    chelly-agent-config = pkgs.callPackage ./applications/chelly/agent-checks.nix {
+                      workbenchSystem = self.nixosConfigurations.workbench;
+                    };
+                  };
             apps = inputs'.my-emacs.packages.default.makeApps {
               lockDirName = "applications/emacs/twist/lock";
             };

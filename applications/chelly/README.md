@@ -48,9 +48,157 @@ VM 化する場合は、store の読み取り共有だけでなく、ホスト�
 ホストから見える GC root の維持が必要になる。Nix 2.34.8 の
 `mounted-ssh-ng` で既存 daemon 越しのビルドと GC root 登録を実測したが、
 Nix が SSH を省略する特別な `localhost` 経路であり、VM 越しの実証ではない。
-workbench は OCI A1 Flex の KVM ゲストなので、まずホスト上で nested KVM の
-可用性を確認する。コンテナに `/dev/kvm` が見えないだけでは判断しない。
-方式が確定するまでは現行設定を維持する。
+workbench は OCI A1 Flex の KVM ゲスト。2026-09-20 にホスト側でも
+`/dev/kvm` が無く、kernel journal に `HYP mode not available` があることを
+確認したため、現在のホストで KVM による追加 VM を動かす前提は満たせない。
+カーネル共有を許容し、専用 OS ユーザーで本人の環境・権限から分離する方針とする。
+native Podman を VM と同等とは扱わない。
+
+### 専用ユーザーの入口
+
+`modules/nixos/chelly-agent.nix` を workbench で有効にし、`chelly-agent` を追加する。
+既存の `chelly` と Emacs の起動設定はまだ切り替えない。以下は設定適用後の手順であり、
+実機での起動確認が済むまでは、自律作業環境全体の移行完了とは扱わない。
+
+| 対象 | 専用環境での扱い |
+| --- | --- |
+| 実行ユーザー | `chelly-agent`。wheel・trusted Nix user にしない |
+| home・Podman storage | `/var/lib/chelly-agent`、モード `0700` |
+| 作業 clone | `/srv/chelly-workspaces` 以下。本人の clone と Git メタデータを共有しない |
+| 本人からの閲覧 | `chelly-workspaces` グループ経由。親ディレクトリは `2750` で書き込み権限を渡さない |
+| Nix store | ホストの store を read-only 共有。既存 proxy の専用グループ経由で接続 |
+| Claude・Copilot の状態 | `.claude`・`.copilot` を専用ユーザーの Podman named volume に保存。本人の状態や brainium はマウントしない |
+| Git ignore | Home Manager のルールを read-only で渡す。Git 設定全体・署名鍵は渡さない |
+| 環境変数 | 呼び出し元の環境を捨て、端末情報と専用環境のパスだけを再設定 |
+
+launcher は本人から専用ユーザーへの固定 runner だけを sudo で実行する。
+runner は実行ユーザー、本人の home にアクセスできないこと、作業場所、
+専用ユーザーの runtime directory を確認し、条件を満たさなければ停止する。
+専用ユーザーには独立した subordinate UID/GID の範囲を割り当て、
+`--userns=keep-id:uid=1000,gid=100` で workbench のイメージ内ユーザーへ対応させる。
+Claude の設定先は `CLAUDE_CONFIG_DIR=/home/warashi/.claude` として明示する。
+
+```sh
+# ホスト側で NixOS 設定を適用し、グループ変更を反映するためログインし直す
+just switch-for workbench
+
+# 新しいログインセッションから。本人の普段の clone 内では起動しない
+cd /srv/chelly-workspaces
+chelly-agent config list
+chelly-agent build &&
+  chelly-agent run -- id &&
+  chelly-agent run -- nix store info --json
+```
+
+ベースイメージは `docker.io/library/debian:stable` と完全修飾し、個人の
+短縮名 alias や検索レジストリ設定に依存させない。`chelly-agent run` は
+`--pull=never` で専用ユーザーがビルドしたローカルイメージだけを使う。
+ビルドに失敗した場合はその原因を直してから `run` に進む。
+`chelly:latest` が無い場合に同名の外部イメージを取得して代用しない。
+
+作業用 clone は専用ユーザーの所有でこの領域に用意する。
+本人の clone から `git worktree add` で作らない。取り込み・署名・公開の経路は別途整備する。
+閲覧のためにホストの `safe.directory = "*"` を設定したり、
+作業 clone の Git 設定・hooks を信頼する clone にコピーしたりしない。
+
+agent の個人設定・skills・global hooks の選別した配布と private module の取得経路も未実装。
+
+ホストでの受け入れ確認では、専用ユーザーが本人の home に入れないこと、
+外側の Podman が rootless であること、コンテナ内の `nix store info --json` が
+`"trusted":false` を返すこと、複数作業で store・cache を共用できること、
+入れ子の Podman が動くことを確認する。runner と設定の回帰チェックは
+`nix build .#checks.aarch64-linux.chelly-agent-config` で実行するが、実機確認の代わりではない。
+
+既存ユーザーの Podman image・volume は移動・削除しない。新しい専用 storage での
+image build は追加のディスクを使うが、ホストの Nix store 自体は複製しない。
+公開先への送信制限、ディスク枯渇防止、並行する AI 同士の強い隔離は保証しない。
+
+### 専用のモデル認証
+
+workbench では `secrets/default.yaml` の SOPS キー `chelly-agent-dotenv` を
+`/run/secrets/chelly-agent-dotenv` に復号し、`chelly-agent:chelly-agent` 所有・
+モード `0400` で配置する。`hosts/workbench/chelly.nix` が
+`warashi.chelly-agent.envfiles` にこのパスだけを指定する。
+専用環境を無効化した場合は secret の配備と envfile の指定も外れる。
+モジュール自体の envfiles の既定値は空のまま。
+
+このキーの中身は dotenv 形式の複数行文字列とし、次の 2 変数だけを
+本人が SOPS の編集画面で保存する。
+
+- `CLAUDE_CODE_OAUTH_TOKEN`: `claude setup-token` で発行した token。
+- `COPILOT_GITHUB_TOKEN`: Copilot Requests 専用の token。
+
+値を会話・平文の Git ファイル・Nix 式・Nix store に置かない。
+本人の既存 `chelly-dotenv` や Git 認証にはフォールバックせず、本人の
+認証状態・署名鍵も共有しない。token はコンテナの環境変数として渡すため、
+agent から読み出せる。持ち出しや利用枠の消費を防ぐ境界ではない。
+
+専用コンテナには `IS_DEMO=1` も指定する。Claude Code 2.1.278 では
+token で非対話のモデル応答が成功しても、初回の対話起動でログインを要求された。
+[公式の環境変数](https://code.claude.com/docs/en/env-vars)で初回セットアップを
+スキップすると対話でも応答できたため、追加ログインや内部の `.claude.json` の
+直接編集は行わない。メールアドレス・組織名の表示も隠れる。
+通常の `chelly` の起動設定や共通 Dockerfile にはこの指定を追加しない。
+ツールの権限確認を無効化するフラグも追加しない。
+
+ホスト側の configurations で次を実行する。envfile の追加・更新だけなら
+image の再ビルドや再ログインは不要。更新は次に起動するコンテナから反映される。
+
+```sh
+just switch-for workbench &&
+  sudo stat -Lc '%a %U:%G %n' /run/secrets/chelly-agent-dotenv &&
+  cd /srv/chelly-workspaces &&
+  chelly-agent run -- sh -c '
+    : "${CLAUDE_CODE_OAUTH_TOKEN:?missing Claude token}"
+    : "${COPILOT_GITHUB_TOKEN:?missing Copilot token}"
+    echo model-tokens-present
+  '
+```
+
+権限が `400 chelly-agent:chelly-agent` で、`model-tokens-present` が出れば
+値を表示せずに注入を確認できる。`env` や `printenv` で値を表示しない。
+これは認証成功の確認ではない。続いてホストの `/srv/chelly-workspaces` から
+次を一つずつ起動し、それぞれ「ツールは使わず、この会話の目印
+`chelly-resume-check-01` を会話の中だけで覚えて」と依頼する。
+応答を確認したら CLI を終了し、ホストに戻る。
+
+```sh
+chelly-agent run -- claude
+chelly-agent run -- copilot
+```
+
+次もホストの同じディレクトリから一つずつ起動する。既存コンテナ内で CLI を
+起動し直すのではなく、`chelly-agent run` で新しいコンテナを作る。
+確認中は同じ CLI で別の会話を始めない。
+
+```sh
+chelly-agent run -- claude --continue
+chelly-agent run -- copilot --continue
+```
+
+それぞれ「ツールは使わず、前に伝えた会話の目印は何？」と尋ね、
+目印をもう一度入力せずに答えられることと、以前の会話が表示されることを確認する。
+Claude は初回ログインを求められずに進めること、Copilot も引き続き応答することを
+確認する。これは CLI の会話保存の確認で、プロセスや一時ファイルの復元ではない。
+ACP の新規会話／再開は別途確認し、必要な確認が済むまで通常の `chelly` と
+Emacs の入口は切り替えない。
+
+### proxy socket に旧権限が残っている場合
+
+`nix store info` が socket の `Permission denied` で止まったら、ホストで
+`stat -c '%a %U:%G %n' /run/chelly-nix/socket` と
+`systemctl cat chelly-nix-proxy.socket --no-pager` を比較する。
+unit が `0660`・`chelly-agent` グループに更新済みなのに実体が旧 `0600` の場合は、
+ほかの Nix ビルドが動いていないタイミングで次を実行する。
+
+```sh
+sudo systemctl daemon-reload &&
+  sudo systemctl restart chelly-nix-proxy.socket &&
+  stat -c '%a %U:%G %n' /run/chelly-nix/socket
+```
+
+`660 warashi:chelly-agent` を確認してから専用入口の Nix 接続を再試行する。
+この不一致の解消に、image の再ビルド、Nix daemon 全体の再起動、`chmod 666` は不要。
 
 ## athena: Podman machine
 

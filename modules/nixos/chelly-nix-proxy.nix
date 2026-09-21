@@ -28,6 +28,11 @@ in
         本物と同じ socket にしてある。
       '';
     };
+    socket-group = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Optional group allowed to connect through the untrusted proxy.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -46,9 +51,10 @@ in
         ListenStream = "${cfg.socket-dir}/socket";
         Accept = true;
         SocketUser = config.warashi.username;
-        SocketMode = "0600";
+        SocketMode = if cfg.socket-group == null then "0600" else "0660";
         DirectoryMode = "0755";
-      };
+      }
+      // optionalAttrs (cfg.socket-group != null) { SocketGroup = cfg.socket-group; };
     };
 
     systemd.services."chelly-nix-proxy@" = {

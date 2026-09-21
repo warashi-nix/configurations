@@ -1,4 +1,4 @@
-FROM debian:stable
+FROM docker.io/library/debian:stable
 
 ARG UID=1000
 ARG GID=1000
@@ -358,6 +358,7 @@ RUN mkdir -p /home/warashi/.config/git && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
 # Claude CLI インストール
+RUN mkdir -p /home/warashi/.claude /home/warashi/.copilot
 ADD --chmod=0666 https://claude.ai/install.sh /tmp/claude-install.sh
 RUN bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 

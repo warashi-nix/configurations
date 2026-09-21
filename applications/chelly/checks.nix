@@ -75,6 +75,16 @@ let
       expr = linuxHome.warashi.chelly.nix-store;
       expected = "host";
     };
+    test-existing-entries-do-not-skip-claude-onboarding = {
+      expr = map (home: lib.elem "--env=IS_DEMO=1" home.warashi.chelly.runtime_options.podman.run) [
+        macHome
+        linuxHome
+      ];
+      expected = [
+        false
+        false
+      ];
+    };
   };
 in
 assert lib.assertMsg (tests == [ ]) (builtins.toJSON tests);
