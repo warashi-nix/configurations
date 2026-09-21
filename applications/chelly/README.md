@@ -1,5 +1,29 @@
 # chelly
 
+## workbench: ホストの Nix store の共用
+
+workbench は native rootless Podman と `nix-store = "host"` を使い、
+ホストの `/nix` を読み取り専用でコンテナに渡す。取得・ビルドはホストの
+Nix daemon が行い、コンテナ用に store を複製しない。
+
+`host-store.nix` と `modules/nixos/chelly-nix-proxy.nix` が対になる。
+本物の daemon socket はコンテナ側で覆い隠し、wheel に属さない専用ユーザー
+`chelly-nix-proxy` の接続だけを見せる。`--userns=keep-id` の本人の UID で
+ホストの trusted user へ直接接続する構成にはしない。
+コンテナ内の Nix も `CHELLY_NIX_BIN` でホストと同じ版を使う。
+
+これは VM による隔離ではなく、ホストとカーネルを共有する構成。
+ホストのディスク・ビルド資源も使う。VM 化はまだ有効にしていない。
+既存の Unix socket を VM にそのまま共有できるとも扱わない。
+
+VM 化する場合は、store の読み取り共有だけでなく、ホストへの処理の委譲と
+ホストから見える GC root の維持が必要になる。Nix 2.34.8 の
+`mounted-ssh-ng` で既存 daemon 越しのビルドと GC root 登録を実測したが、
+Nix が SSH を省略する特別な `localhost` 経路であり、VM 越しの実証ではない。
+workbench は OCI A1 Flex の KVM ゲストなので、まずホスト上で nested KVM の
+可用性を確認する。コンテナに `/dev/kvm` が見えないだけでは判断しない。
+方式が確定するまでは現行設定を維持する。
+
 ## athena: Podman machine
 
 複数の chelly から Nix store とビルドキャッシュを同時に使うため、
