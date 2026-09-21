@@ -45,5 +45,64 @@ root の 1 段目は repo 名の置き場で clone ではなく、clone の下�
               ((= 2 (length parts))))
     (cons (car parts) (cadr parts))))
 
+;;;; 本人の repository から見た clone の列挙と作成
+
+(defcustom warashi-chelly-workspace-handoff-program "chelly-handoff"
+  "chelly-handoff の実行ファイル名かパス。"
+  :type 'string)
+
+(defun warashi-chelly-workspace-available-p ()
+  "このホストで専用 clone を作れるなら非 nil。"
+  (and (executable-find warashi-chelly-workspace-handoff-program) t))
+
+(defun warashi-chelly-workspace--repository-name (repository)
+  "本人の REPOSITORY に対応する専用領域の repo 名を返す。
+chelly-handoff は toplevel の basename を使う。"
+  (file-name-nondirectory (directory-file-name repository)))
+
+(defun warashi-chelly-workspace-path (repository name)
+  "本人の REPOSITORY の handoff NAME の clone のディレクトリを返す。"
+  (file-name-as-directory
+   (expand-file-name name
+                     (expand-file-name
+                      (warashi-chelly-workspace--repository-name repository)
+                      warashi-chelly-workspace-root))))
+
+(defun warashi-chelly-workspace-list (repository)
+  "本人の REPOSITORY から作られた専用 clone を (NAME . DIRECTORY) で返す。
+専用領域が無いホストでは nil。"
+  (let ((parent (expand-file-name
+                 (warashi-chelly-workspace--repository-name repository)
+                 warashi-chelly-workspace-root)))
+    (when (file-directory-p parent)
+      (mapcar (lambda (name)
+                (cons name (file-name-as-directory (expand-file-name name parent))))
+              (seq-filter (lambda (name)
+                            (and (not (string-prefix-p "." name))
+                                 (file-directory-p (expand-file-name name parent))))
+                          (directory-files parent))))))
+
+(defun warashi-chelly-workspace-create (repository name)
+  "本人の REPOSITORY の HEAD から handoff NAME の専用 clone を作る。
+作られた clone のディレクトリを返す。失敗したら出力を buffer に出して
+`user-error' を出す。"
+  (when (file-remote-p repository)
+    (user-error "chelly-handoff must run on the workbench host, not over TRAMP"))
+  (unless (warashi-chelly-workspace-available-p)
+    (user-error "%s is not installed on this host"
+                warashi-chelly-workspace-handoff-program))
+  (let ((buffer (get-buffer-create "*chelly-handoff*")))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+        (erase-buffer)))
+    (let* ((default-directory (file-name-as-directory repository))
+           (status (call-process warashi-chelly-workspace-handoff-program
+                                 nil buffer nil "create" name)))
+      (unless (eql status 0)
+        (display-buffer buffer)
+        (user-error "%s create %s failed (%s)"
+                    warashi-chelly-workspace-handoff-program name status))
+      (warashi-chelly-workspace-path repository name))))
+
 (provide 'warashi-chelly-workspace)
 ;;; warashi-chelly-workspace.el ends here
