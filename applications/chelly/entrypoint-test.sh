@@ -232,7 +232,15 @@ EOF
   printf 'old\n' >"${case_dir}/home/.claude/skills/pair-old-file"
   printf '{"runtime":"kept","disabledSkills":["a"],"footer":{"showBranch":true}}\n' \
     >"${case_dir}/home/.copilot/settings.json"
+  # bundle は Nix store path なので、実機では書き込み不可の mode で渡される。
+  chmod -R a-w "${bundle}"
 
+  run_config_entrypoint "${case_dir}" "${config_env}"
+}
+
+run_config_entrypoint() {
+  case_dir="$1"
+  config_env="$2"
   (
     cd "${case_dir}"
     CHELLY_AGENT_CONFIG="${config_env}" CLAUDE_CONFIG_DIR="${case_dir}/home/.claude" \
@@ -258,8 +266,17 @@ jq -e '.runtime == "kept" and .outputStyle == "grilling"
 jq -e '.runtime == "kept" and .theme == "auto" and (.disabledSkills | sort) == ["a", "b"]
   and .footer == {showAgent: true, showBranch: true}' \
   "${work}/config-applied/home/.copilot/settings.json" >/dev/null
-test ! -e "${work}/config-applied/home/.claude/settings.json.tmp"
-test ! -e "${work}/config-applied/home/.copilot/settings.json.tmp"
+test -z "$(find "${work}/config-applied/home" -name 'settings.json.*')"
+# 2 回目以降の起動でも、前回写した内容を上書きできること。
+chmod -R u+w "${work}/config-applied/bundle"
+printf 'memory 2\n' >"${work}/config-applied/bundle/claude/CLAUDE.md"
+printf 'style 2\n' >"${work}/config-applied/bundle/claude/output-styles/grilling.md"
+printf 'skill 2\n' >"${work}/config-applied/bundle/copilot/skills/pair/SKILL.md"
+chmod -R a-w "${work}/config-applied/bundle"
+run_config_entrypoint "${work}/config-applied" "${work}/config-applied/bundle"
+expect_output "${work}/config-applied/home/.claude/CLAUDE.md" "memory 2"
+expect_output "${work}/config-applied/home/.claude/output-styles/grilling.md" "style 2"
+expect_output "${work}/config-applied/home/.copilot/skills/pair/SKILL.md" "skill 2"
 
 run_config_case untouched ""
 test ! -e "${work}/config-untouched/home/.claude/CLAUDE.md"

@@ -388,10 +388,11 @@ bundle="$1"
 claude_dir="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
 copilot_dir="${HOME}/.copilot"
 
+# bundle は Nix store の 0444/0555 なので mode を引き継ぐと次回の上書きで失敗する。
 copy_tree() {
   rm -rf "$2"
   mkdir -p "$(dirname "$2")"
-  cp -R "$1" "$2"
+  cp -R --no-preserve=mode "$1" "$2"
 }
 
 merge_settings() {
@@ -400,13 +401,14 @@ merge_settings() {
   if [ ! -s "${target}" ]; then
     printf '{}\n' >"${target}"
   fi
-  jq -s "${filter}" "${target}" "${override}" >"${target}.tmp"
-  mv "${target}.tmp" "${target}"
+  tmp="$(mktemp "${target}.XXXXXX")"
+  jq -s "${filter}" "${target}" "${override}" >"${tmp}"
+  mv "${tmp}" "${target}"
 }
 
 if [ -f "${bundle}/claude/CLAUDE.md" ]; then
   mkdir -p "${claude_dir}"
-  cp "${bundle}/claude/CLAUDE.md" "${claude_dir}/CLAUDE.md"
+  cp --no-preserve=mode "${bundle}/claude/CLAUDE.md" "${claude_dir}/CLAUDE.md"
 fi
 if [ -d "${bundle}/claude/output-styles" ]; then
   copy_tree "${bundle}/claude/output-styles" "${claude_dir}/output-styles"
@@ -421,7 +423,7 @@ fi
 
 if [ -f "${bundle}/copilot/copilot-instructions.md" ]; then
   mkdir -p "${copilot_dir}"
-  cp "${bundle}/copilot/copilot-instructions.md" "${copilot_dir}/copilot-instructions.md"
+  cp --no-preserve=mode "${bundle}/copilot/copilot-instructions.md" "${copilot_dir}/copilot-instructions.md"
 fi
 for skill in "${bundle}"/copilot/skills/*/; do
   [ -d "${skill}" ] || continue
