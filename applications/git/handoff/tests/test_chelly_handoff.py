@@ -59,6 +59,8 @@ class HandoffTest(unittest.TestCase):
             "SSH_AUTH_SOCK": str(self.root / "owner-agent.sock"),
             "PATH": f"{self.bin}:{os.environ['PATH']}",
             "CHELLY_HANDOFF_WORKSPACES": str(self.agent_root),
+            # テスト用の root より上にある repo を git が見つけないようにする。
+            "GIT_CEILING_DIRECTORIES": str(self.root),
         }
         self.repo = self.root / "source"
         self.git("init", "-q", "-b", "main", self.repo)
@@ -133,6 +135,14 @@ class HandoffTest(unittest.TestCase):
         duplicate = self.handoff("create", "fix", check=False)
         self.assertEqual(duplicate.returncode, 1)
         self.assertIn(b"already exists", duplicate.stderr)
+
+    def test_harness_cannot_reach_a_repository_outside_the_test_root(self):
+        # 専用領域がまだ repo でない状態で git を動かしても、上位の repo に触れないこと。
+        stray = self.agent_root / "stray"
+        stray.mkdir()
+        result = self.git("-C", stray, "rev-parse", "--show-toplevel", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(b"not a git repository", result.stderr)
 
     def test_create_defaults_name_to_branch_and_scopes_by_project(self):
         result = self.handoff("create")
