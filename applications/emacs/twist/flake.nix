@@ -59,6 +59,7 @@
             "warashi-agent-shell"
             "warashi-agent-shell-list"
             "warashi-chelly-workspace"
+            "warashi-git-wit"
             "warashi-pkm-capture"
             "warashi-init"
             "warashi-early-init"
@@ -75,6 +76,9 @@
             };
             warashi-chelly-workspace = _: _: {
               src = ./packages/warashi-chelly-workspace;
+            };
+            warashi-git-wit = _: _: {
+              src = ./packages/warashi-git-wit;
             };
             org = _: prev: {
               # org-version.el はリポジトリに無く make autoloads が生成するが、

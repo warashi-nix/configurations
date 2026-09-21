@@ -682,10 +682,10 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
 ;;;; git-wit の memo を buffer 名に出す
 
 (defconst warashi-agent-shell-test--git-wit-json
-  "[{\"id\":\"a1b2\",\"memo\":\"nskk の remap を直す\",\"path\":\"/home/me/wt/a1b2\"},
-    {\"id\":\"c3d4\",\"memo\":\"\",\"path\":\"/home/me/wt/c3d4\"},
-    {\"id\":\"e5f6\",\"path\":\"/home/me/wt/e5f6\"}]"
-  "git-wit ls --json の出力を模した fixture。")
+  '(((id . "a1b2") (memo . "nskk の remap を直す") (path . "/home/me/wt/a1b2"))
+    ((id . "c3d4") (memo . "") (path . "/home/me/wt/c3d4"))
+    ((id . "e5f6") (path . "/home/me/wt/e5f6")))
+  "`warashi-git-wit-list' が返す worktree 一覧を模した fixture。")
 
 (defvar warashi-agent-shell-test--git-wit-calls nil
   "`warashi-agent-shell--git-wit-list' が呼ばれたディレクトリ。")
@@ -729,12 +729,8 @@ git-wit を呼んだディレクトリは `warashi-agent-shell-test--git-wit-cal
                warashi-agent-shell-test--git-wit-json "/home/me/wt/e5f6")))
 
 (ert-deftest warashi-agent-shell-test-git-wit-memo-in-broken ()
-  "git-wit を呼べなかったときと壊れた出力では memo 無しに落ちる。"
-  (should-not (warashi-agent-shell--git-wit-memo-in nil "/home/me/wt/a1b2"))
-  (should-not (warashi-agent-shell--git-wit-memo-in "" "/home/me/wt/a1b2"))
-  (should-not (warashi-agent-shell--git-wit-memo-in "not json" "/home/me/wt/a1b2"))
-  (should-not (warashi-agent-shell--git-wit-memo-in
-               "{\"memo\":\"x\"}" "/home/me/wt/a1b2")))
+  "git-wit を呼べなかったとき (一覧が nil) は memo 無しに落ちる。"
+  (should-not (warashi-agent-shell--git-wit-memo-in nil "/home/me/wt/a1b2")))
 
 (ert-deftest warashi-agent-shell-test-repository-name-in ()
   "common dir から repository 名を取る。"

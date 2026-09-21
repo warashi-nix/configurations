@@ -4,7 +4,7 @@
 
 ;; Author: Shinnosuke Sawada-Dazai <shin@warashi.dev>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (agent-shell "0.77.2") (warashi-chelly-workspace "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (agent-shell "0.77.2") (warashi-chelly-workspace "0.1.0") (warashi-git-wit "0.1.0"))
 ;; Keywords: convenience, tools
 
 ;;; Commentary:
@@ -39,6 +39,7 @@
 (require 'project)
 (require 'seq)
 (require 'subr-x)
+(require 'warashi-git-wit)
 ;; agent-shell を実行時に require しないのは、起動コマンドを呼ぶまで agent-shell
 ;; を読む必要が無いため。compile 時だけ読ませる。
 (eval-when-compile (require 'agent-shell))
@@ -270,38 +271,18 @@ VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
 
 ;;;; git-wit の memo を buffer 名に出す
 
-(defvar warashi-agent-shell-git-wit-program "git-wit"
-  "git-wit の実行ファイル名かパス。")
-
 (defvar warashi-agent-shell--shell-name-cache (make-hash-table :test #'equal)
   "ディレクトリごとに解決済みの project 名。値が nil なら差し替え無し。")
 
 (defun warashi-agent-shell--git-wit-list (directory)
-  "DIRECTORY で git-wit の worktree 一覧を引き、JSON 文字列で返す。"
-  ;; call-process ではなく process-file なのは、DIRECTORY がリモートのときに
-  ;; 手元の git-wit を叩くと、無関係な worktree 一覧と突き合わせて別の作業の
-  ;; memo を付けてしまうため。
-  (with-temp-buffer
-    (let* ((default-directory directory)
-           (status (ignore-errors
-                     (process-file warashi-agent-shell-git-wit-program
-                                   nil t nil "ls" "--json"))))
-      (when (eql status 0)
-        (buffer-string)))))
+  "DIRECTORY で git-wit の worktree 一覧を引く。"
+  (warashi-git-wit-list directory))
 
-(defun warashi-agent-shell--git-wit-memo-in (json directory)
-  "JSON に載った worktree のうち、DIRECTORY のものの memo を返す。
-JSON は `warashi-agent-shell--git-wit-list' の戻り値。DIRECTORY は
+(defun warashi-agent-shell--git-wit-memo-in (worktrees directory)
+  "WORKTREES のうち、DIRECTORY のものの memo を返す。
+WORKTREES は `warashi-agent-shell--git-wit-list' の戻り値。DIRECTORY は
 リモート接頭辞を落としたパス。"
-  (when-let* (((stringp json))
-              (worktrees (ignore-errors
-                           (json-parse-string json
-                                              :object-type 'alist
-                                              :null-object nil
-                                              :false-object nil)))
-              ;; 配列以外は git-wit の出力として扱わない。alist を舐めると
-              ;; 要素が cons になり `alist-get' が型エラーになる。
-              ((vectorp worktrees))
+  (when-let* (((listp worktrees))
               (target (file-name-as-directory directory))
               (found (seq-find
                       (lambda (worktree)
