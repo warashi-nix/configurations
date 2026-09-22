@@ -17,8 +17,9 @@
 ;;   effort を順に設定し、応答を待ってから prompt を送る。
 ;;   起動は `agent-shell--dwim' ではなく `agent-shell--start' に session strategy
 ;;   new を渡して行う。起動を投げた後に picker や window の切り替えで割り込ませないため。
-;;   Claude/Copilot は /srv/chelly-workspaces 以下では同じ variant の設定を
-;;   chelly-agent に渡す。専用 runner 非対応の pi は同領域で起動を拒否する。
+;;   Claude/Copilot は `warashi-chelly-workspace-root' 以下では同じ variant
+;;   の設定を chelly-agent に渡す。専用 runner 非対応の pi は同領域で起動を
+;;   拒否する。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても shell には飛ばず、同じ project のメニューを開き直す。
 ;; - session の累積コストを context usage indicator の隣に常設する。実行中は

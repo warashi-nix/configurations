@@ -4,6 +4,8 @@
 
 ;; 通常の agent-shell の設定を変えず、chelly-agent で新規会話・再開を確認する。
 ;; ホストの認証設定や MCP 設定は渡さず、ホストへの操作要求も拒否する。
+;; NixOS では chelly-agent が専用ユーザーの入口、macOS では chelly 自体が
+;; 専用構成で chelly-agent はその wrapper。どちらも専用領域の中でだけ使う。
 
 ;;; Code:
 
@@ -15,7 +17,7 @@
 (defun warashi-agent-shell-chelly--directory (directory)
   "DIRECTORY がローカルの専用作業領域なら実体の絶対パスを返す。"
   (when (file-remote-p directory)
-    (user-error "chelly-agent ACP must be started from the workbench host, not TRAMP"))
+    (user-error "chelly-agent ACP must be started on the local host, not over TRAMP"))
   (let ((directory (file-name-as-directory (file-truename directory)))
         (root (file-name-as-directory
                (file-truename warashi-chelly-workspace-root))))
@@ -51,8 +53,6 @@
         (user-error "chelly-agent ACP path escapes dedicated workspace: %s"
                     lexical-directory))
        ((not dedicated) provider-config)
-       ((not (eq system-type 'gnu/linux))
-        (user-error "chelly-agent ACP is only available on the workbench Linux host"))
        ((not (memq agent '(claude copilot)))
         (user-error "chelly-agent ACP does not support %s; refusing owner credentials"
                     agent))
@@ -141,12 +141,10 @@ PROVIDER-CONFIG が非 nil なら model/effort を含むその設定を保護し
 ;;;###autoload
 (defun warashi-agent-shell-chelly-start (agent &optional resume)
   "専用環境で AGENT の会話を開始する。RESUME が非 nil なら会話を選んで再開。
-ホストの /srv/chelly-workspaces 以下から実行する。対話時は C-u で再開する。"
+ホストの `warashi-chelly-workspace-root' 以下から実行する。対話時は C-u で再開する。"
   (interactive (list (intern (completing-read "Dedicated ACP agent: "
                                             '("claude" "copilot") nil t))
                      current-prefix-arg))
-  (unless (eq system-type 'gnu/linux)
-    (user-error "chelly-agent ACP is only available on the workbench Linux host"))
   (let* ((directory (warashi-agent-shell-chelly--directory default-directory))
          (config (warashi-agent-shell-chelly--config agent directory)))
     (unless (executable-find "chelly-agent")

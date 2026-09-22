@@ -31,8 +31,13 @@
   :group 'tools
   :prefix "warashi-chelly-workspace-")
 
-(defcustom warashi-chelly-workspace-root "/srv/chelly-workspaces/"
-  "専用ユーザーの作業領域。NixOS の chelly-agent runner と対になる。"
+(defcustom warashi-chelly-workspace-root
+  (if (eq system-type 'darwin)
+      "~/chelly-workspaces/"
+    "/srv/chelly-workspaces/")
+  "専用 clone の作業領域。Nix の `warashi.chelly.workspaces' と同じ既定。
+NixOS では chelly-agent runner の作業領域、macOS では Podman machine に
+共有するディレクトリ。"
   :type 'directory)
 
 (defun warashi-chelly-workspace--root ()
@@ -85,8 +90,8 @@ handoff 名が同じでも別の名前にするため。"
 (defun warashi-chelly-workspace-available-p ()
   "このホストで専用 clone を作れるなら非 nil。"
   ;; chelly-handoff は git の設定と一緒に全ホストへ入るが、専用領域は
-  ;; workbench にしか無い。実行ファイルだけで判定すると、他のホストで
-  ;; 種類を聞いた末に create が失敗する。
+  ;; workbench と athena にしか無い。実行ファイルだけで判定すると、他の
+  ;; ホストで種類を聞いた末に create が失敗する。
   (and (executable-find warashi-chelly-workspace-handoff-program)
        (file-directory-p warashi-chelly-workspace-root)
        t))
@@ -123,7 +128,7 @@ chelly-handoff は toplevel の basename を使う。"
 作られた clone のディレクトリを返す。失敗したら出力を buffer に出して
 `user-error' を出す。"
   (when (file-remote-p repository)
-    (user-error "chelly-handoff must run on the workbench host, not over TRAMP"))
+    (user-error "chelly-handoff must run on the local host, not over TRAMP"))
   (unless (warashi-chelly-workspace-available-p)
     (user-error "%s is not installed on this host"
                 warashi-chelly-workspace-handoff-program))

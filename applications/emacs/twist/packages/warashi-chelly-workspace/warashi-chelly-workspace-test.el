@@ -205,7 +205,7 @@ ROOT はその一時ディレクトリを束縛する変数名。"
              (lambda (&rest _) (ert-fail "chelly-handoff was called"))))
     (should-not (warashi-chelly-workspace-available-p))
     (should-error (warashi-chelly-workspace-create "/home/me/repo" "x") :type 'user-error))
-  ;; chelly-handoff は全ホストに入るが、専用領域は workbench にしか無い。
+  ;; chelly-handoff は全ホストに入るが、専用領域の無いホストもある。
   (let ((warashi-chelly-workspace-root "/nonexistent/chelly-workspaces/"))
     (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) "/bin/chelly-handoff"))
               ((symbol-function 'call-process)

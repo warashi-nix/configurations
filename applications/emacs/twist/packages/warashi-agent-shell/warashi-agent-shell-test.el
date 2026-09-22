@@ -150,7 +150,6 @@
 
 (ert-deftest warashi-agent-shell-test-chelly-start-and-resume ()
   "専用入口は新規 buffer で起動し、再開時だけ既存 session の選択を行う。"
-  (skip-unless (eq system-type 'gnu/linux))
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (warashi-chelly-workspace-root (file-name-as-directory root))
          (default-directory root)
@@ -183,7 +182,6 @@
 
 (ert-deftest warashi-agent-shell-test-ordinary-variants-route-inside-chelly-workspace ()
   "通常の Claude/Copilot variant も専用領域では設定を保ったまま専用 runner を使う。"
-  (skip-unless (eq system-type 'gnu/linux))
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (clone (expand-file-name "owner/repository/clone" root))
          (alias-parent (make-temp-file "chelly-alias-" t))
@@ -248,17 +246,23 @@
       (delete-directory root t)
       (delete-directory outside t))))
 
-(ert-deftest warashi-agent-shell-test-dedicated-routing-is-linux-only ()
-  "専用領域は Linux 以外で個人 provider へ fallback しない。"
+(ert-deftest warashi-agent-shell-test-dedicated-routing-works-on-darwin ()
+  "macOS でも専用領域では個人 provider へ fallback せず専用 runner を使う。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (warashi-chelly-workspace-root root)
          (default-directory (file-name-as-directory root))
          (system-type 'darwin))
     (unwind-protect
-        (should-error
-         (warashi-agent-shell-test--capture-start
-           (warashi-agent-shell--start-claude "opus[1m]" "low"))
-         :type 'user-error)
+        (let ((config (plist-get
+                       (warashi-agent-shell-test--capture-start
+                         (warashi-agent-shell--start-claude "opus[1m]" "low"))
+                       :config)))
+          (should (alist-get :chelly-agent config))
+          (with-temp-buffer
+            (should (equal "chelly-agent"
+                           (map-elt (funcall (alist-get :client-maker config)
+                                             (current-buffer))
+                                    :command)))))
       (delete-directory root t))))
 
 (ert-deftest warashi-agent-shell-test-pi-refuses-dedicated-workspace ()
