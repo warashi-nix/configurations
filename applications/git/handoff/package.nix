@@ -5,6 +5,9 @@
   git,
   python3,
   makeWrapper,
+  # chelly-handoff が専用 clone を置く領域。null なら script の既定 (/srv/chelly-workspaces)。
+  # macOS では home 配下の Podman machine に共有する領域を host の設定から受ける。
+  workspaces ? null,
 }:
 
 stdenvNoCC.mkDerivation {
@@ -43,7 +46,10 @@ stdenvNoCC.mkDerivation {
       --prefix PATH : ${lib.makeBinPath [ git ]}
     makeWrapper ${bash}/bin/bash "$out/bin/chelly-handoff" \
       --add-flags "$out/libexec/git-check-new-ignored/chelly-handoff.sh" \
-      --prefix PATH : "$out/bin:${lib.makeBinPath [ git ]}"
+      --prefix PATH : "$out/bin:${lib.makeBinPath [ git ]}" \
+      ${lib.optionalString (
+        workspaces != null
+      ) "--set-default CHELLY_HANDOFF_WORKSPACES ${lib.escapeShellArg workspaces}"}
     runHook postInstall
   '';
 

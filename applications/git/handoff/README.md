@@ -65,7 +65,8 @@ trusted rule origin, line, and pattern. A successful check prints fixed
 ## `chelly-handoff`
 
 `chelly-handoff` moves Git bundles between the owner's repository and a named
-clone owned by the dedicated `chelly-agent` account. Review and integration are
+clone owned by the dedicated `chelly-agent` account (on NixOS) or placed in the
+directory shared with the dedicated Podman machine (on macOS). Review and integration are
 ordinary Git operations on a remote-tracking branch, so Magit or any Git client
 can show the diff, cherry-pick the whole `BASE..handoff-NAME/branch` range in
 one step, or merge with the owner's usual signing configuration. The command keeps no state file: the remote `handoff-NAME` in
@@ -126,6 +127,9 @@ changes or a `HEAD` that this repository has not fetched yet.
 
 The owner's SSH agent and Git identity variables are not passed to the
 transport, and nothing is ever pushed. `chelly-agent` must be on the host
-`PATH`; it is started from `/srv/chelly-workspaces` so candidate development
-shells are never evaluated for transport. `CHELLY_HANDOFF_WORKSPACES` overrides
-that directory for tests only.
+`PATH`; it is started from the workspace root so candidate development shells
+are never evaluated for transport. The root is `/srv/chelly-workspaces` by
+default, and `CHELLY_HANDOFF_WORKSPACES` overrides it. The Nix package sets it
+from `warashi.chelly.workspaces`, so on macOS the root is the directory shared
+with the Podman machine (`~/chelly-workspaces`) and `chelly-agent` is a thin
+wrapper over `chelly`, which is itself the dedicated configuration there.
