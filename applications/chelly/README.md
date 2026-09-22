@@ -324,7 +324,7 @@ macOS には別の OS ユーザーも sudo の入口も無いので、workbench 
 | VM に共有するもの | `~/chelly-workspaces` (専用 clone) と `~/.local/share/chelly` (git-ignore と設定 bundle の実体) だけ。home 全体・`~/.claude`・`~/.copilot`・`~/ghq` は共有しない |
 | 作業 clone | `~/chelly-workspaces/<repo 名>/<名前>`。`chelly-handoff create` で作る。本人の clone を直接 mount する経路は無い |
 | Claude・Copilot の状態 | `claude-state`・`copilot-state` の named volume。本人の `~/.claude`・`~/.copilot` は mount しない |
-| 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、`CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない |
+| 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、同じ path に read-only で bind mount して `CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない。mount が無いと entrypoint は黙って何も写さない |
 | モデル認証 | Home Manager の sops secret `chelly-agent-dotenv` だけ。本人の `chelly-dotenv` は使わない。`--env-file` は Mac 側の podman client が読むので VM に共有しなくてよい |
 | brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う |
 | Git ignore | 従来どおり `~/.local/share/chelly/git-ignore` の実体を read-only で渡す |
@@ -335,6 +335,10 @@ macOS には別の OS ユーザーも sudo の入口も無いので、workbench 
 Emacs の ACP 経路は `warashi-agent-shell-chelly.el` が host 要求を拒否するので、
 VM の共有範囲を絞っても Emacs 経由で home を触られることはない。
 公開先への送信制限、ディスク枯渇防止、並行する AI 同士の強い隔離は保証しない。
+
+専用領域の外 (本人の clone など) で `chelly run` すると、VM に無い cwd を bind mount
+しようとして podman が statfs のエラー (exit 125) で止まる。これは想定どおりで、
+`chelly-handoff create` で専用領域に clone を作ってから起動する。
 
 通常入口を別に残さないのは、本人の clone を直接 mount する経路を残すと `~/ghq` を VM に
 共有することになり、agent が本人の clone の `.git` (hooks・config) を書き換えて次の
@@ -425,9 +429,16 @@ agent の会話を失う。
   で通る (workbench の手順と同じ)。
 - 同じ VM のまま、別ターミナルから二つの `chelly run` を同時に動かし、
   `podman inspect` で同じ named volume を使い、一方が動いたまま他方も `nix develop` とビルドを実行できる。
+- コンテナから専用 clone に書いたファイルを Mac の Emacs で読み書きでき、所有者が変わらない。
+  handoff の agent 側 script は `GIT_CONFIG_GLOBAL=/dev/null` で Dockerfile の
+  `safe.directory` を無効にしているので、virtiofs の所有者が揺れると `create` の clone や
+  `status` が dubious ownership で落ちる。起きたら直すのは handoff script 側で、Dockerfile ではない。
 - Emacs の専用入口で host のファイル要求が `*Messages*` に拒否として出る。
 - chelly 内で `podman run --rm docker.io/library/alpine:latest true` が成功する。
 - VM を停止・再起動した後も named volume の内容を使える。
+
+`chelly-handoff` の python テストは Linux 以外では skip されるので、athena での
+package build は handoff の動作を検査しない。
 
 設定の回帰チェックは `nix build .#checks.<system>.chelly-config` で実行する。
 これはランタイム選択、共有マウント、Git ignore と設定 bundle の実体配置、

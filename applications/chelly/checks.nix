@@ -238,6 +238,20 @@ let
         userns = [ "--userns=keep-id" ];
       };
     };
+    # Mac の /nix は VM に無いので、CHELLY_AGENT_CONFIG の path はそのまま
+    # bind mount で見せないと entrypoint が黙って何も写さない。
+    test-mac-dedicated-mounts-bundle-at-env-path = {
+      expr =
+        let
+          bundle = lib.removePrefix "--env=CHELLY_AGENT_CONFIG=" (
+            lib.findFirst (lib.hasPrefix "--env=CHELLY_AGENT_CONFIG=") "" macRunArgs
+          );
+        in
+        lib.filter (mount: lib.hasPrefix "${bundle}:${bundle}" mount) macMounts;
+      expected = [
+        "${macHome.xdg.dataHome}/chelly/agent-config:${macHome.xdg.dataHome}/chelly/agent-config:ro"
+      ];
+    };
     test-mac-dedicated-uses-only-agent-token = {
       expr = macHome.warashi.chelly.settings.env_files;
       expected = [ macHome.sops.secrets.chelly-agent-dotenv.path ];

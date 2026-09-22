@@ -69,6 +69,9 @@ in
       envfiles = [ config.sops.secrets.chelly-agent-dotenv.path ];
       settings.additional_mounts = [
         # keep-sorted start
+        # bundle は CHELLY_AGENT_CONFIG と同じ path で見せる。NixOS 版は /nix の mount 越しに
+        # store path が届くが、Mac では実体を bind mount しないと entrypoint が黙って何も写さない。
+        "${agentConfigPath}:${agentConfigPath}:ro"
         "${brainiumWorkspace}:/home/warashi/ghq/github.com/Warashi"
         "claude-state:/home/warashi/.claude"
         "copilot-state:/home/warashi/.copilot"
