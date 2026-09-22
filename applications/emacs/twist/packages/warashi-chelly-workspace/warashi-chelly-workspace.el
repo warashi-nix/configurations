@@ -15,9 +15,15 @@
 ;;
 ;; agent-shell の専用入口や project の切り替えなど、専用 clone を扱う側は
 ;; ここだけを見る。root や命名が変わるときに直す場所を一つにするため。
+;;
+;; `warashi-chelly-workspace-install-project-name' を呼ぶと、専用 clone の
+;; `project-name' が "<repo> / <handoff 名> (chelly)" になる。eshell や
+;; compile の buffer 名、agent-shell の表示はどれも project 名から作られる
+;; ので、ここで差し替えれば全部に効く。
 
 ;;; Code:
 
+(require 'project)
 (require 'subr-x)
 
 (defgroup warashi-chelly-workspace nil
@@ -44,6 +50,31 @@ root の 1 段目は repo 名の置き場で clone ではなく、clone の下�
               (parts (split-string (string-remove-prefix root directory) "/" t))
               ((= 2 (length parts))))
     (cons (car parts) (cadr parts))))
+
+;;;; project 名
+
+(defun warashi-chelly-workspace-project-name (directory)
+  "DIRECTORY が専用 clone なら \"<repo> / <handoff 名> (chelly)\" を返す。
+それ以外では nil。種類を付けるのは、同じ repo の git-wit の memo と
+handoff 名が同じでも別の名前にするため。"
+  (when-let* ((workspace (warashi-chelly-workspace-parse directory)))
+    (format "%s / %s (chelly)" (car workspace) (cdr workspace))))
+
+(defun warashi-chelly-workspace--project-name (orig project)
+  "PROJECT が専用 clone なら repo 名付きの名前を返し、それ以外は ORIG に任せる。"
+  ;; root の basename、つまり handoff 名だけでは、別 repo の同名 handoff の
+  ;; eshell や compile の buffer が同じ名前になって衝突する。
+  ;; リモートの root で `file-truename' を呼ぶと接続が起きるので判定に入らない。
+  (let ((root (project-root project)))
+    (or (and (not (file-remote-p root))
+             (warashi-chelly-workspace-project-name root))
+        (funcall orig project))))
+
+(defun warashi-chelly-workspace-install-project-name ()
+  "専用 clone の `project-name' に repo 名と種類を含める。"
+  ;; `.dir-locals.el' の `project-vc-name' にしないのは、clone の作業 tree に
+  ;; 置くと handoff のコミットに漏れ、専用ユーザーが名前を書き換えられるため。
+  (advice-add 'project-name :around #'warashi-chelly-workspace--project-name))
 
 ;;;; 本人の repository から見た clone の列挙と作成
 

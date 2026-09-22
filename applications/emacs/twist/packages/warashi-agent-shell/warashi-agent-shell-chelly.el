@@ -10,7 +10,6 @@
 (require 'agent-shell)
 (require 'acp)
 (require 'map)
-(require 'project)
 (require 'warashi-chelly-workspace)
 
 (defun warashi-agent-shell-chelly--directory (directory)
@@ -94,27 +93,6 @@
 
 ;; restart/reload は公開入口を通らず、client-maker より前に dir-local を読む。
 (advice-add 'agent-shell--start :around #'warashi-agent-shell-chelly--start)
-
-(defun warashi-agent-shell-chelly--workspace-name ()
-  "`default-directory' が専用 clone の中なら \"<repo> / <handoff 名>\" を返す。
-それ以外の場所では nil。"
-  ;; project root から取るのは、clone の下のディレクトリから起動しても同じ
-  ;; 名前にするため。git からは repo 名を引けない。clone は本人の repo と
-  ;; 独立していて、git-common-dir は clone 自身の .git を指す。
-  (when-let* ((default-directory)
-              ((not (file-remote-p default-directory)))
-              (project (project-current))
-              (workspace (warashi-chelly-workspace-parse (project-root project))))
-    (format "%s / %s" (car workspace) (cdr workspace))))
-
-(defun warashi-agent-shell-chelly--project-name (name)
-  "専用 clone なら project 名 NAME を repo 名付きに置き換える。"
-  (or (warashi-agent-shell-chelly--workspace-name) name))
-
-;; 上流の project 名は clone の basename、つまり handoff 名だけになり、
-;; buffer 名・header・一覧のどれを見ても repo が分からない。
-(advice-add 'agent-shell--project-name :filter-return
-            #'warashi-agent-shell-chelly--project-name)
 
 (defun warashi-agent-shell-chelly--config (agent directory &optional provider-config)
   "AGENT を専用 DIRECTORY で起動する config を作る。

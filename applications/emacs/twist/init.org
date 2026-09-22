@@ -931,6 +931,20 @@ project のディスパッチに戻るので、続けて =g= で magit を開け
                                   (project-compile "Compile" ?c))))
 #+end_src
 
+*** 作業場所ごとの project 名
+project 名は eshell / compile の buffer 名や agent-shell の表示の元になる。
+専用 clone は =<root>/<repo>/<handoff 名>= に置かれ、素の project 名は
+handoff 名だけになるため、別 repo で同じ handoff 名を使うと buffer が衝突する。
+専用 clone では =repo / handoff 名 (chelly)= にする。種類を付けるのは、同じ
+repo の git-wit の memo と handoff 名が同じでも別の名前にするため。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-chelly-workspace)
+  (:with-feature project
+    (:when-loaded
+      (warashi-chelly-workspace-install-project-name))))
+#+end_src
+
 * misc
 #+begin_src emacs-lisp
 (setup (:package ppp))

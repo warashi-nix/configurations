@@ -63,6 +63,68 @@ ROOT はその一時ディレクトリを束縛する変数名。"
                           (expand-file-name "configurations/main" link))))
         (delete-file link)))))
 
+;;;; project 名
+
+(defmacro warashi-chelly-workspace-test--with-project-name (&rest body)
+  "project 名の差し替えを有効にして BODY を実行し、後で外す。"
+  (declare (indent 0))
+  `(unwind-protect
+       (progn
+         (warashi-chelly-workspace-install-project-name)
+         ,@body)
+     (advice-remove 'project-name #'warashi-chelly-workspace--project-name)))
+
+(defun warashi-chelly-workspace-test--project-name (directory)
+  "DIRECTORY を含む project の名前を返す。"
+  (let ((default-directory (file-name-as-directory directory)))
+    (project-name (project-current))))
+
+(ert-deftest warashi-chelly-workspace-test-project-name-includes-repository ()
+  "専用 clone の project 名は <repo> / <handoff 名> (chelly) になり、
+別 repo の同名 handoff と区別できる。"
+  (warashi-chelly-workspace-test--with-root root
+    (let ((clone (expand-file-name "configurations/main" root))
+          (other (expand-file-name "brainium/main" root)))
+      (dolist (directory (list clone other))
+        (make-directory (expand-file-name ".git" directory) t))
+      (make-directory (expand-file-name "sub" clone))
+      (warashi-chelly-workspace-test--with-project-name
+        (should (equal "configurations / main (chelly)"
+                       (warashi-chelly-workspace-test--project-name clone)))
+        ;; clone の下のディレクトリから見ても同じ名前になる。
+        (should (equal "configurations / main (chelly)"
+                       (warashi-chelly-workspace-test--project-name
+                        (expand-file-name "sub" clone))))
+        (should (equal "brainium / main (chelly)"
+                       (warashi-chelly-workspace-test--project-name other)))))))
+
+(ert-deftest warashi-chelly-workspace-test-project-name-leaves-others ()
+  "専用領域の 1 段目と領域外の project 名は変えない。"
+  (warashi-chelly-workspace-test--with-root root
+    (let ((outside (make-temp-file "chelly-outside-" t)))
+      (unwind-protect
+          (progn
+            (dolist (directory (list (expand-file-name "configurations" root)
+                                     (expand-file-name "main" outside)))
+              (make-directory (expand-file-name ".git" directory) t))
+            (warashi-chelly-workspace-test--with-project-name
+              (should (equal "configurations"
+                             (warashi-chelly-workspace-test--project-name
+                              (expand-file-name "configurations" root))))
+              (should (equal "main"
+                             (warashi-chelly-workspace-test--project-name
+                              (expand-file-name "main" outside))))))
+        (delete-directory outside t)))))
+
+(ert-deftest warashi-chelly-workspace-test-project-name-skips-remote ()
+  "リモートの project では専用領域の判定に入らず名前をそのまま返す。"
+  (warashi-chelly-workspace-test--with-project-name
+    (cl-letf (((symbol-function 'file-truename)
+               (lambda (&rest _) (ert-fail "file-truename was called for a remote project"))))
+      (should (equal "main"
+                     (project-name
+                      '(vc Git "/ssh:workbench:/srv/chelly-workspaces/configurations/main/")))))))
+
 ;;;; 本人の repository から見た clone の列挙と作成
 
 (ert-deftest warashi-chelly-workspace-test-list-clones-of-repository ()
