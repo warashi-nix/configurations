@@ -163,6 +163,9 @@ runCommand "chelly-agent-config-check"
     test -f ${ownerHome.warashi.claude.bundle}/skills/pair-programming/SKILL.md
     grep -Fq '"outputStyle": "grilling"' ${ownerHome.warashi.claude.bundle}/settings.json
     test -f ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
+    # Copilot CLI の base prompt が調査量と応答量を抑えるため、grilling の補足が指示ファイルに載っていること。
+    grep -Fq '# grilling の Copilot CLI 向け補足' ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
+    grep -Fq '# Output Style: grilling' ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
     test -f ${ownerHome.warashi.copilot.bundle}/settings.json
     test -f ${ownerHome.warashi.copilot.bundle}/skills/pair-programming/SKILL.md
     if ${runnerCommand} run >stdout 2>stderr; then
