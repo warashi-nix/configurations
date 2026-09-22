@@ -25,7 +25,10 @@ let
   );
 in
 {
-  imports = [ ./host-store.nix ];
+  imports = [
+    ./dedicated.nix
+    ./host-store.nix
+  ];
 
   options.warashi.chelly = {
     enable = mkOption {
@@ -164,14 +167,19 @@ in
         mkDefaultLeaves {
           additional_mounts = [
             # keep-sorted start
-            "${config.home.homeDirectory}/.claude:/home/warashi/.claude"
-            "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
-            "${config.home.homeDirectory}/.pi:/home/warashi/.pi"
-            "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             "${gitIgnorePath}:/home/warashi/.config/git/ignore"
             "go-cache:/home/warashi/.cache/go-build"
             "go-mod:/home/warashi/go/pkg/mod"
             "nix-cache:/home/warashi/.cache/nix"
+            # keep-sorted end
+          ]
+          # 本人の状態は通常入口だけが使う。専用構成 (dedicated.nix) は volume と handoff clone に置き換える。
+          ++ optionals (!cfg.dedicated) [
+            # keep-sorted start
+            "${config.home.homeDirectory}/.claude:/home/warashi/.claude"
+            "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
+            "${config.home.homeDirectory}/.pi:/home/warashi/.pi"
+            "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             # keep-sorted end
           ]
           ++ optional (cfg.nix-store == "volume") "chelly-nix:/nix";

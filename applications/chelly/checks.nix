@@ -47,6 +47,21 @@ let
       };
     };
 
+  # dedicated.nix は本人の Claude/Copilot の配布 bundle を参照する。最小構成では
+  # applications/claude と copilot を取り込まず、bundle の option だけを空の store path で満たす。
+  agentBundleStub =
+    { lib, pkgs, ... }:
+    {
+      options.warashi.claude.bundle = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.emptyDirectory;
+      };
+      options.warashi.copilot.bundle = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.emptyDirectory;
+      };
+    };
+
   chellyHomeConfig =
     { pkgs, hostHomeModule }:
     (homeManagerLib.homeManagerConfiguration {
@@ -66,6 +81,7 @@ let
       };
       modules = [
         sopsSecretsStub
+        agentBundleStub
         ./default.nix
         hostHomeModule
         {
@@ -78,7 +94,12 @@ let
       ];
     }).config;
 
-  installsPodman = home: lib.any (package: (package.pname or "") == "podman") home.home.packages;
+  installsPackage =
+    pname: home: lib.any (package: (package.pname or package.name or "") == pname) home.home.packages;
+  installsPodman = installsPackage "podman";
+  macRunArgs = macHome.warashi.chelly.runtime_options.podman.run;
+  macMounts = macHome.warashi.chelly.settings.additional_mounts;
+  macWorkspaces = "${macHome.home.homeDirectory}/chelly-workspaces";
 
   darwinChellyHome = chellyHomeConfig {
     pkgs = athenaPkgs;
@@ -151,15 +172,97 @@ let
       expr = linuxHome.warashi.chelly.nix-store;
       expected = "host";
     };
-    test-existing-entries-do-not-skip-claude-onboarding = {
-      expr = map (home: lib.elem "--env=IS_DEMO=1" home.warashi.chelly.runtime_options.podman.run) [
-        macHome
-        linuxHome
+    # Linux の通常入口は本人の実 ~/.claude を mount するので、初回セットアップの
+    # スキップも配布 bundle の適用もしない。
+    test-linux-entry-keeps-owner-state = {
+      expr = {
+        skipsOnboarding = lib.elem "--env=IS_DEMO=1" linuxHome.warashi.chelly.runtime_options.podman.run;
+        appliesBundle = lib.any (lib.hasPrefix "--env=CHELLY_AGENT_CONFIG=") linuxHome.warashi.chelly.runtime_options.podman.run;
+        mountsOwnerClaude = lib.elem "${linuxHome.home.homeDirectory}/.claude:/home/warashi/.claude" linuxHome.warashi.chelly.settings.additional_mounts;
+        dedicated = linuxHome.warashi.chelly.dedicated;
+        workspaces = linuxHome.warashi.chelly.workspaces;
+      };
+      expected = {
+        skipsOnboarding = false;
+        appliesBundle = false;
+        mountsOwnerClaude = true;
+        dedicated = false;
+        workspaces = "/srv/chelly-workspaces";
+      };
+    };
+
+    # macOS は VM の共有範囲を境界にするので、chelly 自体が専用構成になる。
+    # 本人の home の状態は mount せず、専用領域と ~/.local/share/chelly の実体だけを使う。
+    test-mac-dedicated-does-not-mount-owner-state = {
+      expr = lib.filter (
+        mount:
+        lib.any (prefix: lib.hasPrefix "${macHome.home.homeDirectory}/${prefix}" mount) [
+          ".claude"
+          ".copilot"
+          ".pi"
+          "ghq"
+        ]
+      ) macMounts;
+      expected = [ ];
+    };
+    test-mac-dedicated-keeps-agent-state-in-volumes = {
+      expr = lib.all (mount: lib.elem mount macMounts) [
+        "claude-state:/home/warashi/.claude"
+        "copilot-state:/home/warashi/.copilot"
+        "${macWorkspaces}/brainium:/home/warashi/ghq/github.com/Warashi"
       ];
-      expected = [
-        false
-        false
-      ];
+      expected = true;
+    };
+    test-mac-dedicated-mount-sources-stay-in-shared-paths = {
+      expr = lib.filter (
+        mount:
+        lib.hasPrefix "/" mount
+        && !(lib.any (prefix: lib.hasPrefix prefix mount) [
+          "${macWorkspaces}/"
+          "${macHome.xdg.dataHome}/chelly/"
+        ])
+      ) macMounts;
+      expected = [ ];
+    };
+    test-mac-dedicated-applies-bundle-and-skips-onboarding = {
+      expr = {
+        bundle = lib.filter (lib.hasPrefix "--env=CHELLY_AGENT_CONFIG=") macRunArgs;
+        configDir = lib.elem "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude" macRunArgs;
+        skipsOnboarding = lib.elem "--env=IS_DEMO=1" macRunArgs;
+        userns = lib.filter (lib.hasPrefix "--userns=") macRunArgs;
+      };
+      expected = {
+        bundle = [ "--env=CHELLY_AGENT_CONFIG=${macHome.xdg.dataHome}/chelly/agent-config" ];
+        configDir = true;
+        skipsOnboarding = true;
+        userns = [ "--userns=keep-id" ];
+      };
+    };
+    test-mac-dedicated-uses-only-agent-token = {
+      expr = macHome.warashi.chelly.settings.env_files;
+      expected = [ macHome.sops.secrets.chelly-agent-dotenv.path ];
+    };
+    test-mac-dedicated-materializes-bundle-and-workspaces = {
+      expr = {
+        bundle = lib.hasInfix "${macHome.xdg.dataHome}/chelly/agent-config" macHome.home.activation.chelly-agent-config.data;
+        workspaces = lib.hasInfix "${macWorkspaces}/brainium" macHome.home.activation.chelly-workspaces.data;
+      };
+      expected = {
+        bundle = true;
+        workspaces = true;
+      };
+    };
+    test-mac-dedicated-installs-chelly-agent-wrapper = {
+      expr = {
+        mac = installsPackage "chelly-agent" darwinChellyHome;
+        linux = installsPackage "chelly-agent" linuxChellyHome;
+        workspaces = darwinChellyHome.warashi.chelly.workspaces;
+      };
+      expected = {
+        mac = true;
+        linux = false;
+        workspaces = "/Users/warashi/chelly-workspaces";
+      };
     };
   };
 in
