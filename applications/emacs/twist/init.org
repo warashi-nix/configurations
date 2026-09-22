@@ -753,16 +753,8 @@ session の累積コストを context usage indicator の隣に常設する。�
     (warashi-agent-shell-install-cost-indicator)))
 #+end_src
 
-git-wit の worktree で起動した shell は buffer 名の project 部分を =repository / memo=
-にする。worktree のディレクトリ名は ID 由来で、一覧に並べてもどの作業か読み取れな
-いため。repository 名を頭に置くのは、memo だけではどのリポジトリの作業か分からな
-くなるため。
-
-#+begin_src emacs-lisp
-(setup agent-shell
-  (:when-loaded
-    (warashi-agent-shell-install-git-wit-memo-name)))
-#+end_src
+git-wit の worktree や専用 clone で起動した shell の buffer 名は、project 名の
+差し替え ([[*作業場所ごとの project 名][作業場所ごとの project 名]]) がそのまま効く。
 
 *** 一覧サイドバー
 複数の shell を並行で回していると、どれが permission 待ちで止まっているかを見失
@@ -935,14 +927,18 @@ project のディスパッチに戻るので、続けて =g= で magit を開け
 project 名は eshell / compile の buffer 名や agent-shell の表示の元になる。
 専用 clone は =<root>/<repo>/<handoff 名>= に置かれ、素の project 名は
 handoff 名だけになるため、別 repo で同じ handoff 名を使うと buffer が衝突する。
-専用 clone では =repo / handoff 名 (chelly)= にする。種類を付けるのは、同じ
-repo の git-wit の memo と handoff 名が同じでも別の名前にするため。
+git-wit の worktree はディレクトリ名が ID 由来で、並べてもどの作業か読み取れない。
+専用 clone では =repo / handoff 名 (chelly)=、git-wit の worktree では
+=repo / memo (wit)= にする。種類を付けるのは、同じ repo の memo と handoff 名が
+同じでも別の名前にするため。同じ memo の worktree 同士は区別しない。
 
 #+begin_src emacs-lisp
-(setup (:package warashi-chelly-workspace)
+(setup (:package warashi-chelly-workspace
+                 warashi-git-wit)
   (:with-feature project
     (:when-loaded
-      (warashi-chelly-workspace-install-project-name))))
+      (warashi-chelly-workspace-install-project-name)
+      (warashi-git-wit-install-project-name))))
 #+end_src
 
 * misc
