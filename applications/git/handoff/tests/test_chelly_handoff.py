@@ -188,6 +188,53 @@ class HandoffTest(unittest.TestCase):
         self.assertIn(b"token.secret", result.stdout)
         self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/main"), ignored_tip)
 
+    def test_fetch_follows_agent_head_on_another_branch(self):
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "switch", "-q", "-c", "feat/topic")
+        tip = self.agent_commit("feature", "done\n")
+        result = self.handoff("fetch", "fix")
+        self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/feat/topic"), tip)
+        self.assertIn(b"handoff-fix/feat/topic", result.stdout)
+        self.assertEqual(
+            self.git("-C", self.repo, "rev-parse", "--verify", "-q", "refs/remotes/handoff-fix/main",
+                     check=False).returncode,
+            1,
+        )
+
+    def test_fetch_uses_recorded_branch_name_for_detached_head(self):
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "switch", "-q", "--detach")
+        tip = self.agent_commit("feature", "done\n")
+        result = self.handoff("fetch", "fix")
+        self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/main"), tip)
+        self.assertIn(b"handoff-fix/main", result.stdout)
+        # detached のままでも update は記録 branch に載せ直す。
+        self.git("-C", self.repo, "merge", "-q", "--ff-only", "refs/remotes/handoff-fix/main")
+        self.handoff("update", "fix")
+        self.assertEqual(
+            self.git("-C", self.workspace, "symbolic-ref", "--short", "HEAD").stdout.decode().strip(),
+            "main",
+        )
+        self.assertEqual(self.rev(self.workspace), tip)
+
+    def test_fetch_drops_remote_tracking_refs_from_earlier_branches(self):
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "switch", "-q", "-c", "feat/topic")
+        self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+        # 本人側に feat/topic が残ったままだと feat は directory と衝突して作れないので、先に消す必要がある。
+        self.git("-C", self.workspace, "switch", "-q", "main")
+        self.git("-C", self.workspace, "branch", "-q", "-D", "feat/topic")
+        self.git("-C", self.workspace, "switch", "-q", "-c", "feat")
+        tip = self.agent_commit("more", "x\n")
+        self.handoff("fetch", "fix")
+        self.assertEqual(
+            self.git("-C", self.repo, "for-each-ref", "--format=%(refname)", "refs/remotes/handoff-fix/")
+            .stdout.decode().split(),
+            ["refs/remotes/handoff-fix/feat"],
+        )
+        self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/feat"), tip)
+
     def test_fetch_requires_a_clean_committed_workspace(self):
         self.handoff("create", "fix")
         result = self.handoff("fetch", "fix", check=False)
@@ -264,6 +311,59 @@ class HandoffTest(unittest.TestCase):
             self.git("-C", self.repo, "rev-parse", "--verify", "-q", "refs/remotes/handoff-fix/main",
                      check=False).returncode,
             1,
+        )
+        result = self.handoff("update", "fix")
+        self.assertIn(b"up to date", result.stdout)
+
+    def test_update_returns_workspace_to_recorded_branch_and_drops_agent_branch(self):
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "switch", "-q", "-c", "feat/topic")
+        self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+        self.git("-C", self.repo, "cherry-pick", "refs/remotes/handoff-fix/feat/topic")
+        self.git("-C", self.repo, "commit", "-q", "--amend", "--no-verify", "-m", "integrated")
+        integrated = self.rev(self.repo)
+        result = self.handoff("update", "fix")
+        self.assertIn(b"updated", result.stdout)
+        self.assertEqual(self.rev(self.workspace), integrated)
+        self.assertEqual(
+            self.git("-C", self.workspace, "symbolic-ref", "--short", "HEAD").stdout.decode().strip(),
+            "main",
+        )
+        self.assertEqual(
+            self.git("-C", self.workspace, "branch", "--list", "--format=%(refname:short)").stdout.decode().split(),
+            ["main"],
+        )
+        self.assertEqual(
+            self.git("-C", self.repo, "for-each-ref", "refs/remotes/handoff-fix/").stdout,
+            b"",
+        )
+
+    def test_update_returns_to_recorded_branch_even_when_tip_is_unchanged(self):
+        # ff-only で取り込むと SHA が変わらず先端は一致するが、clone は agent の branch に居る。
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "switch", "-q", "-c", "feat/topic")
+        tip = self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+        self.git("-C", self.repo, "merge", "-q", "--ff-only", "refs/remotes/handoff-fix/feat/topic")
+        result = self.handoff("update", "fix")
+        self.assertIn(b"updated", result.stdout)
+        self.assertEqual(self.rev(self.workspace), tip)
+        self.assertEqual(
+            self.git("-C", self.workspace, "branch", "--list", "--format=%(refname:short)").stdout.decode().split(),
+            ["main"],
+        )
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-base").stdout.decode().strip(),
+            tip,
+        )
+        # 本人側も先端も動いていないが agent が branch だけ切った場合も、記録 branch に戻す。
+        self.git("-C", self.workspace, "switch", "-q", "-c", "feat/idle")
+        result = self.handoff("update", "fix")
+        self.assertIn(b"updated", result.stdout)
+        self.assertEqual(
+            self.git("-C", self.workspace, "branch", "--list", "--format=%(refname:short)").stdout.decode().split(),
+            ["main"],
         )
         result = self.handoff("update", "fix")
         self.assertIn(b"up to date", result.stdout)

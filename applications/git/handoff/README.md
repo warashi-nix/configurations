@@ -93,22 +93,32 @@ the remote `handoff-NAME` whose URL is a bundle file under
 An existing remote or workspace is rejected without changes. Uncommitted owner
 changes are not transferred.
 
-`fetch` requires the agent workspace to be clean, on the expected branch, and
-ahead of the base. It streams `BASE..branch` back as a bundle, verifies it,
-fetches it into `refs/remotes/handoff-NAME/branch`, and finally runs
-`git-check-new-ignored` with the owner's own Git directory as the object
-repository. The exit status is the checker's, so findings return `1` while the
-fetched ref stays available for inspection. Repeat `fetch` after the agent
-adds commits.
+`fetch` requires the agent workspace to be clean and ahead of the base. It
+follows the agent's `HEAD` rather than a fixed branch, because agent harnesses
+often start a branch before committing: it streams `BASE..HEAD` back as a
+bundle, verifies it, and fetches it into `refs/remotes/handoff-NAME/<branch>`
+named after the agent's current branch, or after the recorded branch when the
+agent's `HEAD` is detached. Remote-tracking refs left from an earlier fetch on
+another branch name are dropped, so `handoff-NAME/` always shows the single
+current tip. It finally runs `git-check-new-ignored` with the owner's own Git
+directory as the object repository. The exit status is the checker's, so
+findings return `1` while the fetched ref stays available for inspection.
+Repeat `fetch` after the agent adds commits. Histories that merge back or span
+several branches are out of scope; the checker only accepts a linear range.
 
 `update` moves the agent workspace to the current tip of the recorded branch in
 the owner's repository, for long-lived workspaces such as a knowledge base that
 the owner keeps changing. It refuses when the workspace has uncommitted changes
 or a commit the owner has not fetched yet, so nothing is lost; run `fetch` and
 integrate first. Integration rewrites commit IDs, so the workspace is not
-rebased but replaced by the owner's tip, the recorded base moves to that tip,
-and the stale remote-tracking ref is dropped. The owner's checked-out branch
-does not matter; the recorded branch is sent.
+rebased but replaced by the owner's tip: the workspace is put back on the
+recorded branch at that tip as if freshly created, a branch the agent had
+started is deleted, the recorded base moves to that tip, and all stale
+remote-tracking refs under `handoff-NAME/` are dropped. This also applies when
+the tip is unchanged, for example after a fast-forward merge that kept the
+agent's commit IDs; `update` reports "up to date" only when the workspace is
+already on the recorded branch at the tip. The owner's checked-out branch does
+not matter; the recorded branch is sent.
 
 `remove` deletes the agent workspace, the remote, its remote-tracking refs, and
 the bundle. Without `--force` it refuses when the workspace has uncommitted

@@ -271,10 +271,10 @@ Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/READM
 | --- | --- |
 | clone 作成 | 本人の repo で基点の branch を checkout し、`chelly-handoff create [名前]`。名前の既定は branch 名 |
 | 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` で既存の `warashi-agent-shell-claude-*` / `copilot-*` を使う。会話は `C-c a` から開く |
-| 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]` |
-| 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。基点は `remote.handoff-名前.chelly-base` |
+| 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]`。agent が branch を切っていても HEAD までを拾う |
+| 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。branch は agent が HEAD を置いていた branch 名 (detached なら create 時の branch)。基点は `remote.handoff-名前.chelly-base` |
 | 取り込み | Magit の log で `基点..handoff-名前/branch` の region を選んで `A A` (範囲の cherry-pick)。commit 数に関わらず 1 回で、既存設定で SSH 署名され、本人の hooks が動く。署名が要らない repo なら `git merge --ff-only` でもよい |
-| 追従 | 本人側が進んだら `chelly-handoff update [名前]`。未取得の commit や未コミット変更があれば止まる |
+| 追従 | 本人側が進んだら `chelly-handoff update [名前]`。未取得の commit や未コミット変更があれば止まる。clone は create 時の branch に戻り、agent が切った branch は消える |
 | 後片付け | `chelly-handoff remove [名前]`。未取得の commit や未コミット変更があれば止まる |
 
 `create` は現在の HEAD だけを bundle で渡し、専用ユーザーが `origin` も hooks も

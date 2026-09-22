@@ -14,8 +14,9 @@ usage: chelly-handoff create [NAME]
        chelly-handoff remove [NAME] [--force]
 
 create  現在の HEAD から専用領域の <repo 名>/NAME に clone を作り、remote handoff-NAME を追加する
-fetch   専用 clone の commit を remote handoff-NAME に取り込み、新規追跡ファイルを検査する
+fetch   専用 clone の HEAD までの commit を remote handoff-NAME に取り込み、新規追跡ファイルを検査する
 update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
+        agent が切った branch は消し、create 時の branch に戻す
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 
 NAME を省略すると現在の branch 名を使う。
@@ -67,22 +68,23 @@ test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=a
   { echo "new agent workspace is not clean" >&2; exit 1; }
 '
 
+# agent が branch を切っても切らなくても回収できるよう、HEAD の指す先を bundle にする。
+# bundle の head 名 (refs/heads/… か、detached なら HEAD) は本人側が読んで ref 名を決める。
 fetch_script='
 umask 0077
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
-parent=$1 workspace=$2 base=$3 branch=$4
+parent=$1 workspace=$2 base=$3
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
 cd "$workspace"
-test "$(git symbolic-ref --quiet --short HEAD)" = "$branch" ||
-  { echo "agent workspace is not on branch $branch" >&2; exit 1; }
 test "$(git rev-parse --verify HEAD^{commit})" != "$base" ||
   { echo "agent created no commits" >&2; exit 1; }
 test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all)" ||
   { echo "agent workspace is not clean; commit or discard first" >&2; exit 1; }
+ref=$(git symbolic-ref --quiet HEAD) || ref=HEAD
 bundle="${workspace}.bundle.$$"
 trap "rm -f -- \"$bundle\"" EXIT
-git -c core.hooksPath=/dev/null bundle create --quiet "$bundle" "$base..$branch"
+git -c core.hooksPath=/dev/null bundle create --quiet "$bundle" "^$base" "$ref"
 cat "$bundle"
 '
 
@@ -94,11 +96,14 @@ case "$workspace" in *..*) exit 90 ;; esac
 test -d "$workspace" || { echo missing; exit 0; }
 cd "$workspace"
 git rev-parse --verify HEAD^{commit}
+git symbolic-ref --quiet --short HEAD || echo
 git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all | wc -l
 '
 
 # 取り込みで SHA が変わるので rebase はせず、clone をそのまま本人の先端に置き換える。
 # 捨ててよいことは本人側で probe の結果を見て判断済みで、ここでは clean であることだけ再確認する。
+# create 直後と同じ形に戻すため、agent が切っていた branch は消して記録 branch に載せ直す。
+# 先端が base から動いていないと bundle は作れないので、stdin が空なら先端の存在だけ確かめる。
 update_script='
 umask 0027
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
@@ -106,17 +111,23 @@ parent=$1 workspace=$2 branch=$3 tip=$4
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
 cd "$workspace"
-test "$(git symbolic-ref --quiet --short HEAD)" = "$branch" ||
-  { echo "agent workspace is not on branch $branch" >&2; exit 1; }
 test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all)" ||
   { echo "agent workspace is not clean; commit or discard first" >&2; exit 1; }
 bundle="${workspace}.bundle.$$"
 trap "rm -f -- \"$bundle\"" EXIT
 cat >"$bundle"
-git bundle verify --quiet "$bundle"
-git -c core.hooksPath=/dev/null fetch --quiet --no-tags "$bundle" "refs/heads/$branch"
-test "$(git rev-parse --verify FETCH_HEAD^{commit})" = "$tip"
-git -c core.hooksPath=/dev/null reset --quiet --hard "$tip"
+if [ -s "$bundle" ]; then
+  git bundle verify --quiet "$bundle"
+  git -c core.hooksPath=/dev/null fetch --quiet --no-tags "$bundle" "refs/heads/$branch"
+  test "$(git rev-parse --verify FETCH_HEAD^{commit})" = "$tip"
+else
+  git cat-file -e "$tip^{commit}"
+fi
+previous=$(git symbolic-ref --quiet --short HEAD) || previous=
+git -c core.hooksPath=/dev/null switch --quiet --force -C "$branch" "$tip"
+if [ -n "$previous" ] && [ "$previous" != "$branch" ]; then
+  git branch --quiet -D "$previous"
+fi
 '
 
 remove_script='
@@ -179,40 +190,68 @@ fetch() {
   repo_paths
   recorded_paths
   mkdir -p "$gitdir/chelly-handoff"
-  agent "$fetch_script" "$workspaces" "$workspace" "$base" "$branch" </dev/null >"$bundle.tmp"
+  agent "$fetch_script" "$workspaces" "$workspace" "$base" </dev/null >"$bundle.tmp"
   git bundle verify --quiet "$bundle.tmp"
   mv -f -- "$bundle.tmp" "$bundle"
-  git fetch --quiet --no-tags "$remote"
-  tip="refs/remotes/$remote/$branch"
-  echo "fetched $(git rev-parse --short "$tip") as $remote/$branch; review with $base..$remote/$branch"
+  # bundle の head は agent の HEAD ひとつ。detached HEAD は記録 branch の名前で受ける。
+  head_ref=$(git bundle list-heads "$bundle" | {
+    read -r _ ref
+    echo "$ref"
+  })
+  case "$head_ref" in
+  refs/heads/?*) head_name=${head_ref#refs/heads/} ;;
+  HEAD) head_name=$branch ;;
+  *) fail "unexpected bundle head '$head_ref'" ;;
+  esac
+  tip="refs/remotes/$remote/$head_name"
+  # agent が前回と別の branch に居たら古い名前の ref は紛らわしいだけで、
+  # feat/topic の後に feat が来ると directory と衝突して fetch できないので、先に全部消す。
+  git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
+  git fetch --quiet --no-tags "$remote" "+$head_ref:$tip"
+  echo "fetched $(git rev-parse --short "$tip") as $remote/$head_name; review with $base..$remote/$head_name"
   git-check-new-ignored --object-repo "$gitdir" --policy-repo "$toplevel" "$base" "$tip"
+}
+
+# probe の出力は HEAD の commit、HEAD の branch 名 (detached なら空)、未コミット変更の行数。
+probe_agent() {
+  probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null) ||
+    fail "cannot probe agent workspace $workspace"
+  [[ $probe != missing ]] || return 1
+  mapfile -t lines <<<"$probe"
+  head=${lines[0]}
+  head_branch=${lines[1]}
+  dirty=${lines[2]}
 }
 
 # 専用 clone の HEAD が本人の repo にあり、未コミット変更も無いときだけ、clone を捨ててよい。
 require_agent_work_collected() {
-  probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null)
-  [[ $probe != missing ]] || fail "agent workspace $workspace is missing; run create"
-  head=${probe%%$'\n'*}
-  dirty=${probe##*$'\n'}
+  probe_agent || fail "agent workspace $workspace is missing; run create"
   git cat-file -e "$head^{commit}" 2>/dev/null ||
     fail "agent commit $head is not in this repository; run fetch first"
   [[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; commit and fetch, or discard them first"
 }
 
+# ff-only で取り込むと先端の SHA は clone と一致したまま agent の branch に居るので、
+# branch も記録どおりのときだけ up to date とみなす。先端が base から動いていなければ
+# bundle は作れないので、その場合は空の stdin を渡す。
 update() {
   resolve_name "$1"
   repo_paths
   recorded_paths
   tip=$(git rev-parse --verify "refs/heads/$branch^{commit}") || fail "branch $branch does not exist here"
   require_agent_work_collected
-  if [[ $head == "$tip" ]]; then
+  if [[ $head == "$tip" && $head_branch == "$branch" ]]; then
     echo "$remote is up to date at $(git rev-parse --short "$tip")"
     return
   fi
-  git bundle create --quiet - "^$base" "refs/heads/$branch" |
-    agent "$update_script" "$workspaces" "$workspace" "$branch" "$tip"
+  if [[ $base == "$tip" ]]; then
+    agent "$update_script" "$workspaces" "$workspace" "$branch" "$tip" </dev/null
+  else
+    git bundle create --quiet - "^$base" "refs/heads/$branch" |
+      agent "$update_script" "$workspaces" "$workspace" "$branch" "$tip"
+  fi
   git config "remote.$remote.chelly-base" "$tip"
-  git update-ref -d "refs/remotes/$remote/$branch"
+  git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
   rm -f -- "$bundle" "$bundle.tmp"
   echo "updated $remote to $(git rev-parse --short "$tip"); previous base was $(git rev-parse --short "$base")"
 }
@@ -224,13 +263,11 @@ remove() {
   [[ ${2:-} == --force ]] && force=true
   if git config --get "remote.$remote.chelly-workspace" >/dev/null; then
     recorded_paths
-    probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null)
+    probe_agent || probe=missing
   else
     probe=missing
   fi
   if [[ $probe != missing ]] && ! $force; then
-    head=${probe%%$'\n'*}
-    dirty=${probe##*$'\n'}
     git cat-file -e "$head^{commit}" 2>/dev/null ||
       fail "agent commit $head is not in this repository; run fetch first or pass --force"
     [[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; pass --force to discard them"
