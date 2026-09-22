@@ -278,6 +278,41 @@ let
         workspaces = "/Users/warashi/chelly-workspaces";
       };
     };
+    # machine は home-manager の services.podman が宣言どおりに init する。home 全体を共有する
+    # 既定 machine と、停止しても起動し直す watchdog は境界と運用に反するので無効。
+    test-mac-dedicated-declares-machine-with-shared-paths-only = {
+      expr = {
+        enabled = macHome.services.podman.enable;
+        defaultMachine = macHome.services.podman.useDefaultMachine;
+        provider = macHome.services.podman.settings.containers.machine.provider or null;
+        machines = lib.mapAttrs (_: machine: {
+          inherit (machine)
+            autoStart
+            cpus
+            memory
+            rootful
+            volumes
+            ;
+        }) macHome.services.podman.machines;
+        linuxEnabled = linuxHome.services.podman.enable;
+      };
+      expected = {
+        enabled = true;
+        defaultMachine = false;
+        provider = "applehv";
+        machines.chelly = {
+          autoStart = false;
+          cpus = 4;
+          memory = 8192;
+          rootful = false;
+          volumes = [
+            "${macWorkspaces}:${macWorkspaces}"
+            "${macHome.xdg.dataHome}/chelly:${macHome.xdg.dataHome}/chelly"
+          ];
+        };
+        linuxEnabled = false;
+      };
+    };
     # chelly-handoff remove brainium は mount 元の親ごと rmdir するので、NixOS の runner と
     # 同じく wrapper が起動のたびに用意しないと次の switch まで起動できなくなる。
     test-mac-dedicated-wrapper-recreates-brainium-mount-source = {

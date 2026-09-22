@@ -89,17 +89,41 @@ in
 
     home.packages = [ chellyAgent ];
 
+    # machine は home-manager の activation が、無いときだけ宣言どおりに init する。
+    # 既存 machine の volumes は変えられないので、共有範囲を変えるときは本人が
+    # podman machine rm を実行してから switch する。
+    services.podman = {
+      enable = true;
+      package = pkgs.podman;
+      # 既定 machine は /Users を丸ごと共有するので、境界に反する。
+      useDefaultMachine = false;
+      # provider を containers.conf に書き、CONTAINERS_MACHINE_PROVIDER の export を不要にする。
+      settings.containers.machine.provider = "applehv";
+      machines.chelly = {
+        cpus = 4;
+        memory = 8192;
+        rootful = false;
+        volumes = [
+          "${cfg.workspaces}:${cfg.workspaces}"
+          "${dataDir}:${dataDir}"
+        ];
+        # watchdog は stop しても起動し直すので、起動・停止は本人の操作に残す。
+        autoStart = false;
+      };
+    };
+
     home.activation = {
       # linkFarm は store への symlink なので、VM から解決できるよう実体に展開する。
       # store の read-only mode を引き継ぐと次回の上書きで失敗するので mode は付け直す。
-      chelly-agent-config = hm.dag.entryAfter [ "writeBoundary" ] ''
+      # machine の init より前に mount 元を用意する。VM 起動時に無い source は共有できない。
+      chelly-agent-config = hm.dag.entryBetween [ "podmanMachines" ] [ "writeBoundary" ] ''
         run ${pkgs.coreutils}/bin/rm -rf ${escapeShellArg agentConfigPath}
         run ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg dataDir}
         run ${pkgs.coreutils}/bin/cp -RL --no-preserve=mode ${agentConfig} ${escapeShellArg agentConfigPath}
       '';
       # podman は bind mount の元を作らない。brainium の handoff clone が無くても
       # 起動できるよう、専用領域とその親を先に用意する。
-      chelly-workspaces = hm.dag.entryAfter [ "writeBoundary" ] ''
+      chelly-workspaces = hm.dag.entryBetween [ "podmanMachines" ] [ "writeBoundary" ] ''
         run ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg brainiumWorkspace}
       '';
     };

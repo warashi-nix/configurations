@@ -321,7 +321,7 @@ macOS には別の OS ユーザーも sudo の入口も無いので、workbench 
 
 | 対象 | 専用構成での扱い |
 | --- | --- |
-| VM に共有するもの | `~/chelly-workspaces` (専用 clone) と `~/.local/share/chelly` (git-ignore と設定 bundle の実体) だけ。home 全体・`~/.claude`・`~/.copilot`・`~/ghq` は共有しない |
+| VM に共有するもの | `~/chelly-workspaces` (専用 clone) と `~/.local/share/chelly` (git-ignore と設定 bundle の実体)、Home Manager の podman モジュールが足す `~/.config/containers` (podman の設定、認証情報は含まない) だけ。home 全体・`~/.claude`・`~/.copilot`・`~/ghq` は共有しない |
 | 作業 clone | `~/chelly-workspaces/<repo 名>/<名前>`。`chelly-handoff create` で作る。本人の clone を直接 mount する経路は無い |
 | Claude・Copilot の状態 | `claude-state`・`copilot-state` の named volume。本人の `~/.claude`・`~/.copilot` は mount しない |
 | 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、同じ path に read-only で bind mount して `CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない。mount が無いと entrypoint は黙って何も写さない |
@@ -347,32 +347,34 @@ VM の共有範囲を絞っても Emacs 経由で home を触られることは�
 
 ### 初回セットアップ
 
-`podman machine set` (固定版 5.8.6) は volume を変えられないので、共有範囲を絞るには
-machine を作り直す。home 全体を共有していた旧 `chelly` machine は先に消す。
+machine は Home Manager の `services.podman.machines.chelly` (`dedicated.nix`) が宣言し、
+switch 時の activation が **無いときだけ** `podman machine init` する。CPU 4 個・メモリ 8 GiB
+(VM 全体の割り当て)・rootless・共有は上の 2 ディレクトリと podman の設定ディレクトリ
+`~/.config/containers` だけ。provider は containers.conf の `[machine] provider = "applehv"` で
+指定するので `CONTAINERS_MACHINE_PROVIDER` の export は要らない。
+`/Users` を丸ごと共有する既定 machine (`useDefaultMachine`) と、停止しても起動し直す
+launchd の watchdog (`autoStart`) は無効にしてある。
+
+`podman machine set` (固定版 5.8.6) は volume を変えられず、activation も既存 machine は
+触らない。home 全体を共有していた旧 `chelly` machine は、switch の前に本人が消す。
 VM 内の named volume (`chelly-nix`・`nix-cache`・`go-cache`・`go-mod`) は machine と
-一緒に消え、初回は空のキャッシュから始まる。既存の machine で agent やビルドが動いていない
-ことを `podman ps` で確かめてから行う。初期化・起動は Home Manager の activation では行わない。
+一緒に消え、初回は空のキャッシュから始まる。activation は宣言に無い machine も
+`machine rm -f` するので、名前を変えた machine を残さない。
 
 ```sh
-just switch-for athena
-export CONTAINERS_MACHINE_PROVIDER=applehv
-podman machine list
 podman ps && podman machine stop chelly && podman machine rm chelly
-podman machine init --cpus 4 --memory 8192 --rootful=false \
-  --volume "$HOME/chelly-workspaces:$HOME/chelly-workspaces" \
-  --volume "$HOME/.local/share/chelly:$HOME/.local/share/chelly" \
-  chelly
-podman machine start chelly
-podman system connection default chelly
+just switch-for athena            # activation が chelly を init する
 podman machine inspect chelly --format '{{json .Mounts}}'
+podman machine start chelly
+podman system connection list     # chelly の rootless 接続が既定でなければ default にする
+podman system connection default chelly
 chelly build
 ```
 
-固定した nixpkgs の Podman 5.8.6 では `--provider` と `--update-connection` は
-使えない。プロバイダは `CONTAINERS_MACHINE_PROVIDER` で指定し、
-`podman system connection default chelly` でこの VM の rootless 接続を既定にする。
-CPU 4 個・メモリ 8 GiB はコンテナごとではなく VM 全体の割り当て。
-`inspect` の Mounts に上の 2 つだけがあることを確認する。
+`inspect` の Mounts が `~/chelly-workspaces`・`~/.local/share/chelly`・`~/.config/containers`
+の 3 つだけであることを確認する。固定した nixpkgs の Podman 5.8.6 では `--provider` と
+`--update-connection` は使えない。init が既定接続を切り替えるかは実機で確認し、
+切り替わらなければ `podman system connection default chelly` を一度実行する。
 
 `~/chelly-workspaces` と `~/.local/share/chelly` は switch 時の activation が作る。
 Dockerfile も Nix store へのリンクなので、Podman の build には `--file` で
@@ -391,16 +393,14 @@ workbench と同じ `chelly-handoff` と Magit の手順を使う (上の「依�
 
 ```sh
 # 作業開始時
-export CONTAINERS_MACHINE_PROVIDER=applehv
 podman machine start chelly
-podman system connection default chelly
 
 # 全コンテナの作業が終わった後
 podman ps
 podman machine stop chelly
 ```
 
-VM は自動起動・自動停止しない。停止は実行中の全コンテナに影響するため、
+VM は自動起動・自動停止しない (`autoStart = false`)。停止は実行中の全コンテナに影響するため、
 エージェントやビルドが残っている間は行わない。
 
 `chelly-nix`、`nix-cache`、`go-cache`、`go-mod`、`claude-state`、`copilot-state` は
@@ -418,7 +418,8 @@ agent の会話を失う。
 
 次を満たしてから通常利用へ移す。
 
-- `podman machine inspect` の Mounts が `~/chelly-workspaces` と `~/.local/share/chelly` だけ。
+- `podman machine inspect` の Mounts が `~/chelly-workspaces`・`~/.local/share/chelly`・`~/.config/containers` だけ。
+  `podman machine list` に `podman-machine-default` が無い。
   `podman machine ssh chelly ls ~/.claude ~/ghq` が失敗する。
 - `chelly-handoff create` → 専用 clone で `chelly run -- claude` / `copilot` → `fetch` → `remove`
   の一巡が通り、受け取った commit が未署名である。
