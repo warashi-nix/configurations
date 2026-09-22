@@ -161,7 +161,8 @@ token で非対話のモデル応答が成功しても、初回の対話起動�
 [公式の環境変数](https://code.claude.com/docs/en/env-vars)で初回セットアップを
 スキップすると対話でも応答できたため、追加ログインや内部の `.claude.json` の
 直接編集は行わない。メールアドレス・組織名の表示も隠れる。
-通常の `chelly` の起動設定や共通 Dockerfile にはこの指定を追加しない。
+workbench の通常の `chelly` の起動設定や共通 Dockerfile にはこの指定を追加しない
+(athena は `chelly` 自体が専用構成なので付く)。
 ツールの権限確認を無効化するフラグも追加しない。
 
 ホスト側の configurations で次を実行する。envfile の追加・更新だけなら
@@ -267,7 +268,7 @@ Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/READM
 | 段階 | 操作 |
 | --- | --- |
 | clone 作成 | 本人の repo で基点の branch を checkout し、`chelly-handoff create [名前]`。名前の既定は branch 名 |
-| 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` で既存の `warashi-agent-shell-claude-*` / `copilot-*` を使う。会話は `C-c a` から開く |
+| 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` (macOS は `~/chelly-workspaces/…`) で既存の `warashi-agent-shell-claude-*` / `copilot-*` を使う。会話は `C-c a` から開く |
 | 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]`。agent が branch を切っていても HEAD までを拾う |
 | 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。branch は agent が HEAD を置いていた branch 名 (detached なら create 時の branch)。基点は `remote.handoff-名前.chelly-base` |
 | 取り込み | Magit の log で `基点..handoff-名前/branch` の region を選んで `A A` (範囲の cherry-pick)。commit 数に関わらず 1 回で、既存設定で SSH 署名され、本人の hooks が動く。署名が要らない repo なら `git merge --ff-only` でもよい |
@@ -283,7 +284,7 @@ Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/READM
 専用領域内では同じ model・effort のまま `chelly-agent` を使い、領域外の通常起動は
 変えない。Pi は専用 runner 非対応のため領域内では拒否する。
 署名鍵・socket・本人の Git 設定は専用環境へ渡さず、agent の Git 設定・hooks も
-本人側に持ち込まない。macOS/TRAMP、push・PR 作成は対象外。
+本人側に持ち込まない。TRAMP、push・PR 作成は対象外。macOS は下の athena 節。
 
 ### proxy socket に旧権限が残っている場合
 
@@ -302,32 +303,64 @@ sudo systemctl daemon-reload &&
 `660 warashi:chelly-agent` を確認してから専用入口の Nix 接続を再試行する。
 この不一致の解消に、image の再ビルド、Nix daemon 全体の再起動、`chmod 666` は不要。
 
-## athena: Podman machine
+## athena: 専用領域だけを共有する Podman machine
 
-複数の chelly から Nix store とビルドキャッシュを同時に使うため、
 athena は `podman machine` の共有 Linux VM でコンテナを動かす。
 `hosts/athena/homes/chelly.nix` で Podman を明示選択し、
 CLI は共通の chelly モジュールで `isDarwin` の場合に `pkgs.podman` を導入する。
-macOS 用パッケージには
-VM 起動用の vfkit とネットワーク用の gvproxy も組み込まれている。
-apple/container は比較・切り戻し用に残す。
-コンテナ間は VM ではなく Linux の namespace で分離される。
+macOS 用パッケージには VM 起動用の vfkit とネットワーク用の gvproxy も組み込まれている。
+apple/container は比較・切り戻し用に残す。コンテナ間は VM ではなく Linux の namespace で分離される。
+
+### 境界: VM に共有する範囲
+
+macOS には別の OS ユーザーも sudo の入口も無いので、workbench の専用ユーザーの代わりに
+**Podman machine に共有するディレクトリ**を境界にする。`warashi.chelly.dedicated = true`
+(`dedicated.nix`) で `chelly` 自体が専用構成になり、別入口は作らない。
+`chelly-agent` は `chelly` へ exec するだけの wrapper で、`chelly-handoff` と Emacs の
+専用入口から同じ名前で呼べるようにするためにある。
+
+| 対象 | 専用構成での扱い |
+| --- | --- |
+| VM に共有するもの | `~/chelly-workspaces` (専用 clone) と `~/.local/share/chelly` (git-ignore と設定 bundle の実体) だけ。home 全体・`~/.claude`・`~/.copilot`・`~/ghq` は共有しない |
+| 作業 clone | `~/chelly-workspaces/<repo 名>/<名前>`。`chelly-handoff create` で作る。本人の clone を直接 mount する経路は無い |
+| Claude・Copilot の状態 | `claude-state`・`copilot-state` の named volume。本人の `~/.claude`・`~/.copilot` は mount しない |
+| 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、`CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない |
+| モデル認証 | Home Manager の sops secret `chelly-agent-dotenv` だけ。本人の `chelly-dotenv` は使わない。`--env-file` は Mac 側の podman client が読むので VM に共有しなくてよい |
+| brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う |
+| Git ignore | 従来どおり `~/.local/share/chelly/git-ignore` の実体を read-only で渡す |
+| userns | athena の既存 `--userns=keep-id` のまま (イメージ内ユーザーは UID 501 / GID 1000) |
+
+コンテナを抜けて VM の `core` ユーザーになっても、届くのは上の共有範囲、named volume、
+コンテナに渡した限定 token に限る。SSH 鍵・1Password・署名設定・他の repository には届かない。
+Emacs の ACP 経路は `warashi-agent-shell-chelly.el` が host 要求を拒否するので、
+VM の共有範囲を絞っても Emacs 経由で home を触られることはない。
+公開先への送信制限、ディスク枯渇防止、並行する AI 同士の強い隔離は保証しない。
+
+通常入口を別に残さないのは、本人の clone を直接 mount する経路を残すと `~/ghq` を VM に
+共有することになり、agent が本人の clone の `.git` (hooks・config) を書き換えて次の
+`git` 実行で host 上のコードが動く経路が開くため。Claude/Copilot を chelly の外で使わない
+以上、本人の `~/.claude` を共有する理由も無い。
 
 ### 初回セットアップ
 
-athena 上で設定を適用した後、VM を一度だけ作る。既存の machine がある場合は
-先に `podman machine list` と `podman system connection list` で状態を確認する。
-初期化・起動は Home Manager の activation では行わない。
+`podman machine set` (固定版 5.8.6) は volume を変えられないので、共有範囲を絞るには
+machine を作り直す。home 全体を共有していた旧 `chelly` machine は先に消す。
+VM 内の named volume (`chelly-nix`・`nix-cache`・`go-cache`・`go-mod`) は machine と
+一緒に消え、初回は空のキャッシュから始まる。既存の machine で agent やビルドが動いていない
+ことを `podman ps` で確かめてから行う。初期化・起動は Home Manager の activation では行わない。
 
 ```sh
 just switch-for athena
 export CONTAINERS_MACHINE_PROVIDER=applehv
-podman machine init --cpus 4 --memory 8192 \
-  --rootful=false --volume "$HOME:$HOME" chelly
+podman machine list
+podman ps && podman machine stop chelly && podman machine rm chelly
+podman machine init --cpus 4 --memory 8192 --rootful=false \
+  --volume "$HOME/chelly-workspaces:$HOME/chelly-workspaces" \
+  --volume "$HOME/.local/share/chelly:$HOME/.local/share/chelly" \
+  chelly
 podman machine start chelly
 podman system connection default chelly
-podman info
-chelly config get container_cmd
+podman machine inspect chelly --format '{{json .Mounts}}'
 chelly build
 ```
 
@@ -335,29 +368,20 @@ chelly build
 使えない。プロバイダは `CONTAINERS_MACHINE_PROVIDER` で指定し、
 `podman system connection default chelly` でこの VM の rootless 接続を既定にする。
 CPU 4 個・メモリ 8 GiB はコンテナごとではなく VM 全体の割り当て。
-rootless の接続を使い、VM 内の `id` とコンテナ内の `id` を確認する。
-athena のイメージ内ユーザーは UID 501 / GID 1000 を前提にしている。
+`inspect` の Mounts に上の 2 つだけがあることを確認する。
 
-```sh
-podman machine ssh chelly id
-chelly run -- id
-```
-
-Podman の bind mount 元は VM 側のパスなので、リポジトリ、Git worktree の
-共通ディレクトリ、追加マウント元は VM からも同じ絶対パスで見える必要がある。
-ホーム外のリポジトリは、このホーム共有だけでは使えない。
-ホーム全体ではなく共有範囲を限定する場合は、既定の追加マウント元である
-`~/.claude`、`~/.copilot`、`~/.pi`、`~/.local/share/chelly`、
-`~/ghq/github.com/Warashi/brainium` と、利用する worktree のディレクトリも共有する。
-
-`~/.config/git/ignore` は Home Manager が Mac の `/nix/store` へのリンクとして
-生成するため、activation で `~/.local/share/chelly/git-ignore` に実体を
-read-only（モード `0444`）で配置する。内容の更新も activation で行う。
-コンテナにはその実体を渡し、Mac の `/nix` は共有しない。
-その他の追加マウントにホーム外へのリンクを足す場合も、VM からの解決を確認する。
+`~/chelly-workspaces` と `~/.local/share/chelly` は switch 時の activation が作る。
 Dockerfile も Nix store へのリンクなので、Podman の build には `--file` で
 実体のパスを指定する。Mac 側の CLI がファイルを VM に転送するため、
 VM から Mac の Nix store をマウントする必要はない。
+
+### athena での依頼から取り込みまで
+
+workbench と同じ `chelly-handoff` と Magit の手順を使う (上の「依頼から取り込みまで」)。
+作業領域は `~/chelly-workspaces` で、`chelly-handoff` は Nix の `warashi.chelly.workspaces`
+から既定を受け取る。Emacs の `warashi-chelly-workspace-root` も macOS では同じ既定になる。
+専用領域内での Emacs の起動は通常の `warashi-agent-shell-claude-*` / `copilot-*` を使う。
+署名は Mac 側の 1Password の signer のまま、本人が範囲の cherry-pick で行う。
 
 ### 起動・停止とデータ
 
@@ -375,10 +399,11 @@ podman machine stop chelly
 VM は自動起動・自動停止しない。停止は実行中の全コンテナに影響するため、
 エージェントやビルドが残っている間は行わない。
 
-`chelly-nix`、`nix-cache`、`go-cache`、`go-mod` は VM 内の Podman named volume
-として共有され、コンテナ終了や VM 停止後も残る。Apple 側の同名 volume とは
-別物なので、初回は空のキャッシュから始まる。Apple 側のデータは削除しない。
-`podman machine rm` や volume の削除はキャッシュと Nix store を失うため行わない。
+`chelly-nix`、`nix-cache`、`go-cache`、`go-mod`、`claude-state`、`copilot-state` は
+VM 内の Podman named volume として共有され、コンテナ終了や VM 停止後も残る。
+Apple 側の同名 volume とは別物で、Apple 側のデータは削除しない。
+セットアップ後に `podman machine rm` や volume の削除を行うとキャッシュ・Nix store・
+agent の会話を失う。
 
 共有 `/nix` の初期インストールは entrypoint の `flock` で直列化する。
 コンテナごとに見えるプロセスと GC root が異なるため、各コンテナから
@@ -387,20 +412,26 @@ VM は自動起動・自動停止しない。停止は実行中の全コンテ�
 
 ### Mac 実機での受け入れ確認
 
-同じ VM のまま、別ターミナルから二つの `chelly run` を同時に動かす。
 次を満たしてから通常利用へ移す。
 
-- 両方が起動し、`podman inspect` で同じ named volume の利用を確認できる。
-- 一方が動いたまま他方も `nix develop` とビルドを実行できる。
-- Go のプロジェクトでは両方からビルドでき、キャッシュを再利用できる。
-- コンテナから編集したファイルを Mac で読み書きでき、所有者が変わらない。
-- Git worktree と追加マウント先の設定ファイルを両方から読める。
+- `podman machine inspect` の Mounts が `~/chelly-workspaces` と `~/.local/share/chelly` だけ。
+  `podman machine ssh chelly ls ~/.claude ~/ghq` が失敗する。
+- `chelly-handoff create` → 専用 clone で `chelly run -- claude` / `copilot` → `fetch` → `remove`
+  の一巡が通り、受け取った commit が未署名である。
+- `chelly run -- sh -c 'echo ${CLAUDE_CODE_OAUTH_TOKEN:?} >/dev/null && echo ok'` で
+  値を表示せずに専用 token の注入を確認できる。`~/.claude` はコンテナに無く、
+  `CLAUDE.md` と output-styles は volume に写っている。
+- 会話の再開が `chelly run -- claude --continue` と Emacs の `C-u M-x warashi-agent-shell-chelly-start`
+  で通る (workbench の手順と同じ)。
+- 同じ VM のまま、別ターミナルから二つの `chelly run` を同時に動かし、
+  `podman inspect` で同じ named volume を使い、一方が動いたまま他方も `nix develop` とビルドを実行できる。
+- Emacs の専用入口で host のファイル要求が `*Messages*` に拒否として出る。
 - chelly 内で `podman run --rm docker.io/library/alpine:latest true` が成功する。
 - VM を停止・再起動した後も named volume の内容を使える。
 
 設定の回帰チェックは `nix build .#checks.<system>.chelly-config` で実行する。
-これはランタイム選択、共有マウント、Git ignore の実体配置の設定と、
-remote build の Dockerfile 指定、workbench の既存設定の維持を検査するもので、
+これはランタイム選択、共有マウント、Git ignore と設定 bundle の実体配置、
+専用 token・volume・brainium の見せ方、workbench の既存設定の維持を検査するもので、
 Mac 実機の動作確認の代わりではない。
 
 Podman インストールの有無 (Darwin では入る/Linux では入らない) だけは、
@@ -412,4 +443,5 @@ aarch64-linux では `nix flake check` が失敗するため。この最小構�
 評価は、Darwin ホスト全体のビルドを Linux 上で検証したことを意味しない。
 
 切り戻し時は `CHELLY_CONTAINER_CMD=container chelly run` で既存の Apple 側
-イメージ・volume を使える。ただし、元の named volume の同時利用制約も戻る。
+イメージ・volume を使える。ただし、元の named volume の同時利用制約も戻り、
+apple/container は home 全体を共有するので上の境界にはならない。
