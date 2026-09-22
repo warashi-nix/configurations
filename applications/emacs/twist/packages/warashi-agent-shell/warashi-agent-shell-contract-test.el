@@ -195,22 +195,28 @@ session を確立していないので値は 0 だが、キーが揃っている
 ;;;; buffer 名
 
 (ert-deftest warashi-agent-shell-contract-test-project-name ()
-  "`agent-shell--project-name' を引数なしで呼べ、`default-directory' の project 名を返す。
-git-wit の memo と専用 clone の名前は、この戻り値を :filter-return advice で
-差し替えている。引数を取るようになったり、`default-directory' 以外から
-project を引くようになったりすると、両方とも効かなくなる。"
+  "`agent-shell--project-name' を引数なしで呼べ、`default-directory' の project の
+`project-name' を返す。git-wit の memo と専用 clone の名前は `project-name' を
+差し替えて出しているので、上流が basename を直接使うようになったり、引数を
+取るようになったり、`default-directory' 以外から project を引くようになったり
+すると効かなくなる。"
   ;; 引数をソースから読むのは、advice が付いた関数の `func-arity' は
   ;; advice 側の (0 . many) を返すため。
   (let ((loc (find-function-noselect 'agent-shell--project-name t)))
     (with-current-buffer (car loc)
       (goto-char (cdr loc))
       (should (null (nth 2 (read (current-buffer)))))))
-  (let ((root (make-temp-file "project-name-contract-" t)))
+  (let ((root (make-temp-file "project-name-contract-" t))
+        (sentinel (lambda (_project) "via project-name")))
     (unwind-protect
         (let ((default-directory (file-name-as-directory root)))
           (make-directory (expand-file-name ".git" root))
           (should (equal (file-name-nondirectory root)
-                         (agent-shell--project-name))))
+                         (agent-shell--project-name)))
+          (advice-add 'project-name :override sentinel)
+          (unwind-protect
+              (should (equal "via project-name" (agent-shell--project-name)))
+            (advice-remove 'project-name sentinel)))
       (delete-directory root t))))
 
 (ert-deftest warashi-agent-shell-contract-test-buffer-name-prefix ()
