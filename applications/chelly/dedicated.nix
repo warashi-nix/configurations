@@ -35,7 +35,10 @@ let
   brainiumWorkspace = "${cfg.workspaces}/brainium";
   # chelly-handoff と Emacs の専用入口は chelly-agent を呼ぶ。macOS では chelly 自体が
   # 専用構成なので、そのまま chelly に渡すだけでよい。
+  # brainium の mount 元だけは NixOS の runner と同じく起動のたびに用意する。podman は
+  # bind mount の元を作らず、chelly-handoff remove brainium が親ごと rmdir するため。
   chellyAgent = pkgs.writeShellScriptBin "chelly-agent" ''
+    ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg brainiumWorkspace}
     exec ${getExe cfg.package} "$@"
   '';
 in

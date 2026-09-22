@@ -278,6 +278,18 @@ let
         workspaces = "/Users/warashi/chelly-workspaces";
       };
     };
+    # chelly-handoff remove brainium は mount 元の親ごと rmdir するので、NixOS の runner と
+    # 同じく wrapper が起動のたびに用意しないと次の switch まで起動できなくなる。
+    test-mac-dedicated-wrapper-recreates-brainium-mount-source = {
+      expr =
+        let
+          wrapper = lib.findFirst (
+            package: (package.name or "") == "chelly-agent"
+          ) null darwinChellyHome.home.packages;
+        in
+        wrapper != null && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.text;
+      expected = true;
+    };
   };
 in
 assert lib.assertMsg (tests == [ ]) (builtins.toJSON tests);

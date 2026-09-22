@@ -215,7 +215,7 @@ Emacs の起動は変更しない。
 `chelly-agent run -- copilot --acp` を起動し、buffer 名に `[chelly-agent]` を付ける。
 専用 clone では project 名を `<repo 名> / <handoff 名>` にし、一覧や header で
 どの repo の作業か分かるようにする。
-ローカルの `/srv/chelly-workspaces` 以下に限定し、TRAMP や領域外へ向く
+ローカルの `/srv/chelly-workspaces` (macOS は `~/chelly-workspaces`) 以下に限定し、TRAMP や領域外へ向く
 symlink は拒否する。起動後・再接続時も同じ専用 client-maker を使う。
 
 ACP のファイル読み書き能力は無効として通知する。それだけでは上流の要求処理を
@@ -326,7 +326,7 @@ macOS には別の OS ユーザーも sudo の入口も無いので、workbench 
 | Claude・Copilot の状態 | `claude-state`・`copilot-state` の named volume。本人の `~/.claude`・`~/.copilot` は mount しない |
 | 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、同じ path に read-only で bind mount して `CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない。mount が無いと entrypoint は黙って何も写さない |
 | モデル認証 | Home Manager の sops secret `chelly-agent-dotenv` だけ。本人の `chelly-dotenv` は使わない。`--env-file` は Mac 側の podman client が読むので VM に共有しなくてよい |
-| brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う |
+| brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う。mount 元は `chelly-agent` が起動ごとに作る。`remove brainium` は親ごと消すので、その直後は素の `chelly run` ではなく `chelly-agent run` を使う |
 | Git ignore | 従来どおり `~/.local/share/chelly/git-ignore` の実体を read-only で渡す |
 | userns | athena の既存 `--userns=keep-id` のまま (イメージ内ユーザーは UID 501 / GID 1000) |
 
