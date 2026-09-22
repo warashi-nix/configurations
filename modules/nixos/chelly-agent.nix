@@ -74,7 +74,6 @@ let
             "--env=CHELLY_AGENT_CONFIG=${agentConfig}"
             "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
             "--env=IS_DEMO=1"
-            "--pull=never"
             "--userns=keep-id:uid=${toString chellyConfig.uid},gid=${toString chellyConfig.gid}"
           ];
       }

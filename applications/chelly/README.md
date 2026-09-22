@@ -92,10 +92,7 @@ chelly-agent build &&
 ```
 
 ベースイメージは `docker.io/library/debian:stable` と完全修飾し、個人の
-短縮名 alias や検索レジストリ設定に依存させない。`chelly-agent run` は
-`--pull=never` で専用ユーザーがビルドしたローカルイメージだけを使う。
-ビルドに失敗した場合はその原因を直してから `run` に進む。
-`chelly:latest` が無い場合に同名の外部イメージを取得して代用しない。
+短縮名 alias や検索レジストリ設定に依存させない。
 
 作業用 clone は専用ユーザーの所有でこの領域に用意する。
 本人の clone から `git worktree add` で作らない。

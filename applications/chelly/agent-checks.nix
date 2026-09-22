@@ -206,7 +206,6 @@ runCommand "chelly-agent-config-check"
     assert "--userns=keep-id" not in run, run
     assert "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude" in run, run
     assert "--env=IS_DEMO=1" in run, run
-    assert "--pull=never" in run, run
     # 配布 bundle は /nix の read-only mount 越しに store path で渡す。
     config_env = [arg for arg in run if arg.startswith("--env=CHELLY_AGENT_CONFIG=")]
     assert len(config_env) == 1, run
