@@ -3,7 +3,6 @@
   stdenv,
   zig,
   callPackage,
-  runCommand,
   writeShellScriptBin,
   symlinkJoin,
   src,
@@ -46,6 +45,8 @@ let
       '')
     ];
   };
+
+  deps = callPackage ./build.zig.zon.nix { };
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "ghostel-module";
@@ -56,47 +57,18 @@ stdenv.mkDerivation (finalAttrs: {
   ]
   ++ lib.optionals stdenv.hostPlatform.isDarwin [ xcodeShim ];
 
-  deps = callPackage ./build.zig.zon.nix {
-    name = "${finalAttrs.pname}-cache-${finalAttrs.version}";
-    # linkFarm の既定は store への symlink を張るだけなので、後段で
-    # tar に食わせるために実体を持つツリーにする。-L は付けない:
-    # ツリー内の symlink を実体化するとパッケージの内容が変わり、zig の
-    # ハッシュ検証が mismatch で落ちる。
-    linkFarm =
-      name: entries:
-      runCommand name { } ''
-        mkdir -p $out
-        ${lib.concatMapStringsSep "\n" (e: ''
-          cp -r ${e.path} $out/${e.name}
-        '') entries}
-      '';
-  };
-
-  # zon2nix が用意するのは展開済みのツリーだが、zig 0.16 のグローバル
-  # キャッシュ p/ は <hash>.tar.gz を置く形式に変わっており、展開済み
-  # ディレクトリを置いても認識されずネットワーク取得に走る。そこで
-  # <hash>/ を root に持つ tar.gz へ詰め直す。zig は展開後の内容から
-  # ハッシュを検証するので、tar のバイト列が upstream と一致する必要は
-  # ない。
-  # zon2nix が案内するもう一方の方法 (--system で p/ 相当のディレクトリを
-  # 渡す) は使えない: ghostty のようにパス依存 (pkg/*) を含むパッケージを
-  # --system で渡すと zig build が出力なしで無限ループする
-  # (https://codeberg.org/ziglang/zig/issues/32121)。
-  # --hard-dereference は外せない: auto-optimise-store (linux で有効) が
-  # deps のツリー内で同一内容のファイルを hardlink にまとめるため、素の
-  # tar は 2 個目以降を type '1' (hardlink) エントリとして記録するが、zig
-  # の tar reader は type '1' を扱えず unable to unpack tarball で落ちる。
-  # 残りのフラグは tar の出力を決定的にするためのもので、正しさには影響
-  # しない。
-  zigCache = runCommand "ghostel-module-zig-cache-${finalAttrs.version}" { } ''
-    mkdir -p "$out"
-    for dir in ${finalAttrs.deps}/*; do
-      name="$(basename "$dir")"
-      tar --hard-dereference \
-        --sort=name --owner=0 --group=0 --numeric-owner --mtime=@1 \
-        -czf "$out/$name.tar.gz" -C ${finalAttrs.deps} "$name"
-    done
-  '';
+  # zig 0.16.0 の `zig build --system` は、パス依存 (pkg/*) を持つ ghostty
+  # のようなパッケージが farm にあると無限ループする。zon2nix はそうした
+  # パッケージを pathDependencyPackages に列挙するので、それらをビルド
+  # ルートへコピーして --fork で farm の外から渡すと通る。詳細は zon2nix
+  # の README を参照。
+  # zon2nix の README は `cp -rsL` (ファイルは symlink) を案内しているが、
+  # zig の installHeadersDirectory は kind が .file のエントリしかコピー
+  # しないため、ghostty の pkg/simdutf のヘッダが黙って落ちて
+  # 'simdutf.h' file not found になる。実体コピーが要る。
+  postPatch = lib.concatMapStrings (p: ''
+    cp -rL --no-preserve=mode ${deps}/${p} fork-${p}
+  '') deps.pathDependencyPackages;
 
   # hook のデフォルト (--release=safe) は使えない: ReleaseSafe だと
   # src/posix.h の translate-c が zig 同梱 glibc の fortify ヘッダ
@@ -108,16 +80,14 @@ stdenv.mkDerivation (finalAttrs: {
   zigBuildFlags = [
     "-Dcpu=baseline"
     "-Doptimize=ReleaseFast"
-  ];
+    "--system"
+    "${deps}"
+  ]
+  ++ map (p: "--fork=fork-${p}") deps.pathDependencyPackages;
 
-  postConfigure = ''
-    mkdir -p "$ZIG_GLOBAL_CACHE_DIR/p"
-    cp ${finalAttrs.zigCache}/*.tar.gz "$ZIG_GLOBAL_CACHE_DIR/p/"
-    chmod -R u+w "$ZIG_GLOBAL_CACHE_DIR/p"
-  ''
   # darwin stdenv の apple-sdk は xcbuild 製 xcrun を propagate しており
   # PATH 上でシムより先に来る可能性があるため、シムを先頭に固定する
-  + lib.optionalString stdenv.hostPlatform.isDarwin ''
+  postConfigure = lib.optionalString stdenv.hostPlatform.isDarwin ''
     export PATH="${xcodeShim}/bin:$PATH"
   '';
 
