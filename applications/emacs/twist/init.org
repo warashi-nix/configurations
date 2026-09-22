@@ -935,10 +935,10 @@ git-wit の worktree はディレクトリ名が ID 由来で、並べてもど�
 #+begin_src emacs-lisp
 (setup (:package warashi-chelly-workspace
                  warashi-git-wit)
-  (:with-feature project
-    (:when-loaded
-      (warashi-chelly-workspace-install-project-name)
-      (warashi-git-wit-install-project-name))))
+  (:require warashi-chelly-workspace
+            warashi-git-wit)
+  (warashi-chelly-workspace-install-project-name)
+  (warashi-git-wit-install-project-name))
 #+end_src
 
 * misc
