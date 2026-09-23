@@ -22,7 +22,7 @@
     },
     "gnu-elpa": {
         "cargoLock": null,
-        "date": "2026-09-20",
+        "date": "2026-09-22",
         "extract": null,
         "name": "gnu-elpa",
         "passthru": null,
@@ -34,12 +34,12 @@
             "name": null,
             "owner": "elpa-mirrors",
             "repo": "elpa",
-            "rev": "c0aff3f12bca433ca6e24aa2e74a2e0acb918685",
-            "sha256": "sha256-BqaKXXCFgWBUyJttsIltvJaBEm3VPGVy2BQ8ExSryCQ=",
+            "rev": "2129d367ed03c8e5d6e3cedca1c4224b62d03eb6",
+            "sha256": "sha256-6+FpcgrScg5uIM+PFfNOK7Da6UTg9GagU+q3JNbJbc8=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "c0aff3f12bca433ca6e24aa2e74a2e0acb918685"
+        "version": "2129d367ed03c8e5d6e3cedca1c4224b62d03eb6"
     },
     "melpa": {
         "cargoLock": null,
