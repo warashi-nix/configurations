@@ -96,6 +96,8 @@ chelly-handoff の起動は `warashi-chelly-handoff-test--started' に積むだ�
       (should-error (warashi-chelly-handoff-fetch "brainium") :type 'user-error))
     (let ((default-directory "/ssh:host:/home/me/brainium/"))
       (should-error (warashi-chelly-handoff-update "brainium") :type 'user-error))
+    (cl-letf (((symbol-function 'magit-toplevel) (lambda (&rest _) nil)))
+      (should-error (warashi-chelly-handoff-create "brainium") :type 'user-error))
     (should-not warashi-chelly-handoff-test--started)))
 
 ;;;; create と remove

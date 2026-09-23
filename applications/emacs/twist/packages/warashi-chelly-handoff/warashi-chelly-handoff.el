@@ -57,7 +57,8 @@
   (unless (warashi-chelly-workspace-available-p)
     (user-error "%s is not installed on this host"
                 warashi-chelly-workspace-handoff-program))
-  (let* ((default-directory (magit-toplevel))
+  (let* ((default-directory (or (magit-toplevel)
+                                (user-error "Not inside a Git repository")))
          ;; pty だと chelly-agent の stdout が端末になり、podman が --tty で
          ;; 端末を attach しようとする。パスフレーズなどの入力も要らない。
          (magit-process-connection-type nil)
