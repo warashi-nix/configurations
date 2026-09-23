@@ -58,6 +58,7 @@
             "warashi-agent-shell"
             "warashi-agent-shell-list"
             "warashi-chelly-workspace"
+            "warashi-fish-completion"
             "warashi-git-wit"
             "warashi-pkm-capture"
             "warashi-project-workspace"
@@ -73,6 +74,9 @@
             };
             warashi-chelly-workspace = _: _: {
               src = ./packages/warashi-chelly-workspace;
+            };
+            warashi-fish-completion = _: _: {
+              src = ./packages/warashi-fish-completion;
             };
             warashi-git-wit = _: _: {
               src = ./packages/warashi-git-wit;
