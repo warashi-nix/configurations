@@ -264,6 +264,9 @@ Copilot は上の `'claude` を `'copilot` に置き換えて同じ確認を行�
 専用の会話管理画面や取り込み画面は作らず、いつもの agent-shell と Magit を使う。
 Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/README.md) が補助し、
 状態は本人の repo の remote `handoff-名前` だけに置く。
+Emacs では本人の repo の Magit で `@` を押すと各操作の transient が開き
+(`c` create、`f` fetch、`u` update、`k` remove)、名前は remote から選べる。
+`fetch` の後は `基点..handoff-名前/branch` の log が開くので、そのまま取り込める。
 
 | 段階 | 操作 |
 | --- | --- |

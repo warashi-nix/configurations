@@ -738,8 +738,8 @@ Pi は専用 runner に対応していないため、専用領域では起動を
 transcript 保存は無効にし、会話の保存は agent 側の専用 volume に任せる。
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
-受け取りは shell から =chelly-handoff= で行い、差分の確認と取り込みは Magit の
-通常操作に任せる。手順は configurations の =applications/chelly/README.md= にある。
+受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
+確認と取り込みは Magit の通常操作に任せる。手順は configurations の =applications/chelly/README.md= にある。
 
 session の累積コストを context usage indicator の隣に常設する。ターン終了時の
 ボックス (=agent-shell-show-usage-at-turn-end=) ではなく常設にするのは、走らせて
@@ -800,7 +800,10 @@ git-wit の worktree や専用 clone で起動した shell の buffer 名は、p
 
 *** 専用 clone との受け渡し
 本人の repository の Magit で =@= を押すと、専用 clone との受け渡し
-(=chelly-handoff=) の transient が開く。=magit-dispatch= にも並ぶ。受け取りの後は
+(=chelly-handoff=) の transient が開き、create・fetch・update・remove を選べる。
+=magit-dispatch= にも並ぶ。handoff 名はその repository の remote から選び、一つしか
+無ければ聞かない。create は作るだけでその場に留まり、作ってそこへ移るなら
+=C-x p p= を使う。remove は確認してから走り、=-f= で未取得の作業も捨てる。受け取りの後は
 その範囲の log が開くので、そのまま region を選んで =A A= で取り込める。
 新規追跡ファイルの検査で引っかかった場合も ref は受け取り済みなので log を開き、
 検査結果の process buffer も並べる。
