@@ -18,81 +18,9 @@ let
   macHome = athena.home-manager.users.warashi;
   linuxHome = workbench.home-manager.users.warashi;
 
-  # macHome.home.packages / linuxHome.home.packages は完全な host config が
-  # ../../applications 配下に持ち込む無関係なパッケージ (twist 経由の emacs など) まで
-  # 含んでおり、それらの .pname を評価しようとすると Darwin 向け IFD ビルドが要求されて
-  # aarch64-linux では失敗する。Podman の有無だけを見るテストは、chelly の
-  # home-manager モジュールと対応する host の homes/chelly.nix だけを取り込んだ
-  # 最小構成を評価することで、無関係なパッケージを辿らずに済ませる。
-  #
-  # sops-nix 本体の home-manager モジュールは鍵ソースの assertion を要求するため、
-  # ここでは cfg.envfiles が参照する sops.secrets.*.path だけを提供する最小限の
-  # スタブに留める。
-  sopsSecretsStub =
-    { lib, ... }:
-    {
-      options.sops.secrets = lib.mkOption {
-        type = lib.types.attrsOf (
-          lib.types.submodule (
-            { name, ... }:
-            {
-              options.path = lib.mkOption {
-                type = lib.types.str;
-                default = "/run/secrets/${name}";
-              };
-            }
-          )
-        );
-        default = { };
-      };
-    };
-
-  # dedicated.nix は本人の Claude/Copilot の配布 bundle を参照する。最小構成では
-  # applications/claude と copilot を取り込まず、bundle の option だけを空の store path で満たす。
-  agentBundleStub =
-    { lib, pkgs, ... }:
-    {
-      options.warashi.claude.bundle = lib.mkOption {
-        type = lib.types.package;
-        default = pkgs.emptyDirectory;
-      };
-      options.warashi.copilot.bundle = lib.mkOption {
-        type = lib.types.package;
-        default = pkgs.emptyDirectory;
-      };
-    };
-
-  chellyHomeConfig =
-    { pkgs, hostHomeModule }:
-    (homeManagerLib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = {
-        inputs = chellyModuleInputs;
-        # nix-store = "host" (workbench) は host-store.nix が osConfig.warashi.chelly-nix-proxy
-        # を要求する。実ホストでは hosts/workbench/chelly.nix が有効にしているものを、
-        # NixOS 側を丸ごと評価せずに満たすための最小限のスタブ。
-        osConfig = {
-          warashi.chelly-nix-proxy = {
-            enable = true;
-            socket-dir = "/run/chelly-nix";
-          };
-          nix.package = pkgs.nix;
-        };
-      };
-      modules = [
-        sopsSecretsStub
-        agentBundleStub
-        ./default.nix
-        hostHomeModule
-        {
-          home = {
-            username = "warashi";
-            homeDirectory = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/warashi" else "/home/warashi";
-            stateVersion = "24.11";
-          };
-        }
-      ];
-    }).config;
+  # macHome.home.packages / linuxHome.home.packages は完全な host config が持ち込む
+  # 無関係なパッケージまで含むので、Podman の有無だけを見るテストは最小構成で評価する。
+  chellyHomeConfig = import ./test-home.nix { inherit homeManagerLib chellyModuleInputs; };
 
   installsPackage =
     pname: home: lib.any (package: (package.pname or package.name or "") == pname) home.home.packages;
