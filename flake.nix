@@ -174,6 +174,7 @@
               )) inputs'.my-emacs.checks
               // {
                 git-check-new-ignored = pkgs.callPackage ./applications/git/handoff/package.nix { };
+                chelly-go-proxy = pkgs.callPackage ./applications/chelly/go-proxy/package.nix { };
                 chelly-config = pkgs.callPackage ./applications/chelly/checks.nix {
                   athena = self.darwinConfigurations.athena.config;
                   workbench = self.nixosConfigurations.workbench.config;
@@ -213,6 +214,9 @@
               projectRootFile = "flake.nix";
               programs = {
                 # keep-sorted start block=yes
+                gofmt = {
+                  enable = true;
+                };
                 keep-sorted = {
                   enable = true;
                 };
