@@ -98,6 +98,55 @@ chelly-handoff の起動は `warashi-chelly-handoff-test--started' に積むだ�
       (should-error (warashi-chelly-handoff-update "brainium") :type 'user-error))
     (should-not warashi-chelly-handoff-test--started)))
 
+;;;; create と remove
+
+(ert-deftest warashi-chelly-handoff-test-create ()
+  "create は既定を現在の branch 名にして、読んだ名前で chelly-handoff create を起動する。"
+  (warashi-chelly-handoff-test--with-repository nil
+    (cl-letf (((symbol-function 'magit-get-current-branch) (lambda () "feature-x"))
+              ((symbol-function 'read-string)
+               (lambda (_prompt _initial _history default &rest _)
+                 (should (equal "feature-x" default))
+                 default)))
+      (call-interactively #'warashi-chelly-handoff-create))
+    (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "create" "feature-x"))
+                   warashi-chelly-handoff-test--started))))
+
+(ert-deftest warashi-chelly-handoff-test-create-default-must-be-usable ()
+  "'/' を含む branch 名は handoff 名にできないので既定にしない。"
+  (warashi-chelly-handoff-test--with-repository nil
+    (cl-letf (((symbol-function 'magit-get-current-branch) (lambda () "feat/x"))
+              ((symbol-function 'read-string)
+               (lambda (_prompt _initial _history default &rest _)
+                 (should-not default)
+                 "feat-x")))
+      (call-interactively #'warashi-chelly-handoff-create))
+    (should (equal "feat-x" (car (last (car warashi-chelly-handoff-test--started)))))))
+
+(ert-deftest warashi-chelly-handoff-test-create-rejects-unusable-name ()
+  "chelly-handoff が受け付けない名前は起動する前に拒否する。"
+  (warashi-chelly-handoff-test--with-repository nil
+    (dolist (name '("" "feat/x" "-x" ".x" "a b"))
+      (should-error (warashi-chelly-handoff-create name) :type 'user-error))
+    (should-not warashi-chelly-handoff-test--started)))
+
+(ert-deftest warashi-chelly-handoff-test-remove ()
+  "remove は確認してから、transient の --force を末尾に付けて起動する。"
+  (warashi-chelly-handoff-test--with-repository warashi-chelly-handoff-test--config
+    (cl-letf (((symbol-function 'y-or-n-p) (lambda (&rest _) t)))
+      (warashi-chelly-handoff-remove "brainium" nil)
+      (warashi-chelly-handoff-remove "v1.2" '("--force")))
+    (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "remove" "v1.2" "--force")
+                     (,warashi-chelly-handoff-test--repository "chelly-handoff" "remove" "brainium"))
+                   warashi-chelly-handoff-test--started))))
+
+(ert-deftest warashi-chelly-handoff-test-remove-declined ()
+  "確認で断ったら起動しない。"
+  (warashi-chelly-handoff-test--with-repository warashi-chelly-handoff-test--config
+    (cl-letf (((symbol-function 'y-or-n-p) (lambda (&rest _) nil)))
+      (should-error (warashi-chelly-handoff-remove "brainium" nil) :type 'user-error))
+    (should-not warashi-chelly-handoff-test--started)))
+
 ;;;; fetch の後の log
 
 (ert-deftest warashi-chelly-handoff-test-log-range ()

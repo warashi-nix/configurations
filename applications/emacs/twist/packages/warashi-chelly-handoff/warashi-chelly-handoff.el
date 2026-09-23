@@ -110,14 +110,49 @@ ref が一つでなければ範囲は決まらないので nil。"
   (interactive (list (warashi-chelly-handoff--read-name "Update")))
   (warashi-chelly-handoff--start (list "update" name)))
 
+;;;; create と remove
+
+(defconst warashi-chelly-handoff--name-pattern
+  "\\`[A-Za-z0-9][A-Za-z0-9._-]\\{0,127\\}\\'"
+  "chelly-handoff が受け付ける handoff 名。専用領域の path になる。")
+
+(defun warashi-chelly-handoff--usable-name-p (name)
+  "NAME を handoff 名に使えるなら非 nil。"
+  (and name (string-match-p warashi-chelly-handoff--name-pattern name)))
+
+(defun warashi-chelly-handoff-create (name)
+  "現在の HEAD から handoff NAME の専用 clone を作る。移らずにその場に留まる。"
+  (interactive
+   (let* ((branch (magit-get-current-branch))
+          (default (and (warashi-chelly-handoff--usable-name-p branch) branch)))
+     (list (read-string (format-prompt "Create handoff" default) nil nil default))))
+  (unless (warashi-chelly-handoff--usable-name-p name)
+    (user-error "Handoff name must start with an ASCII letter or digit and contain only letters, digits, '.', '_' or '-'"))
+  (warashi-chelly-handoff--start (list "create" name)))
+
+(defun warashi-chelly-handoff-remove (name args)
+  "handoff NAME の専用 clone と remote を消す。
+ARGS に --force があれば、受け取っていない commit や未コミットの変更も捨てる。"
+  (interactive (list (warashi-chelly-handoff--read-name "Remove")
+                     (transient-args 'warashi-chelly-handoff)))
+  (let ((force (member "--force" args)))
+    (unless (y-or-n-p (format "Remove handoff %s%s? " name
+                              (if force " and discard uncollected work" "")))
+      (user-error "Aborted"))
+    (warashi-chelly-handoff--start (append (list "remove" name) (and force '("--force"))))))
+
 ;;;; 入口
 
 ;;;###autoload (autoload 'warashi-chelly-handoff "warashi-chelly-handoff" nil t)
 (transient-define-prefix warashi-chelly-handoff ()
   "専用 clone との受け渡し。"
+  ["Arguments"
+   ("-f" "Discard uncollected work on remove" "--force")]
   ["chelly-handoff"
+   ("c" "Create" warashi-chelly-handoff-create)
    ("f" "Fetch" warashi-chelly-handoff-fetch)
-   ("u" "Update" warashi-chelly-handoff-update)])
+   ("u" "Update" warashi-chelly-handoff-update)
+   ("k" "Remove" warashi-chelly-handoff-remove)])
 
 ;;;###autoload
 (defun warashi-chelly-handoff-install ()
