@@ -460,3 +460,61 @@ aarch64-linux では `nix flake check` が失敗するため。この最小構�
 切り戻し時は `CHELLY_CONTAINER_CMD=container chelly run` で既存の Apple 側
 イメージ・volume を使える。ただし、元の named volume の同時利用制約も戻り、
 apple/container は home 全体を共有するので上の境界にはならない。
+
+## macOS: private Go module の取得
+
+仕事の Mac の専用構成 (`warashi.chelly.dedicated`) で、agent が private Go module を
+本人の認証なしで取得・更新できるようにする。実装は `go-proxy/`。
+
+| 項目 | 内容 |
+| --- | --- |
+| 取得 | Mac 上の `chelly-go-proxy` (本人の launchd agent、`127.0.0.1:3140`) が、本人の `go`・`git` と Git 認証で VCS から直接取得する |
+| 許可 | `warashi.chelly.goProxy.allow` の pattern (GOPRIVATE と同じ書式) に一致する module だけ。一致しない path では go も git も呼ばずに 404 を返す |
+| コンテナ | `GOPROXY=http://host.containers.internal:3140,https://proxy.golang.org` と、許可 pattern の `GONOSUMDB` だけを渡す。`GOPRIVATE` は渡さない (proxy を迂回して認証の無い direct 取得になる) |
+| 状態 | proxy 専用の module cache は `~/.cache/chelly-go-proxy`、ログは `~/Library/Logs/chelly-go-proxy.log`。どちらも VM に共有しない |
+
+許可リストは configurations を input に持つ private flake の host 設定で与える。社内の
+repository 名を公開の configurations に書かないため。
+
+```nix
+warashi.chelly.goProxy.allow = [
+  "github.com/<org>/<repo>"
+];
+```
+
+新しい private repository が必要になると、agent の `go` は proxy の 404 と proxy.golang.org
+の失敗で止まる。本人が内容を確認し、private flake の許可リストに足して switch する。
+許可から外した module も、次の要求からは go を呼ばずに 404 になる。コンテナ内の
+`go-mod` volume に既に取得済みの分は残る。
+
+守らないもの:
+
+- 許可しない module path がコンテナから proxy.golang.org や sum.golang.org に問い合わせられること。
+  コンテナの外向き通信は制限していない。
+- private module の新しい version の改ざん検出。sumdb の対象外なので、本人が普段 `GOPRIVATE`
+  で取得するときと同じく、取得元の Git と HTTPS を信頼する。取得済みの version は repository の
+  `go.sum` が検出する。
+- NixOS (workbench) は対象外で、有効にすると assertion で止まる。
+
+### Mac 実機での受け入れ確認
+
+switch 後に次を確かめる。`<mod>` は許可した module、`<other>` は本人が読めるが許可していない
+private module。
+
+```sh
+launchctl print gui/$(id -u)/org.nix-community.home.chelly-go-proxy | grep state
+curl -s http://127.0.0.1:3140/<mod>/@v/list        # version が並ぶ
+curl -s http://127.0.0.1:3140/<other>/@v/list      # not in the allowed module list
+chelly-agent run -- curl -s http://host.containers.internal:3140/<mod>/@v/list
+```
+
+- コンテナから `host.containers.internal:3140` に届く。届かなければ Podman machine の
+  host への経路 (gvproxy の host gateway) を確かめ、`go-proxy/default.nix` の宛先を直す。
+- 専用 clone の Go repository で `go mod download` と `go get -u <mod>` が通り、
+  `~/.cache/chelly-go-proxy` に取得した module が増える。
+- `<other>` を import した状態の `go mod download` が失敗し、`~/.cache/chelly-go-proxy` に
+  `<other>` が無い。
+- 許可から外して switch した後、取得済みだった module の `@v/list` も 404 になる。
+
+設定の検査は `nix build .#checks.<system>.chelly-go-proxy-config`、proxy 本体のテストは
+`.#checks.<system>.chelly-go-proxy` で実行する。どちらも Mac 実機の確認の代わりではない。
