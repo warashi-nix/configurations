@@ -713,12 +713,12 @@ GPT-6 Astra に low / medium を用意する。CLI の =--model= だけでは AC
 
 #+begin_src emacs-lisp
 (warashi-agent-shell-define-copilot-variants
- (luna-low     "gpt-5.6-luna"  "low")
- (luna-medium  "gpt-5.6-luna"  "medium")
+ (luna-low     "gpt-6-luna"    "low")
+ (luna-medium  "gpt-6-luna"    "medium")
  (terra-low    "gpt-5.6-terra" "low")
  (terra-medium "gpt-5.6-terra" "medium")
- (sol-low      "gpt-5.6-sol"   "low")
- (sol-medium   "gpt-5.6-sol"   "medium")
+ (sol-low      "gpt-6-sol"     "low")
+ (sol-medium   "gpt-6-sol"     "medium")
  (astra-low    "gpt-6-astra"   "low")
  (astra-medium "gpt-6-astra"   "medium"))
 #+end_src
