@@ -71,10 +71,14 @@ let
         git = lib.elem "${mac.programs.git.package}/bin" (
           lib.splitString ":" agent.config.EnvironmentVariables.PATH
         );
+        gh = lib.elem "${mac.programs.gh.package}/bin" (
+          lib.splitString ":" agent.config.EnvironmentVariables.PATH
+        );
       };
       expected = {
         go = "${mac.programs.go.package}/bin/go";
         git = true;
+        gh = true;
       };
     };
     # VM に共有する領域に置くと、agent が proxy の cache を書き換えて他の module を返させられる。

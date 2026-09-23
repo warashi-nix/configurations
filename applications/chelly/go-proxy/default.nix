@@ -54,7 +54,9 @@ in
         EnvironmentVariables = {
           # git が本人の設定 (gh の credential helper) を読むのに要る。
           HOME = config.home.homeDirectory;
-          PATH = "${config.programs.git.package}/bin:/usr/bin:/bin";
+          # credential helper を `!gh auth git-credential` のように PATH 頼みで書いた設定でも
+          # 認証できるよう、gh も入れる。
+          PATH = "${config.programs.git.package}/bin:${config.programs.gh.package}/bin:/usr/bin:/bin";
         };
         KeepAlive = true;
         RunAtLoad = true;
