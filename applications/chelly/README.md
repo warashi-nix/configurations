@@ -482,14 +482,22 @@ warashi.chelly.goProxy.allow = [
 ];
 ```
 
-新しい private repository が必要になると、agent の `go` は proxy の 404 と proxy.golang.org
-の失敗で止まる。本人が内容を確認し、private flake の許可リストに足して switch する。
+新しい private repository が必要になると、agent の `go` は proxy の 404 の後に
+proxy.golang.org でも失敗して止まる。go が表示するのは最後の proxy.golang.org の
+`could not read Username for 'https://github.com'` と「private repository なら」の案内で、
+proxy の「not in the allowed module list」は出ない。本人が内容を確認し、private flake の
+許可リストに足して switch する。
 許可から外した module も、次の要求からは go を呼ばずに 404 になる。コンテナ内の
 `go-mod` volume に既に取得済みの分は残る。
+
+`GOPROXY` の区切りは `,` なので、go が次の proxy に進むのは 404/410 のときだけ。
+launchd agent が止まっていて接続できないと、公開 module を含めてコンテナ内の取得が
+すべて失敗する。そのときは下の `launchctl print` で state を見る。
 
 守らないもの:
 
 - 許可しない module path がコンテナから proxy.golang.org や sum.golang.org に問い合わせられること。
+  許可した module でも、取得に失敗した path と version は proxy.golang.org に流れる。
   コンテナの外向き通信は制限していない。
 - private module の新しい version の改ざん検出。sumdb の対象外なので、本人が普段 `GOPRIVATE`
   で取得するときと同じく、取得元の Git と HTTPS を信頼する。取得済みの version は repository の
