@@ -888,6 +888,17 @@ pcomplete は =pcomplete/COMMAND= があると既定関数に降りてこない�
                   #'warashi-fish-completion--find-completion-function))))
 #+end_src
 
+corfu-auto の自動表示と fish の補完を両立させる。fish-completion のままだと、
+候補を待つ間に打鍵すると入力が消えてベルが鳴り、ポップアップが出ている間は
+打鍵のたびに fish が起動して入力が遅れる。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-fish-completion)
+  (:require warashi-fish-completion)
+  (warashi-fish-completion-install-call)
+  (warashi-fish-completion-install-cache))
+#+end_src
+
 ** tramp
 #+begin_src emacs-lisp
 (setup (:package tramp
