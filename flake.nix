@@ -175,6 +175,12 @@
               // {
                 git-check-new-ignored = pkgs.callPackage ./applications/git/handoff/package.nix { };
                 chelly-go-proxy = pkgs.callPackage ./applications/chelly/go-proxy/package.nix { };
+                chelly-go-proxy-config = pkgs.callPackage ./applications/chelly/go-proxy/checks.nix {
+                  athenaPkgs = self.darwinConfigurations.athena.pkgs;
+                  workbenchPkgs = self.nixosConfigurations.workbench.pkgs;
+                  homeManagerLib = inputs.home-manager.lib;
+                  chellyModuleInputs = inputs;
+                };
                 chelly-config = pkgs.callPackage ./applications/chelly/checks.nix {
                   athena = self.darwinConfigurations.athena.config;
                   workbench = self.nixosConfigurations.workbench.config;

@@ -27,6 +27,7 @@ in
 {
   imports = [
     ./dedicated.nix
+    ./go-proxy
     ./host-store.nix
   ];
 
