@@ -57,6 +57,7 @@
             "spectreshell"
             "warashi-agent-shell"
             "warashi-agent-shell-list"
+            "warashi-chelly-handoff"
             "warashi-chelly-workspace"
             "warashi-fish-completion"
             "warashi-git-wit"
@@ -71,6 +72,9 @@
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;
+            };
+            warashi-chelly-handoff = _: _: {
+              src = ./packages/warashi-chelly-handoff;
             };
             warashi-chelly-workspace = _: _: {
               src = ./packages/warashi-chelly-workspace;
@@ -245,7 +249,11 @@
             value =
               pkgs.runCommand "emacs-${name}-test"
                 {
-                  nativeBuildInputs = [ emacs ];
+                  # magit は require しただけで git の version を確かめる。
+                  nativeBuildInputs = [
+                    emacs
+                    pkgs.git
+                  ];
                 }
                 ''
                   # -L で env 側の同名パッケージより手前にソースを置く。

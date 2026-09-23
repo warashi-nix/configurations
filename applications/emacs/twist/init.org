@@ -798,6 +798,19 @@ git-wit の worktree や専用 clone で起動した shell の buffer 名は、p
                             'append)))
 #+end_src
 
+*** 専用 clone との受け渡し
+本人の repository の Magit で =@= を押すと、専用 clone との受け渡し
+(=chelly-handoff=) の transient が開く。=magit-dispatch= にも並ぶ。受け取りの後は
+その範囲の log が開くので、そのまま region を選んで =A A= で取り込める。
+新規追跡ファイルの検査で引っかかった場合も ref は受け取り済みなので log を開き、
+検査結果の process buffer も並べる。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-chelly-handoff)
+  (with-eval-after-load 'magit
+    (warashi-chelly-handoff-install)))
+#+end_src
+
 ** compile
 #+begin_src emacs-lisp
 (setup compile
