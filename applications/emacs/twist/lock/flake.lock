@@ -983,11 +983,11 @@
     "with-editor": {
       "flake": false,
       "locked": {
-        "lastModified": 1789810600,
-        "narHash": "sha256-l2TFOTRTQH3w3VSJFUYyQorTJIga32NhyYmGu9PYCH4=",
+        "lastModified": 1790153132,
+        "narHash": "sha256-DzPE0k4Nkznr1mRkeyxEpmE1S+Omsc3kgZQneBg67Lc=",
         "owner": "magit",
         "repo": "with-editor",
-        "rev": "53115f978576e043e050fd04d0cb7517296727e9",
+        "rev": "3195a545b6c9bec7f3fbb68eaba14a172e0ea3ef",
         "type": "github"
       },
       "original": {
