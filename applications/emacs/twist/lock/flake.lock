@@ -919,11 +919,11 @@
     "transient": {
       "flake": false,
       "locked": {
-        "lastModified": 1790188589,
-        "narHash": "sha256-/4h6LCwRAnbJDRl7OIuAarb+/tBTZRcZdjCPP/7nNTc=",
+        "lastModified": 1790242528,
+        "narHash": "sha256-ZSwtj+jKhBZ7Yp5QFzIxeC5fvTMJTMMXGHtGWWkGkZU=",
         "owner": "magit",
         "repo": "transient",
-        "rev": "db34982dd7d38b3275ae432e23cd708e28303b81",
+        "rev": "d1ab36958ddfd6c85aab00dbc130cd3e1a97615f",
         "type": "github"
       },
       "original": {
