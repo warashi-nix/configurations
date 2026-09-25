@@ -663,8 +663,12 @@ Claude Code は agentel で使う。agent-shell では subagent の表示が親�
 壊れ、折り畳みの追加位置もずれるため。agentel が対応していない pi と Copilot は
 [[*agent-shell][agent-shell]] に残す。
 
+=C-c a= で session の一覧を開く。どの session が許可や質問の答え待ちで止まって
+いるかを一覧の状態から拾う。
+
 #+begin_src emacs-lisp
 (setup (:package agentel)
+  (:global-keymap "C-c a" #'agentel-list)
   (:opt agentel-command-prefix #'warashi-agentel-command-prefix)
   (:with-hook agentel-chat-mode-hook
     (:hook agentel-focus-mode)))
@@ -762,7 +766,7 @@ GPT-6 Astra に low / medium を用意する。CLI の =--model= だけでは AC
 
 workbench の =/srv/chelly-workspaces= 内では、上の Copilot の
 起動コマンドが同じ model・effort のまま専用 =chelly-agent= を使う。
-表示や focus を奪わない挙動も同じで、会話は既存の =C-c a= の一覧から開く。
+表示や focus を奪わない挙動も同じで、会話は後述のサイドバーから開く。
 専用領域外の通常起動や =agent-shell-command-prefix= は変更しない。
 Pi は専用 runner に対応していないため、専用領域では起動を拒否する。
 明示的に専用 agent を選ぶ =M-x warashi-agent-shell-chelly-start= も残し、
@@ -794,8 +798,9 @@ git-wit の worktree や専用 clone で起動した shell の buffer 名は、p
 気づきの装置にはならない。side window に常駐させ、要操作の shell を先頭に集める。
 
 =C-x o= の巡回からは外してある。shell と編集中の buffer を往復するあいだに一覧へ
-降りても読むものが無いため。行き来は =C-c a= がまとめて引き受け、出ていなければ
-開いて移り、他の window に居れば移り、一覧に居れば閉じる。
+降りても読むものが無いため。行き来は =M-x warashi-agent-shell-list-toggle= がまと
+めて引き受け、出ていなければ開いて移り、他の window に居れば移り、一覧に居れば
+閉じる。 =C-c a= は [[*agentel][agentel]] の一覧に譲った。
 
 実装をここに置かず =warashi-agent-shell-list= に切り出しているのは、並び順と未読
 の扱いを ert で固定したいため。init.org の中身は tangle されて初めてロードされる
@@ -804,7 +809,6 @@ git-wit の worktree や専用 clone で起動した shell の buffer 名は、p
 #+begin_src emacs-lisp
 (setup (:package warashi-agent-shell-list)
   (:require warashi-agent-shell-list)
-  (:global-keymap "C-c a" #'warashi-agent-shell-list-toggle)
   (:with-hook agent-shell-mode-hook
     (:hook warashi-agent-shell-list--subscribe
            warashi-agent-shell-list--auto-open))
