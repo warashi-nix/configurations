@@ -211,6 +211,12 @@ Emacs の起動は変更しない。
 
 ホストの Emacs では `warashi-agent-shell-chelly-start` を使う。
 通常の agent-shell の `("chelly" "run")` は変更しない。
+
+日常の Claude の起動コマンド (`warashi-agentel-claude-*`) は agentel を使い、
+専用領域では `chelly-agent run -- claude-agent-acp` で agent を動かす。領域外へ
+向く symlink と TRAMP は起動前に拒否する。agentel はファイル・端末の能力を
+通知せず、MCP server も渡さないので、ホスト操作の委譲は起きない。以下の検証入口は
+agent-shell 経由の確認と Copilot のために残している。
 専用入口は `chelly-agent run -- claude-agent-acp` または
 `chelly-agent run -- copilot --acp` を起動し、buffer 名に `[chelly-agent]` を付ける。
 専用 clone では project 名を `<repo 名> / <handoff 名>` にし、一覧や header で
@@ -261,7 +267,7 @@ Copilot は上の `'claude` を `'copilot` に置き換えて同じ確認を行�
 
 ### 依頼から取り込みまで
 
-専用の会話管理画面や取り込み画面は作らず、いつもの agent-shell と Magit を使う。
+専用の会話管理画面や取り込み画面は作らず、いつもの agentel・agent-shell と Magit を使う。
 Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/README.md) が補助し、
 状態は本人の repo の remote `handoff-名前` だけに置く。
 Emacs では本人の repo の Magit で `@` を押すと各操作の transient が開き
@@ -271,7 +277,7 @@ Emacs では本人の repo の Magit で `@` を押すと各操作の transient 
 | 段階 | 操作 |
 | --- | --- |
 | clone 作成 | 本人の repo で基点の branch を checkout し、`chelly-handoff create [名前]`。名前の既定は branch 名 |
-| 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` (macOS は `~/chelly-workspaces/…`) で既存の `warashi-agent-shell-claude-*` / `copilot-*` を使う。会話は `C-c a` から開く |
+| 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` (macOS は `~/chelly-workspaces/…`) で既存の `warashi-agentel-claude-*` / `warashi-agent-shell-copilot-*` を使う。Claude の会話は `C-c a`、Copilot の会話は agent-shell のサイドバー (`M-x warashi-agent-shell-list-toggle`) から開く |
 | 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]`。agent が branch を切っていても HEAD までを拾う |
 | 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。branch は agent が HEAD を置いていた branch 名 (detached なら create 時の branch)。基点は `remote.handoff-名前.chelly-base` |
 | 取り込み | Magit の log で `基点..handoff-名前/branch` の region を選んで `A A` (範囲の cherry-pick)。commit 数に関わらず 1 回で、既存設定で SSH 署名され、本人の hooks が動く。署名が要らない repo なら `git merge --ff-only` でもよい |
@@ -389,7 +395,7 @@ VM から Mac の Nix store をマウントする必要はない。
 workbench と同じ `chelly-handoff` と Magit の手順を使う (上の「依頼から取り込みまで」)。
 作業領域は `~/chelly-workspaces` で、`chelly-handoff` は Nix の `warashi.chelly.workspaces`
 から既定を受け取る。Emacs の `warashi-chelly-workspace-root` も macOS では同じ既定になる。
-専用領域内での Emacs の起動は通常の `warashi-agent-shell-claude-*` / `copilot-*` を使う。
+専用領域内での Emacs の起動は通常の `warashi-agentel-claude-*` / `warashi-agent-shell-copilot-*` を使う。
 署名は Mac 側の 1Password の signer のまま、本人が範囲の cherry-pick で行う。
 
 ### 起動・停止とデータ
