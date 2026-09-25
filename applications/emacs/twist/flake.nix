@@ -57,6 +57,7 @@
             "spectreshell"
             "warashi-agent-shell"
             "warashi-agent-shell-list"
+            "warashi-agentel"
             "warashi-chelly-handoff"
             "warashi-chelly-workspace"
             "warashi-fish-completion"
@@ -72,6 +73,9 @@
             };
             warashi-agent-shell-list = _: _: {
               src = ./packages/warashi-agent-shell-list;
+            };
+            warashi-agentel = _: _: {
+              src = ./packages/warashi-agentel;
             };
             warashi-chelly-handoff = _: _: {
               src = ./packages/warashi-chelly-handoff;

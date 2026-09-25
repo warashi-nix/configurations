@@ -181,7 +181,7 @@
      captured))
 
 (ert-deftest warashi-agent-shell-test-ordinary-variants-route-inside-chelly-workspace ()
-  "通常の Claude/Copilot variant も専用領域では設定を保ったまま専用 runner を使う。"
+  "通常の Copilot variant も専用領域では設定を保ったまま専用 runner を使う。"
   (let* ((root (make-temp-file "chelly-workspace-" t))
          (clone (expand-file-name "owner/repository/clone" root))
          (alias-parent (make-temp-file "chelly-alias-" t))
@@ -195,33 +195,23 @@
                                    (expand-file-name "owner/repository/clone"
                                                      alias)))
             (let ((default-directory (file-name-as-directory directory)))
-              (dolist (case '((claude "opus[1m]" "low")
-                              (copilot "gpt-6-astra" "medium")))
-                (let* ((agent (nth 0 case))
-                       (model (nth 1 case))
-                       (effort (nth 2 case))
-                       (captured
-                        (warashi-agent-shell-test--capture-start
-                          (if (eq agent 'claude)
-                              (warashi-agent-shell--start-claude model effort)
-                            (warashi-agent-shell--start-copilot model effort))))
-                       (config (plist-get captured :config))
-                       (client (with-temp-buffer
-                                 (funcall (alist-get :client-maker config)
-                                          (current-buffer)))))
-                  (should (plist-get captured :no-focus))
-                  (should (eq 'new (plist-get captured :session-strategy)))
-                  (should (alist-get :chelly-agent config))
-                  (should (equal model
-                                 (funcall (alist-get :default-model-id config))))
-                  (if (eq agent 'claude)
-                      (should (equal effort
-                                     (alist-get :warashi-thought-level config)))
-                    (should
-                     (equal `(("reasoning_effort" . ,effort))
-                            (funcall
-                             (alist-get :default-config-options config)))))
-                  (should (equal "chelly-agent" (map-elt client :command))))))))
+              (let* ((captured
+                      (warashi-agent-shell-test--capture-start
+                        (warashi-agent-shell--start-copilot "gpt-6-astra" "medium")))
+                     (config (plist-get captured :config))
+                     (client (with-temp-buffer
+                               (funcall (alist-get :client-maker config)
+                                        (current-buffer)))))
+                (should (plist-get captured :no-focus))
+                (should (eq 'new (plist-get captured :session-strategy)))
+                (should (alist-get :chelly-agent config))
+                (should (equal "gpt-6-astra"
+                               (funcall (alist-get :default-model-id config))))
+                (should
+                 (equal '(("reasoning_effort" . "medium"))
+                        (funcall
+                         (alist-get :default-config-options config))))
+                (should (equal "chelly-agent" (map-elt client :command)))))))
       (delete-directory alias-parent t)
       (delete-directory root t))))
 
@@ -235,10 +225,6 @@
         (progn
           (make-symbolic-link outside escape)
           (let ((default-directory (file-name-as-directory escape)))
-            (should-error
-             (warashi-agent-shell-test--capture-start
-               (warashi-agent-shell--start-claude "opus[1m]" "low"))
-             :type 'user-error)
             (should-error
              (warashi-agent-shell-test--capture-start
                (warashi-agent-shell--start-copilot "gpt-6-astra" "medium"))
@@ -255,7 +241,7 @@
     (unwind-protect
         (let ((config (plist-get
                        (warashi-agent-shell-test--capture-start
-                         (warashi-agent-shell--start-claude "opus[1m]" "low"))
+                         (warashi-agent-shell--start-copilot "gpt-6-astra" "medium"))
                        :config)))
           (should (alist-get :chelly-agent config))
           (with-temp-buffer
@@ -288,77 +274,7 @@
                 (lambda (&rest _) warashi-agent-shell-test--state)))
        ,@body)))
 
-;;;; thought level
-
-(ert-deftest warashi-agent-shell-test-thought-level-subscribes ()
-  "config に thought level があれば init-finished で送る。"
-  (let ((subscription nil)
-        (sent nil))
-    (cl-letf (((symbol-function 'agent-shell-subscribe-to)
-               (lambda (&rest args) (setq subscription args)))
-              ((symbol-function 'agent-shell--config-option-set-thought-level-id)
-               (lambda (&rest args) (setq sent (plist-get args :thought-level-id)))))
-      (warashi-agent-shell-test--with-state
-          '((:agent-config . ((:warashi-thought-level . "xhigh"))))
-        (warashi-agent-shell--apply-thought-level))
-      (should (eq 'init-finished (plist-get subscription :event)))
-      (should (eq (current-buffer) (plist-get subscription :shell-buffer)))
-      ;; session 確立前には送らない。確立後のイベントで初めて送る。
-      (should-not sent)
-      (funcall (plist-get subscription :on-event) nil)
-      (should (equal "xhigh" sent)))))
-
-(ert-deftest warashi-agent-shell-test-thought-level-absent ()
-  "thought level を持たない config では何もしない。"
-  (let ((subscribed nil))
-    (cl-letf (((symbol-function 'agent-shell-subscribe-to)
-               (lambda (&rest _) (setq subscribed t))))
-      (warashi-agent-shell-test--with-state '((:agent-config . nil))
-        (warashi-agent-shell--apply-thought-level))
-      (warashi-agent-shell-test--with-state nil
-        (warashi-agent-shell--apply-thought-level))
-      (should-not subscribed))))
-
 ;;;; 起動コマンド
-
-(ert-deftest warashi-agent-shell-test-start-claude-config ()
-  "model と thought level が config に載り、新規 session を割り込み無しで起動する。"
-  (let* ((captured (warashi-agent-shell-test--capture-start
-                     (warashi-agent-shell--start-claude "opus[1m]" "low")))
-         (config (plist-get captured :config)))
-    (should (plist-get captured :new-session))
-    ;; session strategy を new で上書きするのは、既定の prompt だと session
-    ;; 確立後に picker が minibuffer を奪うため。
-    (should (eq 'new (plist-get captured :session-strategy)))
-    ;; no-focus なのは、起動を投げた後に window を取り返されないため。
-    (should (plist-get captured :no-focus))
-    ;; :default-model-id は session 確立後に funcall される。
-    (should (equal "opus[1m]" (funcall (alist-get :default-model-id config))))
-    (should (equal "low" (alist-get :warashi-thought-level config)))
-    (should-not (alist-get :chelly-agent config))))
-
-(ert-deftest warashi-agent-shell-test-start-claude-keeps-model-per-shell ()
-  "先に起動した shell の model が、後の起動で書き換わらない。
-:default-model-id を動的束縛ではなく lexical に閉じ込めているため。"
-  (let* ((first (alist-get :default-model-id
-                           (plist-get (warashi-agent-shell-test--capture-start
-                                        (warashi-agent-shell--start-claude "sonnet" "xhigh"))
-                                      :config))))
-    (warashi-agent-shell-test--capture-start
-      (warashi-agent-shell--start-claude "opus[1m]" "low"))
-    (should (equal "sonnet" (funcall first)))))
-
-(ert-deftest warashi-agent-shell-test-define-claude-variants ()
-  "variant ごとにコマンドと eshell 用の関数を定義する。"
-  (warashi-agent-shell-define-claude-variants
-   (warashi-agent-shell-test-variant "test-model" "high"))
-  (should (commandp 'warashi-agent-shell-claude-warashi-agent-shell-test-variant))
-  (should (fboundp 'eshell/claude-warashi-agent-shell-test-variant))
-  (let ((args nil))
-    (cl-letf (((symbol-function 'warashi-agent-shell--start-claude)
-               (lambda (&rest a) (setq args a))))
-      (funcall 'eshell/claude-warashi-agent-shell-test-variant)
-      (should (equal '("test-model" "high") args)))))
 
 (ert-deftest warashi-agent-shell-test-start-pi-config ()
   "model が config に載り、新規 session を割り込み無しで起動する。"
@@ -417,7 +333,6 @@
     (should (equal "gpt-5.6-luna" (funcall (alist-get :default-model-id config))))
     (should (equal '(("reasoning_effort" . "low"))
                    (funcall (alist-get :default-config-options config))))
-    (should-not (alist-get :warashi-thought-level config))
     (should-not (alist-get :chelly-agent config))
     (cl-letf (((symbol-function 'agent-shell--make-acp-client)
                (lambda (&rest args)
@@ -541,15 +456,15 @@
 ;;;; project-switch からの起動
 
 (ert-deftest warashi-agent-shell-test-variants-registered ()
-  "variant は claude / pi の別が付いた名前で定義順に一覧へ載る。"
+  "variant は copilot / pi の別が付いた名前で定義順に一覧へ載る。"
   (let ((warashi-agent-shell-variants nil))
-    (warashi-agent-shell-define-claude-variants
+    (warashi-agent-shell-define-copilot-variants
      (warashi-agent-shell-test-registered "test-model" "high"))
     (warashi-agent-shell-define-pi-variants
      (warashi-agent-shell-test-registered "test/model"))
     (should (equal
-             '(("claude-warashi-agent-shell-test-registered"
-                . warashi-agent-shell-claude-warashi-agent-shell-test-registered)
+             '(("copilot-warashi-agent-shell-test-registered"
+                . warashi-agent-shell-copilot-warashi-agent-shell-test-registered)
                ("pi-warashi-agent-shell-test-registered"
                 . warashi-agent-shell-pi-warashi-agent-shell-test-registered))
              warashi-agent-shell-variants))))
@@ -558,20 +473,20 @@
   "同じ名前で定義し直しても一覧は増えない。
 init.org を評価し直すたびに候補が伸びると選べなくなるため。"
   (let ((warashi-agent-shell-variants nil))
-    (warashi-agent-shell-define-claude-variants
-     (warashi-agent-shell-test-redefined "test-model" "high"))
-    (warashi-agent-shell-define-claude-variants
-     (warashi-agent-shell-test-redefined "other-model" "low"))
+    (warashi-agent-shell-define-pi-variants
+     (warashi-agent-shell-test-redefined "test/model"))
+    (warashi-agent-shell-define-pi-variants
+     (warashi-agent-shell-test-redefined "other/model"))
     (should (equal 1 (length warashi-agent-shell-variants)))))
 
 (ert-deftest warashi-agent-shell-test-project-switch-starts-and-reopens ()
   "選んだ variant を起動し、同じ project のディスパッチを開き直す。"
   (let ((warashi-agent-shell-variants
-         '(("claude-test" . warashi-agent-shell-test--variant-command)))
+         '(("pi-test" . warashi-agent-shell-test--variant-command)))
         (started nil)
         (reopened nil)
         (project-current-directory-override "/tmp/warashi-agent-shell-test/"))
-    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
+    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "pi-test"))
               ((symbol-function 'warashi-agent-shell-test--variant-command)
                (lambda () (setq started t)))
               ((symbol-function 'project-switch-project)
@@ -585,11 +500,11 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
 (ert-deftest warashi-agent-shell-test-project-switch-outside-dispatch ()
   "ディスパッチ外から呼んだときはメニューを開かない。"
   (let ((warashi-agent-shell-variants
-         '(("claude-test" . warashi-agent-shell-test--variant-command)))
+         '(("pi-test" . warashi-agent-shell-test--variant-command)))
         (started nil)
         (reopened nil)
         (project-current-directory-override nil))
-    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
+    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "pi-test"))
               ((symbol-function 'warashi-agent-shell-test--variant-command)
                (lambda () (setq started t)))
               ((symbol-function 'project-switch-project)

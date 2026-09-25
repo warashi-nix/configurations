@@ -665,10 +665,38 @@ Claude Code は agentel で使う。agent-shell では subagent の表示が親�
 
 #+begin_src emacs-lisp
 (setup (:package agentel)
-  (:opt agentel-command-prefix '("chelly" "run"))
+  (:opt agentel-command-prefix #'warashi-agentel-command-prefix)
   (:with-hook agentel-chat-mode-hook
     (:hook agentel-focus-mode)))
 #+end_src
+
+*** 起動コマンド
+model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
+その時点の =default-directory= をそのまま引き継がせるため。起動後は buffer を表示
+せず、session の一覧に任せる。agentel は TRAMP 先の directory では agent を動かせ
+ないので、そこでは起動を拒否する。
+
+#+begin_src emacs-lisp
+;; マクロ展開は byte-compile 時に走るので、compile 時にも読ませる。
+(eval-when-compile (require 'warashi-agentel))
+(setup (:package warashi-agentel)
+  (:require warashi-agentel)
+  (:opt warashi-agentel-ordinary-command-prefix '("chelly" "run")))
+
+;; MODEL と EFFORT は claude-agent-acp の config option の値。
+(warashi-agentel-define-claude-variants
+ (sonnet-xhigh "sonnet" "xhigh")
+ (opus-low     "opus"   "low")
+ (opus-medium  "opus"   "medium")
+ (fable-medium "fable"  "medium"))
+#+end_src
+
+定義した variant は =warashi-agentel-project-switch= から名前で選べる。
+=project-switch-commands= への登録は [[*project.el][project.el]] にある。
+
+workbench の =/srv/chelly-workspaces= 内では、上の起動コマンドも =/resume= も
+agent を専用 =chelly-agent= で動かす。専用領域に見えて実体が外にある path では
+起動しない。
 
 ** agent-shell
 #+begin_src emacs-lisp
@@ -684,8 +712,9 @@ Claude Code は agentel で使う。agent-shell では subagent の表示が親�
 #+end_src
 
 *** 起動コマンド
-model と effort を固定した起動コマンドを用意する。eshell から呼べるようにするのは、
-その時点の =default-directory= (TRAMP 先を含む) をそのまま引き継がせるため。
+pi と Copilot にも、[[*agentel][agentel]] と同じ形の起動コマンドを用意する。eshell から
+呼べるようにするのは、その時点の =default-directory= (TRAMP 先を含む) をそのまま
+引き継がせるため。
 
 起動後は buffer を表示せず、後述のサイドバーに任せる。=agent-shell--dwim= を使うと
 =agent-shell-session-strategy= の既定 =prompt= のまま session 確立を待ち、その時点で
@@ -699,17 +728,10 @@ picker が minibuffer を奪う。eshell で起動を投げてから別の作業
   (:require warashi-agent-shell))
 
 (autoload 'warashi-agent-shell-chelly-start "warashi-agent-shell-chelly" nil t)
-
-;; MODEL-ID は agent-shell 起動時に "Available models" に出る ID。
-(warashi-agent-shell-define-claude-variants
- (sonnet-xhigh "sonnet" "xhigh")
- (opus-low     "opus"   "low")
- (opus-medium  "opus"   "medium")
- (fable-medium "fable"  "medium"))
 #+end_src
 
-pi も同じ形で用意する。軽い作業を athena のローカルモデルに逃がす導線で、モデル
-は pi-acp が組み立てる =provider/id= を指す。
+pi は軽い作業を athena のローカルモデルに逃がす導線で、モデルは pi-acp が組み
+立てる =provider/id= を指す。
 
 #+begin_src emacs-lisp
 (warashi-agent-shell-define-pi-variants
@@ -738,7 +760,7 @@ GPT-6 Astra に low / medium を用意する。CLI の =--model= だけでは AC
 定義した variant は =warashi-agent-shell-project-switch= から名前で選べる。
 =project-switch-commands= への登録は [[*project.el][project.el]] にある。
 
-workbench の =/srv/chelly-workspaces= 内では、上の Claude / Copilot の
+workbench の =/srv/chelly-workspaces= 内では、上の Copilot の
 起動コマンドが同じ model・effort のまま専用 =chelly-agent= を使う。
 表示や focus を奪わない挙動も同じで、会話は既存の =C-c a= の一覧から開く。
 専用領域外の通常起動や =agent-shell-command-prefix= は変更しない。
@@ -759,8 +781,6 @@ session の累積コストを context usage indicator の隣に常設する。�
 
 #+begin_src emacs-lisp
 (setup agent-shell
-  (:with-hook agent-shell-mode-hook
-    (:hook warashi-agent-shell--apply-thought-level))
   (:when-loaded
     (warashi-agent-shell-install-cost-indicator)))
 #+end_src
@@ -946,16 +966,18 @@ corfu-auto の自動表示と fish の補完を両立させる。fish-completion
 #+end_src
 
 ** project.el
-=Agent shell= はエージェントを走らせるのが目的の切り替えのためのもので、eshell を
-開いて起動コマンドを打つ経路を畳んだもの。起動しても shell には飛ばず、同じ
-project のディスパッチに戻るので、続けて =g= で magit を開ける。
+=Agent= (agentel) と =Agent shell= (agent-shell) はエージェントを走らせるのが目的
+の切り替えのためのもので、eshell を開いて起動コマンドを打つ経路を畳んだもの。起動
+しても session には飛ばず、同じ project のディスパッチに戻るので、続けて =g= で
+magit を開ける。
 
 #+begin_src emacs-lisp
 (setup project
   (:opt project-switch-commands '((consult-fd "Find file" ?f)
                                   (consult-project-buffer "Switch buffer" ?b)
                                   (consult-ripgrep "Ripgrep" ?r)
-                                  (warashi-agent-shell-project-switch "Agent shell" ?a)
+                                  (warashi-agentel-project-switch "Agent" ?a)
+                                  (warashi-agent-shell-project-switch "Agent shell" ?s)
                                   (magit-project-status "Magit status" ?g)
                                   (project-eshell "Eshell" ?e)
                                   (project-dired "Dired" ?d)

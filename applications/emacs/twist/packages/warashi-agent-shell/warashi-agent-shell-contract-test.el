@@ -100,8 +100,7 @@
 
 (ert-deftest warashi-agent-shell-contract-test-agent-configs ()
   "agent config が :default-model-id を差し替えられる alist で返る。"
-  (dolist (make '(agent-shell-anthropic-make-claude-code-config
-                  agent-shell-pi-make-agent-config
+  (dolist (make '(agent-shell-pi-make-agent-config
                   agent-shell-github-make-copilot-config))
     (should (equal '(0 . 0) (func-arity make)))
     (should (assq :default-model-id (funcall make)))))
@@ -149,7 +148,7 @@
     (dolist (keyword '(:config-options :on-options-set))
       (should (memq keyword keywords)))))
 
-;;;; thought level の適用
+;;;; state
 
 (ert-deftest warashi-agent-shell-contract-test-state-is-function-and-variable ()
   "`agent-shell--state' を引数なしの関数としても buffer-local 変数としても引ける。
@@ -158,19 +157,6 @@ warashi-agent-shell は関数として、warashi-agent-shell-list は
   (should (equal '(0 . 0) (func-arity 'agent-shell--state)))
   (should (boundp 'agent-shell--state)))
 
-(ert-deftest warashi-agent-shell-contract-test-state-holds-agent-config ()
-  "state の :agent-config に、渡した agent config がそのまま載る。
-thought level は agent config に push した独自キーを経由して session 確立
-後に読み出すので、config が別物に組み替えられると効かなくなる。"
-  (let* ((config (agent-shell-mock-agent-make-agent-config))
-         (state (progn
-                  ;; 本体と同じ順序で組む。push してから state に渡す。
-                  (push (cons :warashi-thought-level "high") config)
-                  (agent-shell--make-state :agent-config config))))
-    (should (equal "high" (alist-get :warashi-thought-level
-                                     (alist-get :agent-config state))))
-    (should (equal "Mock" (map-nested-elt state '(:agent-config :buffer-name))))))
-
 (ert-deftest warashi-agent-shell-contract-test-state-usage ()
   "state の :usage からコストを引ける。
 session を確立していないので値は 0 だが、キーが揃っていることは見られる。"
@@ -178,19 +164,6 @@ session を確立していないので値は 0 だが、キーが揃っている
     (should (map-contains-key usage :cost-amount))
     (should (map-contains-key usage :cost-currency))
     (should (numberp (map-elt usage :cost-amount)))))
-
-(ert-deftest warashi-agent-shell-contract-test-subscribe-to-keywords ()
-  "`agent-shell-subscribe-to' が購読に使うキーワードを受ける。"
-  (let ((keywords (warashi-agent-shell-contract-test--keywords 'agent-shell-subscribe-to)))
-    (dolist (keyword '(:shell-buffer :event :on-event))
-      (should (memq keyword keywords)))))
-
-(ert-deftest warashi-agent-shell-contract-test-set-thought-level-keywords ()
-  "`agent-shell--config-option-set-thought-level-id' が設定に使うキーワードを受ける。"
-  (let ((keywords (warashi-agent-shell-contract-test--keywords
-                   'agent-shell--config-option-set-thought-level-id)))
-    (dolist (keyword '(:thought-level-id :on-failure))
-      (should (memq keyword keywords)))))
 
 ;;;; buffer 名
 

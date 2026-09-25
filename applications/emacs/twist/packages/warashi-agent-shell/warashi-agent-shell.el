@@ -11,13 +11,12 @@
 
 ;; agent-shell に足している四つのこと。
 ;;
-;; - model と effort を固定した起動コマンド。Claude、pi-acp 経由の pi、
-;;   Copilot CLI の三系統がある。Claude の effort は session 確立後に ACP
-;;   の config option として送る。Copilot は初期化中に ACP で model、
+;; - model と effort を固定した起動コマンド。pi-acp 経由の pi と
+;;   Copilot CLI の二系統がある。Copilot は初期化中に ACP で model、
 ;;   effort を順に設定し、応答を待ってから prompt を送る。
 ;;   起動は `agent-shell--dwim' ではなく `agent-shell--start' に session strategy
 ;;   new を渡して行う。起動を投げた後に picker や window の切り替えで割り込ませないため。
-;;   Claude/Copilot は `warashi-chelly-workspace-root' 以下では同じ variant
+;;   Copilot は `warashi-chelly-workspace-root' 以下では同じ variant
 ;;   の設定を chelly-agent に渡す。専用 runner 非対応の pi は同領域で起動を
 ;;   拒否する。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
@@ -26,10 +25,7 @@
 ;;   確定前と分かるよう ~ を付ける。
 ;;
 ;; 利用側で `warashi-agent-shell-install-cost-indicator' を agent-shell の
-;; ロード後に呼び、
-;; `warashi-agent-shell--apply-thought-level' を `agent-shell-mode-hook' に登録
-;; する。起動コマンドは `warashi-agent-shell-define-claude-variants'、
-;; `warashi-agent-shell-define-pi-variants'、
+;; ロード後に呼ぶ。起動コマンドは `warashi-agent-shell-define-pi-variants'、
 ;; `warashi-agent-shell-define-copilot-variants' で作る。
 
 ;;; Code:
@@ -59,23 +55,6 @@
     (setq warashi-agent-shell-variants
           (append warashi-agent-shell-variants (list (cons name command))))))
 
-(defun warashi-agent-shell--apply-thought-level ()
-  "agent config に載せた thought level (effort) を新しい shell に適用する。"
-  ;; effort は agent-shell の agent config に設定点が無く、session 確立後に
-  ;; ACP の config option として送るしかない。claude-agent-acp は初期 effort を
-  ;; settings ファイルからしか読まないため、_meta 経由では指定できない。
-  (when-let* ((config (alist-get :agent-config (agent-shell--state)))
-              (level (alist-get :warashi-thought-level config)))
-    (agent-shell-subscribe-to
-     :shell-buffer (current-buffer)
-     :event 'init-finished
-     :on-event
-     (lambda (_event)
-       (agent-shell--config-option-set-thought-level-id
-        :thought-level-id level
-        :on-failure (lambda (acp-error _raw-message)
-                      (message "Failed to set thought level %s: %s" level acp-error)))))))
-
 (defun warashi-agent-shell--start-shell (config)
   "CONFIG で agent-shell を起動する。表示も focus もしない。"
   ;; `agent-shell--dwim' を使わないのは、起動を投げた後に割り込むため。
@@ -89,54 +68,13 @@
                       :session-strategy 'new
                       :no-focus t))
 
-(defun warashi-agent-shell--start-claude (model-id thought-level)
-  "MODEL-ID と THOUGHT-LEVEL を指定して Claude agent-shell を起動する。"
-  (require 'agent-shell-anthropic)
-  (require 'warashi-agent-shell-chelly)
-  (let ((config (agent-shell-anthropic-make-claude-code-config)))
-    ;; :default-model-id は session 確立後に funcall されるので、動的束縛では
-    ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
-    (setcdr (assq :default-model-id config) (lambda () model-id))
-    ;; thought level を動的束縛で渡さないのは、`agent-shell-mode-hook' が
-    ;; `warashi-agent-shell--start-shell' の動的エクステント内で走るとは限らない
-    ;; ため。
-    ;; config は state の :agent-config に保存されるので、そこから読ませる。
-    (push (cons :warashi-thought-level thought-level) config)
-    (warashi-agent-shell--start-shell
-     (warashi-agent-shell-chelly--route-config
-      'claude config default-directory))))
-
-(defmacro warashi-agent-shell-define-claude-variants (&rest variants)
-  "VARIANTS から Claude agent-shell の起動コマンドを定義する。
-VARIANTS の各要素は (NAME MODEL-ID THOUGHT-LEVEL)。NAME ごとに
-`warashi-agent-shell-claude-NAME' と、eshell から短い名前で呼ぶための
-`eshell/claude-NAME' を生成する。"
-  ;; 一覧を defconst に置いてマクロから参照しないのは、byte-compile 時に
-  ;; defconst が評価されず、マクロ展開時に void-variable になるため。
-  `(progn
-     ,@(mapcan
-        (pcase-lambda (`(,name ,model-id ,thought-level))
-          (let ((fn (intern (format "warashi-agent-shell-claude-%s" name)))
-                (eshell-fn (intern (format "eshell/claude-%s" name))))
-            (list
-             `(defun ,fn ()
-                ,(format "Claude agent-shell を model %s / effort %s で起動する。"
-                         model-id thought-level)
-                (interactive)
-                (warashi-agent-shell--start-claude ,model-id ,thought-level))
-             `(defun ,eshell-fn (&rest _args)
-                ,(format "eshell から `%s' を起動する。" fn)
-                (,fn))
-             `(warashi-agent-shell-register-variant
-               ,(format "claude-%s" name) ',fn))))
-        variants)))
-
 (defun warashi-agent-shell--start-pi (model-id)
   "MODEL-ID を指定して pi agent-shell を起動する。"
   (require 'agent-shell-pi)
   (require 'warashi-agent-shell-chelly)
   (let ((config (agent-shell-pi-make-agent-config)))
-    ;; claude 側と同じく、MODEL-ID を lexical に閉じ込めた関数へ差し替える。
+    ;; :default-model-id は session 確立後に funcall されるので、動的束縛では
+    ;; なく MODEL-ID を lexical に閉じ込めた関数へ差し替える。
     (setcdr (assq :default-model-id config) (lambda () model-id))
     (warashi-agent-shell--start-shell
      (warashi-agent-shell-chelly--route-config
