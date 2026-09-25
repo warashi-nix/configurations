@@ -1674,11 +1674,11 @@
     "with-editor": {
       "flake": false,
       "locked": {
-        "lastModified": 1790242659,
-        "narHash": "sha256-dxVwcqeAuW8q2RNasiLzbWkRAH9rZ0quPuTaiv61r8c=",
+        "lastModified": 1790348565,
+        "narHash": "sha256-10Im3mFcwiVph/99PReSSAfID87iiYAFkNb904A61mo=",
         "owner": "magit",
         "repo": "with-editor",
-        "rev": "5e6b398c06609ad6b294b393d5af7fb6304b0d81",
+        "rev": "7bec41144ea197961c76c769cfc0acaf689ebac0",
         "type": "github"
       },
       "original": {
