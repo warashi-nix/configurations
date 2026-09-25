@@ -84,6 +84,22 @@
         "type": "github"
       }
     },
+    "agentel": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790375166,
+        "narHash": "sha256-JgxMlg8kV/oTkJhr3xIDR0DcrEHkq3XigO6JfS9kCd4=",
+        "owner": "Warashi",
+        "repo": "emacs-agentel",
+        "rev": "54a030cacc690e79962ce93a6285586abcb98155",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Warashi",
+        "repo": "emacs-agentel",
+        "type": "github"
+      }
+    },
     "ccc": {
       "flake": false,
       "locked": {
@@ -1032,6 +1048,7 @@
         "age": "age",
         "agent-shell": "agent-shell",
         "agent-shell-tramp": "agent-shell-tramp",
+        "agentel": "agentel",
         "ccc": "ccc",
         "cdb": "cdb",
         "compat": "compat",

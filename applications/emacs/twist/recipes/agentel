@@ -1,0 +1,2 @@
+(agentel :fetcher github
+         :repo "Warashi/emacs-agentel")

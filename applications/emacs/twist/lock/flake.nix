@@ -25,6 +25,12 @@
       repo = "agent-shell-tramp";
       type = "github";
     };
+    agentel = {
+      flake = false;
+      owner = "Warashi";
+      repo = "emacs-agentel";
+      type = "github";
+    };
     ccc = {
       flake = false;
       owner = "skk-dev";

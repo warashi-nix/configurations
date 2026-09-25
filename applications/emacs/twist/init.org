@@ -658,6 +658,18 @@ clone を作ったかどうかを覚えていなくても、同じ操作で辿�
       '("l" "Translate (ja<->en)" warashi-ellama-translate))))
 #+end_src
 
+** agentel
+Claude Code は agentel で使う。agent-shell では subagent の表示が親に混ざって
+壊れ、折り畳みの追加位置もずれるため。agentel が対応していない pi と Copilot は
+[[*agent-shell][agent-shell]] に残す。
+
+#+begin_src emacs-lisp
+(setup (:package agentel)
+  (:opt agentel-command-prefix '("chelly" "run"))
+  (:with-hook agentel-chat-mode-hook
+    (:hook agentel-focus-mode)))
+#+end_src
+
 ** agent-shell
 #+begin_src emacs-lisp
 (setup (:package agent-shell
