@@ -22,18 +22,15 @@
          ;; agent を起動せずにすぐ終わらせるため。
          (agentel-command-prefix (lambda (cwd) (setq received cwd) '("true")))
          (cwd (file-name-as-directory temporary-file-directory))
-         (shown nil)
          (session nil))
-    (cl-letf (((symbol-function 'pop-to-buffer)
-               (lambda (&rest _) (setq shown t))))
-      (unwind-protect
-          (progn
-            (setq session (agentel-start :cwd cwd :display nil))
-            (should (equal cwd received))
-            (should (buffer-live-p (agentel-session-buffer session)))
-            (should-not shown))
-        (when session
-          (kill-buffer (agentel-session-buffer session)))))))
+    (unwind-protect
+        (progn
+          (setq session (agentel-start :cwd cwd :display nil))
+          (should (equal cwd received))
+          (should (buffer-live-p (agentel-session-buffer session)))
+          (should-not (get-buffer-window (agentel-session-buffer session) t)))
+      (when session
+        (kill-buffer (agentel-session-buffer session))))))
 
 (provide 'warashi-agentel-contract-test)
 ;;; warashi-agentel-contract-test.el ends here
