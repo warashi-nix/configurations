@@ -165,6 +165,20 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
     ;; magit を開くのに project を選び直すことになる。
     (should (equal "/tmp/warashi-agentel-test/" reopened))))
 
+(ert-deftest warashi-agentel-test-project-switch-starts-in-selected-project ()
+  "ディスパッチから起動すると、選んだ project のディレクトリで起動する。"
+  (let ((warashi-agentel-variants
+         '(("claude-test" . warashi-agentel-test--variant-command)))
+        (started-in nil)
+        (default-directory "/tmp/warashi-agentel-test-origin/")
+        (project-current-directory-override "/tmp/warashi-agentel-test/"))
+    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
+              ((symbol-function 'warashi-agentel-test--variant-command)
+               (lambda () (setq started-in default-directory)))
+              ((symbol-function 'project-switch-project) #'ignore))
+      (warashi-agentel-project-switch))
+    (should (equal "/tmp/warashi-agentel-test/" started-in))))
+
 (ert-deftest warashi-agentel-test-project-switch-outside-dispatch ()
   "ディスパッチ外から呼んだときはメニューを開かない。"
   (let ((warashi-agentel-variants

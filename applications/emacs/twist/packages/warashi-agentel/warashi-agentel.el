@@ -136,7 +136,11 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
   "variant を選んで起動し、`project-switch-project' のメニューに戻る。"
   (interactive)
   (when-let* ((command (warashi-agentel--read-variant)))
-    (funcall command))
+    ;; `project-switch-project' は選んだ project を override に入れるだけで、
+    ;; `default-directory' は呼び出し元の buffer のまま残す。
+    (let ((default-directory (or project-current-directory-override
+                                 default-directory)))
+      (funcall command)))
   ;; メニューを開き直すのは、`project-current-directory-override' が
   ;; ディスパッチしたコマンドの終了で消えるため。起動して戻るだけでは元の
   ;; project に居る状態になり、続けて magit を開くのに project を選び直す
