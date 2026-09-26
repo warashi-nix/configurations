@@ -29,6 +29,7 @@
 (require 'subr-x)
 (require 'warashi-chelly-workspace)
 (declare-function agentel-start "agentel")
+(declare-function agentel-session-buffer "agentel-session")
 
 ;;;; 専用 runner への振り分け
 
@@ -114,8 +115,10 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
                 (interactive)
                 (warashi-agentel--start-claude ,model ,effort))
              `(defun ,eshell-fn (&rest _args)
-                ,(format "eshell から `%s' を起動する。" fn)
-                (,fn))
+                ,(format "eshell から `%s' を起動し、起動した buffer を示す。" fn)
+                ;; session をそのまま返すと、eshell が struct を丸ごと出力する。
+                (format ,(format "claude-%s: started %%s" name)
+                        (buffer-name (agentel-session-buffer (,fn)))))
              `(warashi-agentel-register-variant
                ,(format "claude-%s" name) ',fn))))
         variants)))

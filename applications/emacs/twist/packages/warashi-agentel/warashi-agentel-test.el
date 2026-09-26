@@ -102,9 +102,25 @@ BINDINGS は (ROOT OUTSIDE) で、それぞれ root と領域外のディレク�
     (should (commandp 'warashi-agentel-claude-warashi-agentel-test-variant))
     (let ((args nil))
       (cl-letf (((symbol-function 'warashi-agentel--start-claude)
-                 (lambda (&rest a) (setq args a))))
+                 (lambda (&rest a)
+                   (setq args a)
+                   (agentel-session--make))))
         (funcall 'eshell/claude-warashi-agentel-test-variant))
       (should (equal '("test-model" "high") args)))))
+
+(ert-deftest warashi-agentel-test-eshell-reports-started-session ()
+  "eshell 用の関数は session ではなく、起動した buffer を示す一行を返す。"
+  (let ((warashi-agentel-variants nil)
+        (buffer (generate-new-buffer "*agentel: test*")))
+    (unwind-protect
+        (progn
+          (warashi-agentel-define-claude-variants
+           (warashi-agentel-test-variant "test-model" "high"))
+          (cl-letf (((symbol-function 'warashi-agentel--start-claude)
+                     (lambda (&rest _) (agentel-session--make :buffer buffer))))
+            (should (equal "claude-warashi-agentel-test-variant: started *agentel: test*"
+                           (funcall 'eshell/claude-warashi-agentel-test-variant)))))
+      (kill-buffer buffer))))
 
 ;;;; project-switch からの起動
 
