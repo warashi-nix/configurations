@@ -67,11 +67,11 @@
     "agentel": {
       "flake": false,
       "locked": {
-        "lastModified": 1790390029,
-        "narHash": "sha256-c6DvljkmaaO9D0hJrSjqxt/ZN/RUDHM6/Kk7sOcKA9A=",
+        "lastModified": 1790459002,
+        "narHash": "sha256-QHDpDD8C/pTDZZQCXuSn5TnXAr2MRdnYrOz71b3uQfc=",
         "owner": "Warashi",
         "repo": "emacs-agentel",
-        "rev": "f01463d92b7d3c475813ed543280134036668d34",
+        "rev": "d2cff9d50d83fe697a85d386b5fc8abc15190dc3",
         "type": "github"
       },
       "original": {
