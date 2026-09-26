@@ -40,6 +40,20 @@ BINDINGS は (ROOT OUTSIDE) で、それぞれ root と領域外のディレク�
          (delete-directory ,root t)
          (delete-directory ,outside t)))))
 
+(defmacro warashi-agentel-test--with-session (bindings &rest body)
+  "buffer \"*agentel: test*\" を持つ session を作って BODY を実行する。
+BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛する。"
+  (declare (indent 1))
+  (let ((session (nth 0 bindings))
+        (buffer (nth 1 bindings)))
+    `(let* ((,session (agentel-session-create :cwd temporary-file-directory))
+            (,buffer (generate-new-buffer "*agentel: test*")))
+       (setf (agentel-session-buffer ,session) ,buffer)
+       (unwind-protect
+           (progn ,@body)
+         (agentel-session-remove ,session)
+         (kill-buffer ,buffer)))))
+
 ;;;; 起動コマンド
 
 (ert-deftest warashi-agentel-test-start-claude-options ()
@@ -100,27 +114,23 @@ BINDINGS は (ROOT OUTSIDE) で、それぞれ root と領域外のディレク�
     (warashi-agentel-define-claude-variants
      (warashi-agentel-test-variant "test-model" "high"))
     (should (commandp 'warashi-agentel-claude-warashi-agentel-test-variant))
-    (let ((args nil))
-      (cl-letf (((symbol-function 'warashi-agentel--start-claude)
-                 (lambda (&rest a)
-                   (setq args a)
-                   (agentel-session--make))))
-        (funcall 'eshell/claude-warashi-agentel-test-variant))
-      (should (equal '("test-model" "high") args)))))
+    (warashi-agentel-test--with-session (session _buffer)
+      (let ((args nil))
+        (cl-letf (((symbol-function 'warashi-agentel--start-claude)
+                   (lambda (&rest a) (setq args a) session)))
+          (funcall 'eshell/claude-warashi-agentel-test-variant))
+        (should (equal '("test-model" "high") args))))))
 
 (ert-deftest warashi-agentel-test-eshell-reports-started-session ()
   "eshell 用の関数は session ではなく、起動した buffer を示す一行を返す。"
-  (let ((warashi-agentel-variants nil)
-        (buffer (generate-new-buffer "*agentel: test*")))
-    (unwind-protect
-        (progn
-          (warashi-agentel-define-claude-variants
-           (warashi-agentel-test-variant "test-model" "high"))
-          (cl-letf (((symbol-function 'warashi-agentel--start-claude)
-                     (lambda (&rest _) (agentel-session--make :buffer buffer))))
-            (should (equal "claude-warashi-agentel-test-variant: started *agentel: test*"
-                           (funcall 'eshell/claude-warashi-agentel-test-variant)))))
-      (kill-buffer buffer))))
+  (let ((warashi-agentel-variants nil))
+    (warashi-agentel-define-claude-variants
+     (warashi-agentel-test-variant "test-model" "high"))
+    (warashi-agentel-test--with-session (session _buffer)
+      (cl-letf (((symbol-function 'warashi-agentel--start-claude)
+                 (lambda (&rest _) session)))
+        (should (equal "claude-warashi-agentel-test-variant: started *agentel: test*"
+                       (funcall 'eshell/claude-warashi-agentel-test-variant)))))))
 
 ;;;; project-switch からの起動
 
