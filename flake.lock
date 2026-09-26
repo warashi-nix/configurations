@@ -969,11 +969,11 @@
     "marginalia": {
       "flake": false,
       "locked": {
-        "lastModified": 1788757877,
-        "narHash": "sha256-TWjDgP8pHNqnRdMBVydvkHwqB8nDOIkCIYm7ZHeTdfA=",
+        "lastModified": 1790425681,
+        "narHash": "sha256-s+ok2/8p4YVbamZ5tz9yrqGQOiNyhaH/x5lQ2GBjsJo=",
         "owner": "minad",
         "repo": "marginalia",
-        "rev": "c5d0139012d2a84f8040219b9aee17db4e145e5c",
+        "rev": "42eafcfddbe88d92ed96521a00a5a90a49bac4dd",
         "type": "github"
       },
       "original": {
