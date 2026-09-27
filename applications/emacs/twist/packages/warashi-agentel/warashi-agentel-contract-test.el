@@ -19,8 +19,14 @@
   "`agentel-command-prefix' の関数は session の directory を受け取り、
 `agentel-start' は :display nil で buffer を表示せずに作る。"
   (let* ((received nil)
-         ;; agent を起動せずにすぐ終わらせるため。
-         (agentel-command-prefix (lambda (cwd) (setq received cwd) '("true")))
+         ;; 本物の agent の代わりに、応答せず request を読み捨て続ける process を
+         ;; 置く。すぐ終わる process だと、request を書く前に pipe が閉じて
+         ;; `agentel-start' が失敗することがある。後ろに付く agent の program
+         ;; は sh の位置引数として捨てる。
+         (agentel-command-prefix
+          (lambda (cwd)
+            (setq received cwd)
+            '("sh" "-c" "exec cat >/dev/null" "sh")))
          (cwd (file-name-as-directory temporary-file-directory))
          (session nil))
     (unwind-protect
