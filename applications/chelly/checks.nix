@@ -127,7 +127,6 @@ let
         lib.any (prefix: lib.hasPrefix "${macHome.home.homeDirectory}/${prefix}" mount) [
           ".claude"
           ".copilot"
-          ".pi"
           "ghq"
         ]
       ) macMounts;

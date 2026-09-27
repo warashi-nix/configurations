@@ -22,7 +22,7 @@ in
       type = types.lines;
       default = builtins.readFile ./AGENTS.md;
       description = ''
-        Claude Code / Copilot CLI / pi agent に共通のグローバル指示。
+        Claude Code / Copilot CLI に共通のグローバル指示。
         各エージェントのモジュールが text を自分の指示ファイルへ埋め込む。
       '';
     };
@@ -47,7 +47,7 @@ in
       readOnly = true;
       description = ''
         依頼の意図を掘る指示。Claude Code は output-style として持つため text には含めず、
-        output-style を持たない Copilot CLI / pi が自分の指示ファイルへ text の後に埋め込む。
+        output-style を持たない Copilot CLI が自分の指示ファイルへ text の後に埋め込む。
       '';
     };
   };
@@ -58,7 +58,7 @@ in
       cfg.common
       + optionalString cfg.brainium.enable "- タスク・ナレッジ管理には ~/ghq/github.com/Warashi/brainium を使う\n";
 
-    # 指示ファイルが subagent にも渡るかは Copilot CLI / pi とも docs に明記がないため、
+    # 指示ファイルが subagent にも渡るかは Copilot CLI の docs に明記がないため、
     # 渡っても委譲先が質問で止まらないよう最上位エージェント限定と明示する
     grilling = ''
 

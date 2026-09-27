@@ -179,7 +179,6 @@ in
             # keep-sorted start
             "${config.home.homeDirectory}/.claude:/home/warashi/.claude"
             "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
-            "${config.home.homeDirectory}/.pi:/home/warashi/.pi"
             "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             # keep-sorted end
           ]
