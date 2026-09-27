@@ -162,9 +162,10 @@ memo が同じでも別の名前にするため。"
   ;; 読み取れない。
   (let* ((directory (warashi-git-wit--project-name-directory (project-root project)))
          (cached (gethash directory warashi-git-wit--project-name-cache 'missing)))
-    ;; 引き直さないのは、agent-shell の header が再描画のたびに project 名を
-    ;; 引くため。memo を書き換えたときに追随しないのは、この常時呼ばれる経路で
-    ;; process を起こす頻度と釣り合わないため。
+    ;; 引き直さないのは、eshell や compile を開くたびに project 名が引かれ、
+    ;; worktree でない project でも git-wit を起こすことになるため。TRAMP 先
+    ;; では接続越しの process になる。memo を書き換えたときに追随しないのは、
+    ;; 書き換えより開く回数の方がずっと多いため。
     (or (if (eq cached 'missing)
             (puthash directory
                      (warashi-git-wit-project-name directory)

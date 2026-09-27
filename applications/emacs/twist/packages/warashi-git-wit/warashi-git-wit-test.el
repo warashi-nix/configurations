@@ -183,7 +183,7 @@
 
 (ert-deftest warashi-git-wit-test-project-name-cached ()
   "同じ project では git-wit を一度しか呼ばない。
-agent-shell の header は再描画のたびに project 名を引くので、都度 process を
+eshell や compile を開くたびに project 名が引かれるので、都度 process を
 起こさない。"
   (warashi-git-wit-test--with-worktrees warashi-git-wit-test--worktrees
     (project-name '(vc Git "/ssh:host:/home/me/wt/a1b2/"))
