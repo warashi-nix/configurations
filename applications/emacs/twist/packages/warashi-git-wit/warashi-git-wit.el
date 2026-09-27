@@ -10,7 +10,7 @@
 ;;; Commentary:
 
 ;; git-wit <https://github.com/Warashi/git-wit> のコマンド呼び出しと出力の
-;; 解釈を一箇所で持つ。agent-shell の buffer 名や project の切り替えなど、
+;; 解釈を一箇所で持つ。project 名や project の切り替えなど、
 ;; worktree を扱う側はここだけを見る。
 ;;
 ;; git-wit は cwd の repository の worktree だけを扱うので、どの関数も
@@ -18,7 +18,7 @@
 ;;
 ;; `warashi-git-wit-install-project-name' を呼ぶと、memo 付きの worktree の
 ;; `project-name' が "<repo> / <memo> (wit)" になる。eshell や compile の
-;; buffer 名、agent-shell の表示はどれも project 名から作られるので、ここで
+;; buffer 名、agentel の表示はどれも project 名から作られるので、ここで
 ;; 差し替えれば全部に効く。
 
 ;;; Code:

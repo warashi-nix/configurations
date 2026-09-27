@@ -659,9 +659,7 @@ clone を作ったかどうかを覚えていなくても、同じ操作で辿�
 #+end_src
 
 ** agentel
-Claude Code と Copilot CLI は agentel で使う。agent-shell では subagent の表示が
-親に混ざって壊れ、折り畳みの追加位置もずれるため。agentel が対応していない pi は
-[[*agent-shell][agent-shell]] に残す。
+Claude Code と Copilot CLI は agentel で使う。
 
 =C-c a= で session の一覧を開く。どの session が許可や質問の答え待ちで止まって
 いるかを一覧の状態から拾う。
@@ -713,101 +711,9 @@ workbench の =/srv/chelly-workspaces= 内では、上の起動コマンドも =
 agent を専用 =chelly-agent= で動かす。専用領域に見えて実体が外にある path では
 起動しない。
 
-** agent-shell
-#+begin_src emacs-lisp
-(setup (:package agent-shell
-                 agent-shell-tramp)
-  ;; Linux では Emacs が systemd user service で logind セッションを持たず、
-  ;; polkit の inhibit-block-sleep (allow_any = auth_admin_keep) に拒否される。
-  ;; polkit ルールで許可しない理由は、対象がスリープしない headless 機のため。
-  (:opt agent-shell-command-prefix '("chelly" "run")
-        agent-shell-preferred-agent-config '(preselect . claude-code)
-        agent-shell-inhibit-system-sleep (eq system-type 'darwin))
-  (:after-init agent-shell-tramp-mode))
-#+end_src
-
-*** 起動コマンド
-pi にも、[[*agentel][agentel]] と同じ形の起動コマンドを用意する。eshell から
-呼べるようにするのは、その時点の =default-directory= (TRAMP 先を含む) をそのまま
-引き継がせるため。
-
-起動後は buffer を表示せず、後述のサイドバーに任せる。=agent-shell--dwim= を使うと
-=agent-shell-session-strategy= の既定 =prompt= のまま session 確立を待ち、その時点で
-picker が minibuffer を奪う。eshell で起動を投げてから別の作業をしていると、これが
-数十秒後に割り込んでくる。
-
-#+begin_src emacs-lisp
-;; マクロ展開は byte-compile 時に走るので、compile 時にも読ませる。
-(eval-when-compile (require 'warashi-agent-shell))
-(setup (:package warashi-agent-shell)
-  (:require warashi-agent-shell))
-
-(autoload 'warashi-agent-shell-chelly-start "warashi-agent-shell-chelly" nil t)
-#+end_src
-
-pi は軽い作業を athena のローカルモデルに逃がす導線で、モデルは pi-acp が組み
-立てる =provider/id= を指す。
-
-#+begin_src emacs-lisp
-(warashi-agent-shell-define-pi-variants
- (ornith "athena/ornith-1-5-9b"))
-#+end_src
-
-定義した variant は =warashi-agent-shell-project-switch= から名前で選べる。
-=project-switch-commands= への登録は [[*project.el][project.el]] にある。
-
-Pi は専用 runner に対応していないため、専用領域では起動を拒否する。
-明示的に専用 agent を選ぶ =M-x warashi-agent-shell-chelly-start= も残し、
-=C-u M-x= なら専用環境の既存会話を選んで再開する。
-この入口はホストのファイル・端末操作を ACP で代理実行せず、本人の MCP・
-認証設定や clone の dir-local variables も適用しない。Emacs 側の自動
-transcript 保存は無効にし、会話の保存は agent 側の専用 volume に任せる。
-
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
 確認と取り込みは Magit の通常操作に任せる。手順は configurations の =applications/chelly/README.md= にある。
-
-session の累積コストを context usage indicator の隣に常設する。ターン終了時の
-ボックス (=agent-shell-show-usage-at-turn-end=) ではなく常設にするのは、走らせて
-いる最中に膨らみを察知したいため。
-
-#+begin_src emacs-lisp
-(setup agent-shell
-  (:when-loaded
-    (warashi-agent-shell-install-cost-indicator)))
-#+end_src
-
-git-wit の worktree や専用 clone で起動した shell の buffer 名は、project 名の
-差し替え ([[*作業場所ごとの project 名][作業場所ごとの project 名]]) がそのまま効く。
-
-*** 一覧サイドバー
-複数の shell を並行で回していると、どれが permission 待ちで止まっているかを見失
-う。=agent-shell-switch-buffer= は同じ情報を出せるが、呼んだ瞬間しか見えないので
-気づきの装置にはならない。side window に常駐させ、要操作の shell を先頭に集める。
-
-=C-x o= の巡回からは外してある。shell と編集中の buffer を往復するあいだに一覧へ
-降りても読むものが無いため。行き来は =M-x warashi-agent-shell-list-toggle= がまと
-めて引き受け、出ていなければ開いて移り、他の window に居れば移り、一覧に居れば
-閉じる。 =C-c a= は [[*agentel][agentel]] の一覧に譲った。
-
-実装をここに置かず =warashi-agent-shell-list= に切り出しているのは、並び順と未読
-の扱いを ert で固定したいため。init.org の中身は tangle されて初めてロードされる
-ので、テストから =require= できない。
-
-#+begin_src emacs-lisp
-(setup (:package warashi-agent-shell-list)
-  (:require warashi-agent-shell-list)
-  (:with-hook agent-shell-mode-hook
-    (:hook warashi-agent-shell-list--subscribe
-           warashi-agent-shell-list--auto-open))
-  ;; window の変化を見るのは、shell を訪れたことを知る hook が agent-shell 側に
-  ;; 無いため。同じ window で buffer だけ替わる場合は selection-change が飛ばない
-  ;; ので、buffer-change の方も要る。
-  (:with-hook window-selection-change-functions
-    (:hook warashi-agent-shell-list--mark-read))
-  (:with-hook window-buffer-change-functions
-    (:hook warashi-agent-shell-list--mark-read)))
-#+end_src
 
 * 開発ツール
 ** magit
@@ -958,10 +864,9 @@ corfu-auto の自動表示と fish の補完を両立させる。fish-completion
 #+end_src
 
 ** project.el
-=Agent= (agentel) と =Agent shell= (agent-shell) はエージェントを走らせるのが目的
-の切り替えのためのもので、eshell を開いて起動コマンドを打つ経路を畳んだもの。起動
-しても session には飛ばず、同じ project のディスパッチに戻るので、続けて =g= で
-magit を開ける。
+=Agent= (agentel) はエージェントを走らせるのが目的の切り替えのためのもので、
+eshell を開いて起動コマンドを打つ経路を畳んだもの。起動しても session には飛ばず、
+同じ project のディスパッチに戻るので、続けて =g= で magit を開ける。
 
 #+begin_src emacs-lisp
 (setup project
@@ -969,7 +874,6 @@ magit を開ける。
                                   (consult-project-buffer "Switch buffer" ?b)
                                   (consult-ripgrep "Ripgrep" ?r)
                                   (warashi-agentel-project-switch "Agent" ?a)
-                                  (warashi-agent-shell-project-switch "Agent shell" ?s)
                                   (magit-project-status "Magit status" ?g)
                                   (project-eshell "Eshell" ?e)
                                   (project-dired "Dired" ?d)
@@ -977,7 +881,7 @@ magit を開ける。
 #+end_src
 
 *** 作業場所ごとの project 名
-project 名は eshell / compile の buffer 名や agent-shell の表示の元になる。
+project 名は eshell / compile の buffer 名や agentel の session の表示の元になる。
 専用 clone は =<root>/<repo>/<handoff 名>= に置かれ、素の project 名は
 handoff 名だけになるため、別 repo で同じ handoff 名を使うと buffer が衝突する。
 git-wit の worktree はディレクトリ名が ID 由来で、並べてもどの作業か読み取れない。

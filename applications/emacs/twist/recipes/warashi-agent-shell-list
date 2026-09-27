@@ -1,2 +1,0 @@
-(warashi-agent-shell-list :fetcher github
-                          :repo "Warashi/configurations")

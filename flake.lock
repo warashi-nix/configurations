@@ -32,38 +32,6 @@
         "type": "github"
       }
     },
-    "agent-shell": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790388933,
-        "narHash": "sha256-HrTYh0ow+PR4R58NLMbjvYmLwFph7tMsBrR6OfMZo2Q=",
-        "owner": "xenodium",
-        "repo": "agent-shell",
-        "rev": "d551202139dc0ad5f671fd19ca237515eb4ae762",
-        "type": "github"
-      },
-      "original": {
-        "owner": "xenodium",
-        "repo": "agent-shell",
-        "type": "github"
-      }
-    },
-    "agent-shell-tramp": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1783182127,
-        "narHash": "sha256-J4TBVkhlaso+TQvFLBwnWqGu5q2eCW8978mYuD1BbqM=",
-        "owner": "junyi-hou",
-        "repo": "agent-shell-tramp",
-        "rev": "14560d42440c17d9b59fc18d304687641ddf06e5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "junyi-hou",
-        "repo": "agent-shell-tramp",
-        "type": "github"
-      }
-    },
     "agent-skills": {
       "inputs": {
         "nixpkgs": [
@@ -1046,8 +1014,6 @@
       "inputs": {
         "acp": "acp",
         "age": "age",
-        "agent-shell": "agent-shell",
-        "agent-shell-tramp": "agent-shell-tramp",
         "agentel": "agentel",
         "ccc": "ccc",
         "cdb": "cdb",
@@ -1092,7 +1058,6 @@
         "puni": "puni",
         "s": "s",
         "setup": "setup",
-        "shell-maker": "shell-maker",
         "term-title": "term-title",
         "terraform-mode": "terraform-mode",
         "textui": "textui",
@@ -1439,22 +1404,6 @@
         "shallow": true,
         "type": "git",
         "url": "https://codeberg.org/pkal/setup.el"
-      }
-    },
-    "shell-maker": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1789003184,
-        "narHash": "sha256-wH0OYeKthy+V0pWX1WNM8BEJW/gkzEdj/duJfRScS0w=",
-        "owner": "xenodium",
-        "repo": "shell-maker",
-        "rev": "f448a74a8eded23aa42f8d60a41c5d8d3a183d07",
-        "type": "github"
-      },
-      "original": {
-        "owner": "xenodium",
-        "repo": "shell-maker",
-        "type": "github"
       }
     },
     "sops-nix": {

@@ -55,8 +55,6 @@
           localPackages = [
             "sekken"
             "spectreshell"
-            "warashi-agent-shell"
-            "warashi-agent-shell-list"
             "warashi-agentel"
             "warashi-chelly-handoff"
             "warashi-chelly-workspace"
@@ -68,12 +66,6 @@
             "warashi-early-init"
           ];
           inputOverrides = {
-            warashi-agent-shell = _: _: {
-              src = ./packages/warashi-agent-shell;
-            };
-            warashi-agent-shell-list = _: _: {
-              src = ./packages/warashi-agent-shell-list;
-            };
             warashi-agentel = _: _: {
               src = ./packages/warashi-agentel;
             };
@@ -234,7 +226,7 @@
             config.allowUnfree = true;
           };
           # テストは twist がビルドした env の Emacs で走らせる。
-          # 契約テストは agent-shell などの上流を本物として require するので、
+          # 契約テストは agentel などの上流を本物として require するので、
           # 素の Emacs では成立しない。env は host 構成がどのみちビルドする
           # ものなので、CI 上の追加コストはほぼ無い。
           emacs = packages.${system}.default;

@@ -1,2 +1,0 @@
-(agent-shell-tramp :fetcher github
-		   :repo "junyi-hou/agent-shell-tramp")

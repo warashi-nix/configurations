@@ -13,18 +13,6 @@
       repo = "age.el";
       type = "github";
     };
-    agent-shell = {
-      flake = false;
-      owner = "xenodium";
-      repo = "agent-shell";
-      type = "github";
-    };
-    agent-shell-tramp = {
-      flake = false;
-      owner = "junyi-hou";
-      repo = "agent-shell-tramp";
-      type = "github";
-    };
     agentel = {
       flake = false;
       owner = "Warashi";
@@ -290,12 +278,6 @@
       shallow = true;
       type = "git";
       url = "https://codeberg.org/pkal/setup.el";
-    };
-    shell-maker = {
-      flake = false;
-      owner = "xenodium";
-      repo = "shell-maker";
-      type = "github";
     };
     term-title = {
       flake = false;

@@ -13,12 +13,12 @@
 ;; clone は <root>/<repo 名>/<handoff 名> に置かれ、repo 名は本人の
 ;; repository の toplevel の basename になる。
 ;;
-;; agent-shell の専用入口や project の切り替えなど、専用 clone を扱う側は
-;; ここだけを見る。root や命名が変わるときに直す場所を一つにするため。
+;; agentel の専用 runner への振り分けや project の切り替えなど、専用 clone
+;; を扱う側はここだけを見る。root や命名が変わるときに直す場所を一つにするため。
 ;;
 ;; `warashi-chelly-workspace-install-project-name' を呼ぶと、専用 clone の
 ;; `project-name' が "<repo> / <handoff 名> (chelly)" になる。eshell や
-;; compile の buffer 名、agent-shell の表示はどれも project 名から作られる
+;; compile の buffer 名、agentel の表示はどれも project 名から作られる
 ;; ので、ここで差し替えれば全部に効く。
 
 ;;; Code:
