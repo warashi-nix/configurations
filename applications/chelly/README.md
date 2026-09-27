@@ -207,67 +207,31 @@ Claude は初回ログインを求められずに進めること、Copilot も�
 ACP の新規会話／再開は別途確認する。通常の `chelly` と専用領域外の
 Emacs の起動は変更しない。
 
-### Emacs/ACP の専用検証入口
+### Emacs/ACP の専用入口
 
-ホストの Emacs では `warashi-agent-shell-chelly-start` を使う。
-通常の agent-shell の `("chelly" "run")` は変更しない。
+ホストの Emacs では、日常の起動コマンド (`warashi-agentel-claude-*` /
+`warashi-agentel-copilot-*`) が agentel を使い、専用領域では
+`chelly-agent run -- claude-agent-acp` / `chelly-agent run -- copilot --acp` で
+agent を動かす。`/resume` で開き直した会話も同じ振り分けを通る。領域外へ向く
+symlink と TRAMP は起動前に拒否する。専用領域外の起動は `("chelly" "run")` のまま
+変更しない。agentel はファイル・端末の能力を通知せず、MCP server も渡さないので、
+ホスト操作の委譲は起きない。専用 clone では project 名を
+`<repo 名> / <handoff 名> (chelly)` にし、一覧でどの repo の作業か分かるようにする。
 
-日常の Claude の起動コマンド (`warashi-agentel-claude-*`) は agentel を使い、
-専用領域では `chelly-agent run -- claude-agent-acp` で agent を動かす。領域外へ
-向く symlink と TRAMP は起動前に拒否する。agentel はファイル・端末の能力を
-通知せず、MCP server も渡さないので、ホスト操作の委譲は起きない。以下の検証入口は
-agent-shell 経由の確認と Copilot のために残している。
-専用入口は `chelly-agent run -- claude-agent-acp` または
-`chelly-agent run -- copilot --acp` を起動し、buffer 名に `[chelly-agent]` を付ける。
-専用 clone では project 名を `<repo 名> / <handoff 名>` にし、一覧や header で
-どの repo の作業か分かるようにする。
-ローカルの `/srv/chelly-workspaces` (macOS は `~/chelly-workspaces`) 以下に限定し、TRAMP や領域外へ向く
-symlink は拒否する。起動後・再接続時も同じ専用 client-maker を使う。
-
-ACP のファイル読み書き能力は無効として通知する。それだけでは上流の要求処理を
-止められないため、専用セッションでは権限確認の UI 要求以外を実際に拒否する。
-ファイル・端末操作、`session/push`、未知の要求は JSON-RPC エラーにし、
-Emacs の `*Messages*` に拒否を表示する。agent 自身のコンテナ内ツールまで
-無効化する設定ではない。ホストの認証 getter・MCP 設定・自動権限応答は使わない。
-AI 所有の clone の dir-local variables は適用せず、Emacs の自動 transcript
-保存も無効にする。会話は agent 側の専用 volume に保存する。
-これは ACP のホスト操作委譲を制限する入口で、Emacs 全体のサンドボックスではない。
-検証中はファイルの手動添付や agent が提示するリンクを開く操作は行わない。
-
-新しい Emacs 設定を読み込んでから、ホストの Emacs で次を `M-:` から評価する。
-既存の Emacs にこの入口だけを読み込む場合は、`M-x load-file` で
-`applications/emacs/twist/packages/warashi-agent-shell/warashi-agent-shell-chelly.el`
-を読み込めばよい。コンテナ image の再ビルドは不要。
-
-```elisp
-(let ((default-directory "/srv/chelly-workspaces/"))
-  (warashi-agent-shell-chelly-start 'claude))
-```
-
+新しい Emacs 設定を読み込んでから、`/srv/chelly-workspaces` 以下の buffer で
+`M-x warashi-agentel-claude-opus-low` などを実行し、`C-c a` の一覧から会話を開く。
 CLI と同じように、ツールを使わず会話の中だけで目印を覚えるよう依頼する。
-応答後に **shell buffer 自体を kill** して接続を終了する。画面を閉じるだけでは
-プロセスを終了したことにならない。その後、次を評価し、会話一覧から対象を選ぶ。
-
-```elisp
-(let ((default-directory "/srv/chelly-workspaces/"))
-  (warashi-agent-shell-chelly-start 'claude t))
-```
-
-目印を再入力せずに回答できることで、会話の文脈が復元されたことを確認する。
-固定した agent-shell の `agent-shell-session-restore-verbosity` は既定で
-`minimal`。agent が `session/resume` をサポートしていれば、過去の発言を
-再表示せずに再開するため、履歴の表示は成功条件に含めない。
-履歴の再表示は `full` などの表示設定と agent の `session/load` 対応に依存し、
-この専用入口では既定の表示設定を変更しない。
-Copilot は上の `'claude` を `'copilot` に置き換えて同じ確認を行う。
-作業領域の buffer からなら `M-x warashi-agent-shell-chelly-start`、
-再開は `C-u M-x warashi-agent-shell-chelly-start` でも実行できる。
+応答後に **session buffer 自体を kill** して接続を終了する。画面を閉じるだけでは
+プロセスを終了したことにならない。その後、同じ作業領域で新しい session を起動し、
+`/resume` の会話一覧から対象を選ぶ。目印を再入力せずに回答できることで、会話の
+文脈が復元されたことを確認する。Copilot は `warashi-agentel-copilot-*` で同じ
+確認を行う。コンテナ image の再ビルドは不要。
 接続・認証・会話一覧取得が失敗したら、ホストのファイル能力や通常ログインを
 追加して回避せず、token を伏せたエラーを確認する。
 
 ### 依頼から取り込みまで
 
-専用の会話管理画面や取り込み画面は作らず、いつもの agentel・agent-shell と Magit を使う。
+専用の会話管理画面や取り込み画面は作らず、いつもの agentel と Magit を使う。
 Git の受け渡しだけをホストの [`chelly-handoff`](../git/handoff/README.md) が補助し、
 状態は本人の repo の remote `handoff-名前` だけに置く。
 Emacs では本人の repo の Magit で `@` を押すと各操作の transient が開き
@@ -277,7 +241,7 @@ Emacs では本人の repo の Magit で `@` を押すと各操作の transient 
 | 段階 | 操作 |
 | --- | --- |
 | clone 作成 | 本人の repo で基点の branch を checkout し、`chelly-handoff create [名前]`。名前の既定は branch 名 |
-| 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` (macOS は `~/chelly-workspaces/…`) で既存の `warashi-agentel-claude-*` / `warashi-agent-shell-copilot-*` を使う。Claude の会話は `C-c a`、Copilot の会話は agent-shell のサイドバー (`M-x warashi-agent-shell-list-toggle`) から開く |
+| 起動・対話 | `/srv/chelly-workspaces/<repo 名>/名前` (macOS は `~/chelly-workspaces/…`) で既存の `warashi-agentel-claude-*` / `warashi-agentel-copilot-*` を使う。会話は `C-c a` の一覧から開く |
 | 受け取り | agent の作業が止まり、検証済みの**未署名 commit** が残ったら `chelly-handoff fetch [名前]`。agent が branch を切っていても HEAD までを拾う |
 | 差分確認 | Magit で `handoff-名前/branch` の log・diff を見る。branch は agent が HEAD を置いていた branch 名 (detached なら create 時の branch)。基点は `remote.handoff-名前.chelly-base` |
 | 取り込み | Magit の log で `基点..handoff-名前/branch` の region を選んで `A A` (範囲の cherry-pick)。commit 数に関わらず 1 回で、既存設定で SSH 署名され、本人の hooks が動く。署名が要らない repo なら `git merge --ff-only` でもよい |
@@ -291,7 +255,7 @@ Emacs では本人の repo の Magit で `@` を押すと各操作の transient 
 取り込む前に agent に直させる。修正後は `fetch` を繰り返す。
 
 専用領域内では同じ model・effort のまま `chelly-agent` を使い、領域外の通常起動は
-変えない。Pi は専用 runner 非対応のため領域内では拒否する。
+変えない。
 署名鍵・socket・本人の Git 設定は専用環境へ渡さず、agent の Git 設定・hooks も
 本人側に持ち込まない。TRAMP、push・PR 作成は対象外。macOS は下の athena 節。
 
@@ -341,7 +305,7 @@ macOS には別の OS ユーザーも sudo の入口も無いので、workbench 
 
 コンテナを抜けて VM の `core` ユーザーになっても、届くのは上の共有範囲、named volume、
 コンテナに渡した限定 token に限る。SSH 鍵・1Password・署名設定・他の repository には届かない。
-Emacs の ACP 経路は `warashi-agent-shell-chelly.el` が host 要求を拒否するので、
+Emacs の ACP 経路は agentel がファイル・端末の能力を通知せず MCP server も渡さないので、
 VM の共有範囲を絞っても Emacs 経由で home を触られることはない。
 公開先への送信制限、ディスク枯渇防止、並行する AI 同士の強い隔離は保証しない。
 
@@ -395,7 +359,7 @@ VM から Mac の Nix store をマウントする必要はない。
 workbench と同じ `chelly-handoff` と Magit の手順を使う (上の「依頼から取り込みまで」)。
 作業領域は `~/chelly-workspaces` で、`chelly-handoff` は Nix の `warashi.chelly.workspaces`
 から既定を受け取る。Emacs の `warashi-chelly-workspace-root` も macOS では同じ既定になる。
-専用領域内での Emacs の起動は通常の `warashi-agentel-claude-*` / `warashi-agent-shell-copilot-*` を使う。
+専用領域内での Emacs の起動は通常の `warashi-agentel-claude-*` / `warashi-agentel-copilot-*` を使う。
 署名は Mac 側の 1Password の signer のまま、本人が範囲の cherry-pick で行う。
 
 ### 起動・停止とデータ
@@ -435,7 +399,7 @@ agent の会話を失う。
 - `chelly run -- sh -c 'echo ${CLAUDE_CODE_OAUTH_TOKEN:?} >/dev/null && echo ok'` で
   値を表示せずに専用 token の注入を確認できる。`~/.claude` はコンテナに無く、
   `CLAUDE.md` と output-styles は volume に写っている。
-- 会話の再開が `chelly run -- claude --continue` と Emacs の `C-u M-x warashi-agent-shell-chelly-start`
+- 会話の再開が `chelly run -- claude --continue` と Emacs の agentel の `/resume`
   で通る (workbench の手順と同じ)。
 - 同じ VM のまま、別ターミナルから二つの `chelly run` を同時に動かし、
   `podman inspect` で同じ named volume を使い、一方が動いたまま他方も `nix develop` とビルドを実行できる。
