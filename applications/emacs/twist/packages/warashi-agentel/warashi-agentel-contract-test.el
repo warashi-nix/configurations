@@ -32,5 +32,10 @@
       (when session
         (kill-buffer (agentel-session-buffer session))))))
 
+(ert-deftest warashi-agentel-contract-test-copilot-runs-acp ()
+  "`copilot' の agent は Copilot CLI を ACP で動かす。
+専用 runner の中でも同じコマンドを動かすため。"
+  (should (equal '("copilot" "--acp") (alist-get 'copilot agentel-agents))))
+
 (provide 'warashi-agentel-contract-test)
 ;;; warashi-agentel-contract-test.el ends here

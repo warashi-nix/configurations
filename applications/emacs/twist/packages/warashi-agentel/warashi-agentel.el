@@ -11,8 +11,8 @@
 
 ;; agentel に足している三つのこと。
 ;;
-;; - model と effort を固定した Claude の起動コマンド。起動しても表示も
-;;   focus もしない。
+;; - model と effort を固定した Claude と Copilot CLI の起動コマンド。
+;;   起動しても表示も focus もしない。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても session には飛ばず、同じ project のメニューを開き直す。
 ;; - `warashi-chelly-workspace-root' 以下では agent を chelly-agent の専用
@@ -21,7 +21,8 @@
 ;; 利用側で `agentel-command-prefix' に `warashi-agentel-command-prefix' を
 ;; 設定し、専用領域の外で使う prefix を
 ;; `warashi-agentel-ordinary-command-prefix' に置く。起動コマンドは
-;; `warashi-agentel-define-claude-variants' で作る。
+;; `warashi-agentel-define-claude-variants' と
+;; `warashi-agentel-define-copilot-variants' で作る。
 
 ;;; Code:
 
@@ -81,8 +82,9 @@
     (setq warashi-agentel-variants
           (append warashi-agentel-variants (list (cons name command))))))
 
-(defun warashi-agentel--start-claude (model effort)
-  "MODEL と EFFORT を指定して Claude の session を起動する。表示はしない。"
+(defun warashi-agentel--start (agent model effort)
+  "AGENT の session を MODEL と EFFORT を指定して起動する。表示はしない。
+AGENT は `agentel-agents' の名前。"
   ;; agentel は agent をローカルで動かし、cwd もそのまま渡すので、TRAMP 先の
   ;; path では agent が作業場所を見失う。
   (when (file-remote-p default-directory)
@@ -94,34 +96,44 @@
   ;; runner が作業領域を実体のパスで mount するため。
   (agentel-start :cwd (or (warashi-agentel--dedicated-directory default-directory)
                           default-directory)
+                 :agent agent
                  :display nil
                  :model model
                  :effort effort))
+
+(defun warashi-agentel--variant-forms (agent variants)
+  "AGENT の VARIANTS から起動コマンドを定義する form の列を返す。
+VARIANTS の各要素は (NAME MODEL EFFORT)。"
+  (mapcan
+   (pcase-lambda (`(,name ,model ,effort))
+     (let* ((label (format "%s-%s" agent name))
+            (fn (intern (format "warashi-agentel-%s" label)))
+            (eshell-fn (intern (format "eshell/%s" label))))
+       (list
+        `(defun ,fn ()
+           ,(format "%s を model %s / effort %s で起動する。" agent model effort)
+           (interactive)
+           (warashi-agentel--start ',agent ,model ,effort))
+        `(defun ,eshell-fn (&rest _args)
+           ,(format "eshell から `%s' を起動し、起動した buffer を示す。" fn)
+           ;; session をそのまま返すと、eshell が struct を丸ごと出力する。
+           (format ,(format "%s: started %%s" label)
+                   (buffer-name (agentel-session-buffer (,fn)))))
+        `(warashi-agentel-register-variant ,label ',fn))))
+   variants))
 
 (defmacro warashi-agentel-define-claude-variants (&rest variants)
   "VARIANTS から Claude の起動コマンドを定義する。
 VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
 `warashi-agentel-claude-NAME' と、eshell から短い名前で呼ぶための
 `eshell/claude-NAME' を生成する。"
-  `(progn
-     ,@(mapcan
-        (pcase-lambda (`(,name ,model ,effort))
-          (let ((fn (intern (format "warashi-agentel-claude-%s" name)))
-                (eshell-fn (intern (format "eshell/claude-%s" name))))
-            (list
-             `(defun ,fn ()
-                ,(format "Claude を model %s / effort %s で起動する。"
-                         model effort)
-                (interactive)
-                (warashi-agentel--start-claude ,model ,effort))
-             `(defun ,eshell-fn (&rest _args)
-                ,(format "eshell から `%s' を起動し、起動した buffer を示す。" fn)
-                ;; session をそのまま返すと、eshell が struct を丸ごと出力する。
-                (format ,(format "claude-%s: started %%s" name)
-                        (buffer-name (agentel-session-buffer (,fn)))))
-             `(warashi-agentel-register-variant
-               ,(format "claude-%s" name) ',fn))))
-        variants)))
+  `(progn ,@(warashi-agentel--variant-forms 'claude variants)))
+
+(defmacro warashi-agentel-define-copilot-variants (&rest variants)
+  "VARIANTS から Copilot CLI の起動コマンドを定義する。
+VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
+`warashi-agentel-copilot-NAME' と `eshell/copilot-NAME' を生成する。"
+  `(progn ,@(warashi-agentel--variant-forms 'copilot variants)))
 
 ;;;; project-switch からの起動
 

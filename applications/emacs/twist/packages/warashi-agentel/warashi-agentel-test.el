@@ -56,20 +56,21 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
 
 ;;;; 起動コマンド
 
-(ert-deftest warashi-agentel-test-start-claude-options ()
-  "model と effort を渡し、表示せずに default-directory で起動する。"
+(ert-deftest warashi-agentel-test-start-options ()
+  "agent と model と effort を渡し、表示せずに default-directory で起動する。"
   (warashi-agentel-test--with-workspace (_root outside)
     (let* ((default-directory outside)
            (captured (warashi-agentel-test--capture-start
-                       (warashi-agentel--start-claude "opus" "low"))))
+                       (warashi-agentel--start 'claude "opus" "low"))))
       (should (equal outside (plist-get captured :cwd)))
+      (should (eq 'claude (plist-get captured :agent)))
       (should (equal "opus" (plist-get captured :model)))
       (should (equal "low" (plist-get captured :effort)))
       ;; 表示しないのは、起動を投げた後に window を取り返されないため。
       (should (plist-member captured :display))
       (should-not (plist-get captured :display)))))
 
-(ert-deftest warashi-agentel-test-start-claude-inside-workspace-uses-real-path ()
+(ert-deftest warashi-agentel-test-start-inside-workspace-uses-real-path ()
   "専用領域では alias 経由でも実体のパスで起動する。"
   (warashi-agentel-test--with-workspace (root outside)
     (let* ((clone (expand-file-name "owner/repository/clone/" root))
@@ -80,11 +81,11 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
                                (expand-file-name "owner/repository/clone/" alias)))
         (let* ((default-directory (file-name-as-directory directory))
                (captured (warashi-agentel-test--capture-start
-                           (warashi-agentel--start-claude "opus" "low"))))
+                           (warashi-agentel--start 'claude "opus" "low"))))
           (should (equal (file-truename default-directory)
                          (plist-get captured :cwd))))))))
 
-(ert-deftest warashi-agentel-test-start-claude-refuses-symlink-escape ()
+(ert-deftest warashi-agentel-test-start-refuses-symlink-escape ()
   "専用領域に見えて実体が外なら、本人の credential で起動しない。"
   (warashi-agentel-test--with-workspace (root outside)
     (let ((escape (expand-file-name "escape" root)))
@@ -93,18 +94,18 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
             (started nil))
         (cl-letf (((symbol-function 'agentel-start)
                    (lambda (&rest _) (setq started t))))
-          (should-error (warashi-agentel--start-claude "opus" "low")
+          (should-error (warashi-agentel--start 'claude "opus" "low")
                         :type 'user-error))
         ;; 起動後に拒否すると、中身の無い session buffer が残る。
         (should-not started)))))
 
-(ert-deftest warashi-agentel-test-start-claude-refuses-remote ()
+(ert-deftest warashi-agentel-test-start-refuses-remote ()
   "TRAMP 先では起動しない。"
   (let ((default-directory "/ssh:example.invalid:/tmp/")
         (started nil))
     (cl-letf (((symbol-function 'agentel-start)
                (lambda (&rest _) (setq started t))))
-      (should-error (warashi-agentel--start-claude "opus" "low")
+      (should-error (warashi-agentel--start 'claude "opus" "low")
                     :type 'user-error))
     (should-not started)))
 
@@ -116,10 +117,26 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
     (should (commandp 'warashi-agentel-claude-warashi-agentel-test-variant))
     (warashi-agentel-test--with-session (session _buffer)
       (let ((args nil))
-        (cl-letf (((symbol-function 'warashi-agentel--start-claude)
+        (cl-letf (((symbol-function 'warashi-agentel--start)
                    (lambda (&rest a) (setq args a) session)))
           (funcall 'eshell/claude-warashi-agentel-test-variant))
-        (should (equal '("test-model" "high") args))))))
+        (should (equal '(claude "test-model" "high") args))))))
+
+(ert-deftest warashi-agentel-test-define-copilot-variants ()
+  "Copilot の variant も M-x と eshell から同じ設定で起動する。"
+  (let ((warashi-agentel-variants nil))
+    (warashi-agentel-define-copilot-variants
+     (warashi-agentel-test-variant "test-model" "low"))
+    (warashi-agentel-test--with-session (session _buffer)
+      (let ((calls nil))
+        (cl-letf (((symbol-function 'warashi-agentel--start)
+                   (lambda (&rest a) (push a calls) session)))
+          (call-interactively 'warashi-agentel-copilot-warashi-agentel-test-variant)
+          (should (equal "copilot-warashi-agentel-test-variant: started *agentel: test*"
+                         (funcall 'eshell/copilot-warashi-agentel-test-variant))))
+        (should (equal '((copilot "test-model" "low")
+                         (copilot "test-model" "low"))
+                       calls))))))
 
 (ert-deftest warashi-agentel-test-eshell-reports-started-session ()
   "eshell 用の関数は session ではなく、起動した buffer を示す一行を返す。"
@@ -127,7 +144,7 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
     (warashi-agentel-define-claude-variants
      (warashi-agentel-test-variant "test-model" "high"))
     (warashi-agentel-test--with-session (session _buffer)
-      (cl-letf (((symbol-function 'warashi-agentel--start-claude)
+      (cl-letf (((symbol-function 'warashi-agentel--start)
                  (lambda (&rest _) session)))
         (should (equal "claude-warashi-agentel-test-variant: started *agentel: test*"
                        (funcall 'eshell/claude-warashi-agentel-test-variant)))))))
@@ -135,16 +152,20 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
 ;;;; project-switch からの起動
 
 (ert-deftest warashi-agentel-test-variants-registered ()
-  "variant は claude の別が付いた名前で定義順に一覧へ載る。"
+  "variant は claude / copilot の別が付いた名前で定義順に一覧へ載る。"
   (let ((warashi-agentel-variants nil))
     (warashi-agentel-define-claude-variants
      (warashi-agentel-test-first "test-model" "high")
      (warashi-agentel-test-second "test-model" "low"))
+    (warashi-agentel-define-copilot-variants
+     (warashi-agentel-test-first "test-model" "low"))
     (should (equal
              '(("claude-warashi-agentel-test-first"
                 . warashi-agentel-claude-warashi-agentel-test-first)
                ("claude-warashi-agentel-test-second"
-                . warashi-agentel-claude-warashi-agentel-test-second))
+                . warashi-agentel-claude-warashi-agentel-test-second)
+               ("copilot-warashi-agentel-test-first"
+                . warashi-agentel-copilot-warashi-agentel-test-first))
              warashi-agentel-variants))))
 
 (ert-deftest warashi-agentel-test-variants-not-duplicated ()
