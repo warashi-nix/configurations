@@ -1376,11 +1376,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789884295,
-        "narHash": "sha256-P+Y3eepgxB89+l09aA60oGC1kjFdrJ5kBelAdoQIb6M=",
+        "lastModified": 1790517694,
+        "narHash": "sha256-yl1q1Y+q0Lbjfh/Tqh9NZ3+fOifKhsEL2LE6RTspPLM=",
         "owner": "Warashi",
         "repo": "sekken",
-        "rev": "e8565637b3e4d9fc9ac6cd3eb0d2b5eee963f2d1",
+        "rev": "86392ee679edba1c50f61859c9535058a36e50de",
         "type": "github"
       },
       "original": {
