@@ -41,7 +41,7 @@ let
     container_cmd = lib.getExe pkgs.podman;
     additional_mounts = [
       "/nix:/nix:ro"
-      "${proxy.socket-dir}:/nix/var/nix/daemon-socket:ro"
+      "${proxy.socketDir}:/nix/var/nix/daemon-socket:ro"
       "${homeConfig.xdg.configFile."git/ignore".source}:/home/warashi/.config/git/ignore:ro"
       # brainium は本人の clone ではなく、chelly-handoff で専用領域に作った clone を
       # 本人の CLAUDE.md が指すのと同じ path に見せる。clone が無ければ空のまま。
@@ -160,8 +160,8 @@ in
         message = "chelly-agent must not be a trusted Nix user or belong to a trusted Nix group";
       }
       {
-        assertion = chellyConfig.enable && chellyConfig.nix-store == "host" && proxy.enable;
-        message = "chelly-agent requires chelly with nix-store = host and the untrusted Nix proxy";
+        assertion = chellyConfig.enable && chellyConfig.nixStore == "host" && proxy.enable;
+        message = "chelly-agent requires chelly with nixStore = host and the untrusted Nix proxy";
       }
       {
         assertion = lib.elem config.users.users.${owner}.homeMode [
@@ -208,7 +208,7 @@ in
       "d ${workspaces} 2750 ${username} chelly-workspaces - -"
     ];
 
-    warashi.chelly-nix-proxy.socket-group = username;
+    warashi.chelly-nix-proxy.socketGroup = username;
     environment.etc = {
       "chelly-agent/chelly/config.toml".source = configFile;
       "chelly-agent/chelly/Dockerfile".source = chellyConfig.dockerfile;

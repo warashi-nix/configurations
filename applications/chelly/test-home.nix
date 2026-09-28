@@ -50,13 +50,13 @@ in
   inherit pkgs;
   extraSpecialArgs = {
     inputs = chellyModuleInputs;
-    # nix-store = "host" (workbench) は host-store.nix が osConfig.warashi.chelly-nix-proxy
+    # nixStore = "host" (workbench) は host-store.nix が osConfig.warashi.chelly-nix-proxy
     # を要求する。実ホストでは hosts/workbench/chelly.nix が有効にしているものを、
     # NixOS 側を丸ごと評価せずに満たすための最小限のスタブ。
     osConfig = {
       warashi.chelly-nix-proxy = {
         enable = true;
-        socket-dir = "/run/chelly-nix";
+        socketDir = "/run/chelly-nix";
       };
       nix.package = pkgs.nix;
     };

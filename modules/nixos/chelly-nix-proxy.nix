@@ -19,7 +19,7 @@ in
 {
   options.warashi.chelly-nix-proxy = {
     enable = mkEnableOption "untrusted nix-daemon proxy socket for chelly containers";
-    socket-dir = mkOption {
+    socketDir = mkOption {
       type = types.str;
       default = "/run/chelly-nix";
       description = ''
@@ -28,7 +28,7 @@ in
         本物と同じ socket にしてある。
       '';
     };
-    socket-group = mkOption {
+    socketGroup = mkOption {
       type = types.nullOr types.str;
       default = null;
       description = "Optional group allowed to connect through the untrusted proxy.";
@@ -48,13 +48,13 @@ in
       description = "Untrusted nix-daemon proxy socket for chelly containers";
       wantedBy = [ "sockets.target" ];
       socketConfig = {
-        ListenStream = "${cfg.socket-dir}/socket";
+        ListenStream = "${cfg.socketDir}/socket";
         Accept = true;
         SocketUser = config.warashi.username;
-        SocketMode = if cfg.socket-group == null then "0600" else "0660";
+        SocketMode = if cfg.socketGroup == null then "0600" else "0660";
         DirectoryMode = "0755";
       }
-      // optionalAttrs (cfg.socket-group != null) { SocketGroup = cfg.socket-group; };
+      // optionalAttrs (cfg.socketGroup != null) { SocketGroup = cfg.socketGroup; };
     };
 
     systemd.services."chelly-nix-proxy@" = {

@@ -70,7 +70,7 @@ in
       type = types.int;
       description = "gid for container user.";
     };
-    nix-store = mkOption {
+    nixStore = mkOption {
       type = types.enum [
         "volume"
         "host"
@@ -182,7 +182,7 @@ in
             "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             # keep-sorted end
           ]
-          ++ optional (cfg.nix-store == "volume") "chelly-nix:/nix";
+          ++ optional (cfg.nixStore == "volume") "chelly-nix:/nix";
           inherit_env = [
             "COLORTERM"
             "TERM"

@@ -97,7 +97,7 @@ let
       expected = false;
     };
     test-linux-keeps-host-store = {
-      expr = linuxHome.warashi.chelly.nix-store;
+      expr = linuxHome.warashi.chelly.nixStore;
       expected = "host";
     };
     # Linux の通常入口は本人の実 ~/.claude を mount するので、初回セットアップの

@@ -30,7 +30,7 @@ instruction directory を残したまま `/etc/chelly` を加える。
 
 ## workbench: ホストの Nix store の共用
 
-workbench は native rootless Podman と `nix-store = "host"` を使い、
+workbench は native rootless Podman と `nixStore = "host"` を使い、
 ホストの `/nix` を読み取り専用でコンテナに渡す。取得・ビルドはホストの
 Nix daemon が行い、コンテナ用に store を複製しない。
 
