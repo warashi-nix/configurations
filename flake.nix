@@ -173,6 +173,12 @@
                 lib.attrValues topLevel.config.hosts
               )) inputs'.my-emacs.checks
               // {
+                option-naming = pkgs.callPackage ./checks/option-naming.nix {
+                  systems = [
+                    self.darwinConfigurations.athena
+                    self.nixosConfigurations.workbench
+                  ];
+                };
                 git-check-new-ignored = pkgs.callPackage ./applications/git/handoff/package.nix { };
                 chelly-go-proxy = pkgs.callPackage ./applications/chelly/go-proxy/package.nix { };
                 chelly-go-proxy-config = pkgs.callPackage ./applications/chelly/go-proxy/checks.nix {
