@@ -1522,10 +1522,10 @@
     "tramp": {
       "flake": false,
       "locked": {
-        "lastModified": 1790591231,
-        "narHash": "sha256-Z+veQTDNO8exlYO/zGVUAvgjWYYcKAoQoSrZWUzyr5c=",
+        "lastModified": 1790664347,
+        "narHash": "sha256-NAG3G9R0uv2/kPB6RNpMpM91cll++ze7GsaVnziI8RA=",
         "ref": "externals/tramp",
-        "rev": "255ab1eaee36c10abefac120ff757f733a235896",
+        "rev": "825c92c3a159466c1ff8633adc7f7e283241818d",
         "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/tramp.git"
