@@ -953,11 +953,11 @@
     "md-mode": {
       "flake": false,
       "locked": {
-        "lastModified": 1790566962,
-        "narHash": "sha256-kMF+I08lOcNeO7PQQ7YYnJtiBlZjLI/JgFlHlpqL7Bc=",
+        "lastModified": 1790782185,
+        "narHash": "sha256-spgiUD3abUJ4uEjCLCYtHqugwLpuTZDHtwiBz5/H/FI=",
         "owner": "yibie",
         "repo": "md-mode",
-        "rev": "41583957e7f0d0b996611e3426de025f4a451b13",
+        "rev": "19d9635f44e86160af474edcf9ff6e497dd72814",
         "type": "github"
       },
       "original": {
