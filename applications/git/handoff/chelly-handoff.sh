@@ -17,9 +17,10 @@ create  現在の HEAD から専用領域の <repo 名>/NAME に clone を作り
 fetch   専用 clone の HEAD までの commit を remote handoff-NAME に取り込み、新規追跡ファイルを検査する
 update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
         agent が切った branch は消し、create 時の branch に戻す
+        detached HEAD から create したときは、update を実行した場所の HEAD に合わせる
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 
-NAME を省略すると現在の branch 名を使う。
+NAME を省略すると現在の branch 名を使う。detached HEAD では NAME が要る。
 EOF
   exit 2
 }
@@ -107,7 +108,7 @@ git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all | wc -l
 update_script='
 umask 0027
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
-parent=$1 workspace=$2 branch=$3 tip=$4
+parent=$1 workspace=$2 branch=$3 tip=$4 source=$5
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
 cd "$workspace"
@@ -118,7 +119,7 @@ trap "rm -f -- \"$bundle\"" EXIT
 cat >"$bundle"
 if [ -s "$bundle" ]; then
   git bundle verify --quiet "$bundle"
-  git -c core.hooksPath=/dev/null fetch --quiet --no-tags "$bundle" "refs/heads/$branch"
+  git -c core.hooksPath=/dev/null fetch --quiet --no-tags "$bundle" "$source"
   test "$(git rev-parse --verify FETCH_HEAD^{commit})" = "$tip"
 else
   git cat-file -e "$tip^{commit}"
@@ -163,7 +164,7 @@ create() {
   resolve_name "$1"
   repo_paths
   ! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
-  branch=$(git symbolic-ref --quiet --short HEAD) || fail "check out a named branch first"
+  branch=$(git symbolic-ref --quiet --short HEAD) || branch=
   base=$(git rev-parse --verify 'HEAD^{commit}')
   # worktree の toplevel は repo と無関係な名前になり得るので、共有の git dir から引く。
   # 通常は <repo>/.git、bare なら <repo>.git の形をしている。
@@ -176,19 +177,23 @@ create() {
   [[ $project =~ $name_pattern ]] || fail "repository directory name '$project' is not usable under $workspaces"
   workspace="$workspaces/$project/$name"
   git bundle create --quiet - HEAD |
-    agent "$create_script" "$workspaces" "$workspace" "$base" "$branch"
+    agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$name}"
   mkdir -p "$gitdir/chelly-handoff"
   git remote add "$remote" "$bundle"
   git config "remote.$remote.chelly-base" "$base"
-  git config "remote.$remote.chelly-branch" "$branch"
+  if [[ -n $branch ]]; then
+    git config "remote.$remote.chelly-branch" "$branch"
+  fi
   git config "remote.$remote.chelly-workspace" "$workspace"
   echo "$workspace"
 }
 
 # worktree から create した場合も同じ領域を指せるよう、path は remote 設定から読む。
+# detached HEAD から create したときは branch を記録せず、専用 clone の branch は NAME になる。
 recorded_paths() {
   base=$(git config --get "remote.$remote.chelly-base") || fail "remote $remote was not created by chelly-handoff"
-  branch=$(git config --get "remote.$remote.chelly-branch")
+  branch=$(git config --get "remote.$remote.chelly-branch") || branch=
+  agent_branch=${branch:-$name}
   workspace=$(git config --get "remote.$remote.chelly-workspace")
 }
 
@@ -207,7 +212,7 @@ fetch() {
   })
   case "$head_ref" in
   refs/heads/?*) head_name=${head_ref#refs/heads/} ;;
-  HEAD) head_name=$branch ;;
+  HEAD) head_name=$agent_branch ;;
   *) fail "unexpected bundle head '$head_ref'" ;;
   esac
   tip="refs/remotes/$remote/$head_name"
@@ -241,21 +246,28 @@ require_agent_work_collected() {
 # ff-only で取り込むと先端の SHA は clone と一致したまま agent の branch に居るので、
 # branch も記録どおりのときだけ up to date とみなす。先端が base から動いていなければ
 # bundle は作れないので、その場合は空の stdin を渡す。
+# 記録 branch が無ければ、detached のまま取り込んだ実行場所の HEAD を先端とする。
 update() {
   resolve_name "$1"
   repo_paths
   recorded_paths
-  tip=$(git rev-parse --verify "refs/heads/$branch^{commit}") || fail "branch $branch does not exist here"
+  if [[ -n $branch ]]; then
+    source="refs/heads/$branch"
+    tip=$(git rev-parse --verify "$source^{commit}") || fail "branch $branch does not exist here"
+  else
+    source=HEAD
+    tip=$(git rev-parse --verify 'HEAD^{commit}')
+  fi
   require_agent_work_collected
-  if [[ $head == "$tip" && $head_branch == "$branch" ]]; then
+  if [[ $head == "$tip" && $head_branch == "$agent_branch" ]]; then
     echo "$remote is up to date at $(git rev-parse --short "$tip")"
     return
   fi
   if [[ $base == "$tip" ]]; then
-    agent "$update_script" "$workspaces" "$workspace" "$branch" "$tip" </dev/null
+    agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source" </dev/null
   else
-    git bundle create --quiet - "^$base" "refs/heads/$branch" |
-      agent "$update_script" "$workspaces" "$workspace" "$branch" "$tip"
+    git bundle create --quiet - "^$base" "$source" |
+      agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source"
   fi
   git config "remote.$remote.chelly-base" "$tip"
   git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin

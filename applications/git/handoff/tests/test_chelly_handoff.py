@@ -171,15 +171,63 @@ class HandoffTest(unittest.TestCase):
         self.assertEqual(result.stdout.decode().strip(), str(self.workspace))
         self.assertEqual(self.rev(self.workspace), self.base)
 
-    def test_create_rejects_bad_names_and_detached_head(self):
+    def test_create_rejects_bad_names_and_unnamed_detached_head(self):
         for name in ("-x", "a/b", "a b", "..", ".hidden"):
             result = self.handoff("create", name, check=False)
             self.assertNotEqual(result.returncode, 0, name)
         self.assertFalse(self.workspace.exists())
         self.git("-C", self.repo, "switch", "-q", "--detach")
-        result = self.handoff("create", "fix", check=False)
+        result = self.handoff("create", check=False)
         self.assertEqual(result.returncode, 1)
-        self.assertIn(b"named branch", result.stderr)
+        self.assertIn(b"NAME", result.stderr)
+        self.assertFalse(self.workspace.exists())
+
+    def test_detached_worktree_hands_off_and_follows_its_own_head(self):
+        # git-wit の worktree は detached HEAD のまま作業し、そこで取り込みも行う。
+        worktree = self.root / "wit-1234"
+        self.git("-C", self.repo, "worktree", "add", "-q", "--detach", worktree)
+        self.write(worktree, "tracked", "wit\n")
+        wit_base = self.commit(worktree, "wit work")
+        self.handoff("create", "fix", cwd=worktree)
+        self.assertEqual(self.rev(self.workspace), wit_base)
+        self.assertEqual(
+            self.git("-C", self.workspace, "symbolic-ref", "--short", "HEAD").stdout.decode().strip(),
+            "fix",
+        )
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-branch", check=False).returncode,
+            1,
+        )
+
+        tip = self.agent_commit("feature", "done\n")
+        result = self.handoff("fetch", "fix", cwd=worktree)
+        self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/fix"), tip)
+        self.assertIn(b"handoff-fix/fix", result.stdout)
+        # agent が detached にしても、handoff の名前で受ける。
+        self.git("-C", self.workspace, "switch", "-q", "--detach")
+        tip = self.agent_commit("more", "x\n")
+        self.handoff("fetch", "fix", cwd=worktree)
+        self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/fix"), tip)
+
+        self.git("-C", worktree, "cherry-pick", f"{wit_base}..refs/remotes/handoff-fix/fix")
+        self.git("-C", worktree, "commit", "-q", "--amend", "--no-verify", "-m", "integrated")
+        integrated = self.rev(worktree)
+        # 本人の branch は動かさず、update を実行した worktree の HEAD に追従する。
+        self.write(self.repo, "tracked", "owner\n")
+        self.commit(self.repo, "owner work")
+        result = self.handoff("update", "fix", cwd=worktree)
+        self.assertIn(b"updated", result.stdout)
+        self.assertEqual(self.rev(self.workspace), integrated)
+        self.assertEqual(
+            self.git("-C", self.workspace, "branch", "--list", "--format=%(refname:short)").stdout.decode().split(),
+            ["fix"],
+        )
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-base").stdout.decode().strip(),
+            integrated,
+        )
+        result = self.handoff("update", "fix", cwd=worktree)
+        self.assertIn(b"up to date", result.stdout)
 
     def test_fetch_exposes_agent_commits_and_checks_new_paths(self):
         self.handoff("create", "fix")

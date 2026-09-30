@@ -96,12 +96,18 @@ the remote `handoff-NAME` whose URL is a bundle file under
 An existing remote or workspace is rejected without changes. Uncommitted owner
 changes are not transferred.
 
+`create` also works from a detached `HEAD`, as in a git-wit worktree. `NAME` is
+then required, the agent workspace starts on a branch named `NAME`, and no
+branch is recorded in `remote.handoff-NAME.chelly-branch`. Such a handoff
+follows the detached `HEAD` instead of a branch: run `fetch`, integration, and
+`update` from the same worktree.
+
 `fetch` requires the agent workspace to be clean and ahead of the base. It
 follows the agent's `HEAD` rather than a fixed branch, because agent harnesses
 often start a branch before committing: it streams `BASE..HEAD` back as a
 bundle, verifies it, and fetches it into `refs/remotes/handoff-NAME/<branch>`
-named after the agent's current branch, or after the recorded branch when the
-agent's `HEAD` is detached. Remote-tracking refs left from an earlier fetch on
+named after the agent's current branch, or after the recorded branch (`NAME`
+when none is recorded) when the agent's `HEAD` is detached. Remote-tracking refs left from an earlier fetch on
 another branch name are dropped, so `handoff-NAME/` always shows the single
 current tip. It finally runs `git-check-new-ignored` with the owner's own Git
 directory as the object repository. The exit status is the checker's, so
@@ -121,7 +127,9 @@ remote-tracking refs under `handoff-NAME/` are dropped. This also applies when
 the tip is unchanged, for example after a fast-forward merge that kept the
 agent's commit IDs; `update` reports "up to date" only when the workspace is
 already on the recorded branch at the tip. The owner's checked-out branch does
-not matter; the recorded branch is sent.
+not matter; the recorded branch is sent. Without a recorded branch, the `HEAD`
+of the checkout where `update` runs is sent and the workspace is put back on
+the branch `NAME`.
 
 `remove` deletes the agent workspace, the remote, its remote-tracking refs, and
 the bundle. Without `--force` it refuses when the workspace has uncommitted
