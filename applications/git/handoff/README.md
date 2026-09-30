@@ -83,8 +83,10 @@ chelly-handoff remove [fix-issue-123] [--force]
 `create` bundles the current `HEAD` and lets `chelly-agent` clone it into
 `/srv/chelly-workspaces/PROJECT/NAME` on a branch with the owner's current
 branch name, without `origin`, hooks, or the owner's Git configuration.
-`PROJECT` is the directory name of the owner's repository, so the same `NAME`
-can be in use for different projects at once. `NAME` defaults to the current
+`PROJECT` is the name of the owner's repository, taken from its shared Git
+directory rather than the checkout, so a linked worktree such as a git-wit
+worktree uses the repository name, and the same `NAME` can be in use for
+different projects at once. `NAME` defaults to the current
 branch name; pass it explicitly to run several workspaces from one branch or
 when the branch name contains `/`. It starts with an ASCII letter or digit and
 then contains only ASCII letters, digits, `.`, `_`, or `-`. `create` then adds

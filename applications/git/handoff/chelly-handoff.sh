@@ -165,7 +165,14 @@ create() {
   ! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
   branch=$(git symbolic-ref --quiet --short HEAD) || fail "check out a named branch first"
   base=$(git rev-parse --verify 'HEAD^{commit}')
-  project=${toplevel##*/}
+  # worktree の toplevel は repo と無関係な名前になり得るので、共有の git dir から引く。
+  # 通常は <repo>/.git、bare なら <repo>.git の形をしている。
+  project=${gitdir%/}
+  if [[ ${project##*/} == .git ]]; then
+    project=${project%/.git}
+  fi
+  project=${project##*/}
+  project=${project%.git}
   [[ $project =~ $name_pattern ]] || fail "repository directory name '$project' is not usable under $workspaces"
   workspace="$workspaces/$project/$name"
   git bundle create --quiet - HEAD |

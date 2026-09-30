@@ -93,12 +93,12 @@ class HandoffTest(unittest.TestCase):
     def rev(self, repo, revision="HEAD"):
         return self.git("-C", repo, "rev-parse", "--verify", revision).stdout.decode().strip()
 
-    def handoff(self, *args, check=True):
+    def handoff(self, *args, check=True, cwd=None):
         # 本人は端末から起動するので、stdin を擬似端末にして同じ形で動かす。
         leader, follower = pty.openpty()
         try:
             return subprocess.run(
-                ["bash", str(HANDOFF), *args], cwd=self.repo, stdin=follower,
+                ["bash", str(HANDOFF), *args], cwd=cwd or self.repo, stdin=follower,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, check=check,
             )
         finally:
@@ -162,6 +162,14 @@ class HandoffTest(unittest.TestCase):
         result = self.handoff("create", check=False)
         self.assertEqual(result.returncode, 1)
         self.assertIn(b"NAME", result.stderr)
+
+    def test_create_from_linked_worktree_scopes_by_repository_name(self):
+        # git-wit などの worktree はディレクトリ名が repo 名と無関係な ID になる。
+        worktree = self.root / "wit-1234"
+        self.git("-C", self.repo, "worktree", "add", "-q", "-b", "topic", worktree)
+        result = self.handoff("create", "fix", cwd=worktree)
+        self.assertEqual(result.stdout.decode().strip(), str(self.workspace))
+        self.assertEqual(self.rev(self.workspace), self.base)
 
     def test_create_rejects_bad_names_and_detached_head(self):
         for name in ("-x", "a/b", "a b", "..", ".hidden"):
