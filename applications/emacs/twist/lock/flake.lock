@@ -869,11 +869,11 @@
     "tramp-rpc": {
       "flake": false,
       "locked": {
-        "lastModified": 1790338547,
-        "narHash": "sha256-x3vR9qcahVi4mGjhqCiRn3+k5r6xv/6ihefzLVEz9uk=",
+        "lastModified": 1790763606,
+        "narHash": "sha256-+Z7x/SwGrz/GmF74Qwj8i8xfIpEUS7rWYZO1Jlygtfc=",
         "owner": "ArthurHeymans",
         "repo": "emacs-tramp-rpc",
-        "rev": "9ca02be6eceac0054a806153e99c0ffbcb8bb876",
+        "rev": "368a583e4a100de96a4e61479e7e5281758cabf5",
         "type": "github"
       },
       "original": {
