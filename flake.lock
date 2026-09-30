@@ -412,11 +412,11 @@
         "zon2nix": "zon2nix"
       },
       "locked": {
-        "lastModified": 1788777453,
-        "narHash": "sha256-LI9kfrIzfNCfT7VCcKLGEM5DWj0c71+hc865a4qyCNM=",
+        "lastModified": 1790807144,
+        "narHash": "sha256-Snj5+OBlLOwzlftq4oZOsqX2RWwpI0KhYPP/oURPrYQ=",
         "owner": "Warashi",
         "repo": "emacs-spectreshell",
-        "rev": "c5f8c2d22fada34469e15b406559215764afa60f",
+        "rev": "4079b5a3a3014f5e3150a9b7686e4b2a8edcf2a7",
         "type": "github"
       },
       "original": {
@@ -1677,11 +1677,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788301447,
-        "narHash": "sha256-5vUunjPW05Kbh8a1LKgyyAaFInb9X52ZvnsITSitB0A=",
+        "lastModified": 1790695629,
+        "narHash": "sha256-LUMD2+8dK9CgJ07nHtJ/Xaj6AQpvQDk8I410CwDvN/I=",
         "owner": "jcollie",
         "repo": "zon2nix",
-        "rev": "97cd62a05dc1b9a4b978efa67ea80a459e619dc3",
+        "rev": "8186e36e0fa4402a64c5c1cd7cee8bfbf4a5f762",
         "type": "github"
       },
       "original": {
