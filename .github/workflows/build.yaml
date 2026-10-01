@@ -18,6 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-26.04, ubuntu-26.04-arm, macos-26]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - name: Install Nix
         uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
