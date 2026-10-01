@@ -873,11 +873,11 @@
     "llama": {
       "flake": false,
       "locked": {
-        "lastModified": 1790362455,
-        "narHash": "sha256-ViQKbrf/A/Wc/AN3/6oqDzbo3jHXKMBcYh7XhO19/CA=",
+        "lastModified": 1790869090,
+        "narHash": "sha256-QZRnjpPqyN80JOjwu3g3isj1jgQy8GJmrvNCQMwiPIY=",
         "owner": "tarsius",
         "repo": "llama",
-        "rev": "8e4aeb81824a1d08e183220258fdfad1a0e03ada",
+        "rev": "6850d0c91b629da14fdff2300c222289d1a0029a",
         "type": "github"
       },
       "original": {
