@@ -173,6 +173,7 @@
                 lib.attrValues topLevel.config.hosts
               )) inputs'.my-emacs.checks
               // {
+                devShell = config.devShells.default;
                 option-naming = pkgs.callPackage ./checks/option-naming.nix {
                   systems = [
                     self.darwinConfigurations.athena
