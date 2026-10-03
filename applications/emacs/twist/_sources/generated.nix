@@ -44,14 +44,14 @@
   };
   nongnu-elpa = {
     pname = "nongnu-elpa";
-    version = "81c81ac6695e6732344061ac3a041a416c9f6fcb";
+    version = "9d843abdf81662e45ff010398209524064e6814c";
     src = fetchFromGitHub {
       owner = "elpa-mirrors";
       repo = "nongnu";
-      rev = "81c81ac6695e6732344061ac3a041a416c9f6fcb";
+      rev = "9d843abdf81662e45ff010398209524064e6814c";
       fetchSubmodules = false;
-      sha256 = "sha256-dg6iZ+zVRyEOvS71vR/jay6+10HCI6qob1XUchk+m+U=";
+      sha256 = "sha256-wYD6eJoAiN+h+gesksyJQdC2DudeMx2xFOLu6Wr+Ogk=";
     };
-    date = "2026-10-01";
+    date = "2026-10-03";
   };
 }
