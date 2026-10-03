@@ -1,11 +1,9 @@
 {
-  config,
   lib,
   pkgs,
   ...
 }:
 let
-  ghostty = lib.getExe config.programs.ghostty.package;
   fuzzel = lib.getExe pkgs.fuzzel;
   brightnessctl = lib.getExe pkgs.brightnessctl;
 in
@@ -31,8 +29,6 @@ in
     binds {
         Mod+Shift+Slash { show-hotkey-overlay; }
 
-        Mod+T hotkey-overlay-title="Open a Terminal: ghostty" { spawn "${ghostty}"; }
-        Mod+E hotkey-overlay-title="Open Emacs" { spawn "emacsclient" "-c"; }
         Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "${fuzzel}"; }
 
         Mod+O repeat=false { toggle-overview; }
