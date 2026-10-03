@@ -1,0 +1,2 @@
+(warashi-quick-input :fetcher github
+                     :repo "Warashi/configurations")

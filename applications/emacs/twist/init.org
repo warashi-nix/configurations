@@ -228,6 +228,15 @@ sekken が壊れたときの退路として残してある。C-u C-\ で入る�
   (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
+** quick-input
+他のアプリへ渡す日本語を sekken で書く。.quick-input のファイルを開くと入力
+メソッドが有効になり、C-c C-c で確定、C-c C-k で中断する。ファイルを用意して
+クリップボードへ渡すのは、呼び出す側のスクリプトが受け持つ。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-quick-input))
+#+end_src
+
 ** puni
 #+begin_src emacs-lisp
 (setup (:package puni)
