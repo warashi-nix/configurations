@@ -5,6 +5,9 @@
     keyboards.default = {
       ids = [ "*" ];
       settings = {
+        # 押したまま考えて何も打たずに離したときに Esc などが出ないよう、
+        # karabiner の to_if_alone の既定と同じく 1 秒を超えた単押しは捨てる。
+        global.overload_tap_timeout = 1000;
         main = {
           tab = "overload(meh, tab)";
           space = "overload(shift, space)";
