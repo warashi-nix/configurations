@@ -49,7 +49,8 @@
           };
         in
         rec {
-          emacsPackage = pkgs.emacs31;
+          # Linux の GUI は XWayland を持たない Wayland compositor で使うため pgtk にする。
+          emacsPackage = if pkgs.stdenv.hostPlatform.isLinux then pkgs.emacs31-pgtk else pkgs.emacs31;
           lockDir = ./lock;
           extraRecipeDir = ./recipes;
           localPackages = [
