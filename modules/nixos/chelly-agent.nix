@@ -108,7 +108,7 @@ let
       esac
       # podman は bind mount の元を作らず statfs で落ちる。clone を remove した後も
       # 起動できるよう、ここで毎回用意する。mode は chelly-handoff create が作る project
-      # ディレクトリと同じで、親の setgid で本人のグループから閲覧できる。
+      # ディレクトリと同じで、親の setgid で chelly-workspaces から閲覧できる。
       [[ -d ${brainiumWorkspace} ]] || mkdir -m 2750 ${brainiumWorkspace}
       runtime_dir="/run/user/$(id -u)"
       if [[ ! -d "$runtime_dir" ]]; then
