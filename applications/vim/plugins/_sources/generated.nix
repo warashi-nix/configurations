@@ -32,15 +32,15 @@
   };
   vim-lsp = {
     pname = "vim-lsp";
-    version = "bbffa60cb08a6a2d67e2086a89699ab00a084fe9";
+    version = "81481196aa69036d6cdf96cd9374d4827a708ba4";
     src = fetchFromGitHub {
       owner = "prabirshrestha";
       repo = "vim-lsp";
-      rev = "bbffa60cb08a6a2d67e2086a89699ab00a084fe9";
+      rev = "81481196aa69036d6cdf96cd9374d4827a708ba4";
       fetchSubmodules = false;
-      sha256 = "sha256-eExLKs0FULF2z3Ox4AsnMxyaFTHy3CL+3tUJOm/v2RE=";
+      sha256 = "sha256-vT82SU78WM95c9DfGQcQ4vhCdJl9yOCMoeLMYQprO/A=";
     };
-    date = "2026-09-02";
+    date = "2026-10-04";
   };
   vim-lsp-settings = {
     pname = "vim-lsp-settings";
