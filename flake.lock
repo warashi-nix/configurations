@@ -430,11 +430,11 @@
         "elisp-helpers": "elisp-helpers"
       },
       "locked": {
-        "lastModified": 1789774681,
-        "narHash": "sha256-ASpxreIZjkUYfPdgeV6NnGzD/VCnq43OKlxcP51tv9w=",
+        "lastModified": 1791070237,
+        "narHash": "sha256-Tk/LNXcQQC7uuhSrbZcvIGRQtX6Ka6VrpsF6XVEi7WA=",
         "owner": "Warashi",
         "repo": "twist.nix",
-        "rev": "fe1ce3016faf6bc5968ddbcb503bfaa15fc97ef0",
+        "rev": "0f05e887086617f64a6f3947a228d74d28017ea9",
         "type": "github"
       },
       "original": {
