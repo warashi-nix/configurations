@@ -82,7 +82,11 @@ workbench のイメージ内ユーザーへ対応させる。作業 clone は親
 専用ユーザーに渡し、`--gidmap=+g988:@988 --group-add=988` でコンテナ内でも同じ gid に
 見せて所属させる。対応が無いとコンテナ内では overflow gid に見え、nixfmt のように
 書き戻し時に元のグループを付け直すツールが失敗する。`--gidmap` は `--userns` と
-併用できないので、keep-id も対応表で書いている。
+併用できないので、keep-id も対応表で書いている。rootless podman は pause プロセスが
+生きている間 `/etc/subgid` の変更を反映せず、専用ユーザーは linger しているので、
+subgid を変えた switch の後は
+`sudo -u chelly-agent env XDG_RUNTIME_DIR=/run/user/$(id -u chelly-agent) podman system migrate`
+(または再起動) で名前空間を作り直してから起動する。
 Claude の設定先は `CLAUDE_CONFIG_DIR=/home/warashi/.claude` として明示する。
 
 ```sh
