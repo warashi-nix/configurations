@@ -6,6 +6,7 @@
 let
   fuzzel = lib.getExe pkgs.fuzzel;
   brightnessctl = lib.getExe pkgs.brightnessctl;
+  wpctl = lib.getExe' pkgs.wireplumber "wpctl";
 in
 {
   # 既定の config.kdl を include しないのは、waybar や swaylock など入れていない
@@ -62,6 +63,10 @@ in
 
         XF86MonBrightnessUp allow-when-locked=true { spawn "${brightnessctl}" "--class=backlight" "set" "+10%"; }
         XF86MonBrightnessDown allow-when-locked=true { spawn "${brightnessctl}" "--class=backlight" "set" "10%-"; }
+
+        XF86AudioRaiseVolume allow-when-locked=true { spawn "${wpctl}" "set-volume" "--limit" "1.0" "@DEFAULT_AUDIO_SINK@" "5%+"; }
+        XF86AudioLowerVolume allow-when-locked=true { spawn "${wpctl}" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
+        XF86AudioMute allow-when-locked=true { spawn "${wpctl}" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
 
         Print { screenshot; }
         Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
