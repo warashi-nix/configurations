@@ -10,6 +10,8 @@ let
   username = "chelly-agent";
   home = "/var/lib/chelly-agent";
   workspaces = "/srv/chelly-workspaces";
+  # 作業領域の既存ファイルが持つ gid と同じ値。変えると既存 clone のグループが外れる。
+  workspacesGid = 988;
   # brainium の handoff clone の親。コンテナ内では本人の CLAUDE.md が指す path に見せる。
   brainiumWorkspace = "${workspaces}/brainium";
   owner = config.warashi.username;
@@ -74,7 +76,13 @@ let
             "--env=CHELLY_AGENT_CONFIG=${agentConfig}"
             "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
             "--env=IS_DEMO=1"
-            "--userns=keep-id:uid=${toString chellyConfig.uid},gid=${toString chellyConfig.gid}"
+            # 作業 clone は親の setgid で chelly-workspaces を持つ。コンテナ内で対応させて
+            # 所属させないと、nixfmt などが書き戻しでグループを付け直せない。
+            # --gidmap は --userns と併用できないので、keep-id 相当も + 記法の対応表で書く。
+            "--uidmap=+u${toString chellyConfig.uid}:0:1"
+            "--gidmap=+g${toString chellyConfig.gid}:0:1"
+            "--gidmap=+g${toString workspacesGid}:@${toString workspacesGid}"
+            "--group-add=${toString workspacesGid}"
           ];
       }
     ];
@@ -199,10 +207,14 @@ in
           startGid = 300000;
           count = 196608;
         }
+        {
+          startGid = workspacesGid;
+          count = 1;
+        }
       ];
     };
     users.groups.${username} = { };
-    users.groups.chelly-workspaces = { };
+    users.groups.chelly-workspaces.gid = workspacesGid;
     users.users.${owner}.extraGroups = [ "chelly-workspaces" ];
     systemd.tmpfiles.rules = [
       "d ${workspaces} 2750 ${username} chelly-workspaces - -"

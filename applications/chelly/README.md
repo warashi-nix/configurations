@@ -76,7 +76,13 @@ launcher は本人から専用ユーザーへの固定 runner だけを sudo で
 runner は実行ユーザー、本人の home にアクセスできないこと、作業場所、
 専用ユーザーの runtime directory を確認し、条件を満たさなければ停止する。
 専用ユーザーには独立した subordinate UID/GID の範囲を割り当て、
-`--userns=keep-id:uid=1000,gid=100` で workbench のイメージ内ユーザーへ対応させる。
+`--uidmap=+u1000:0:1 --gidmap=+g100:0:1` (`keep-id:uid=1000,gid=100` 相当) で
+workbench のイメージ内ユーザーへ対応させる。作業 clone は親の setgid で
+`chelly-workspaces` (gid 988 に固定) を持つので、この gid も 1 個分の subgid として
+専用ユーザーに渡し、`--gidmap=+g988:@988 --group-add=988` でコンテナ内でも同じ gid に
+見せて所属させる。対応が無いとコンテナ内では overflow gid に見え、nixfmt のように
+書き戻し時に元のグループを付け直すツールが失敗する。`--gidmap` は `--userns` と
+併用できないので、keep-id も対応表で書いている。
 Claude の設定先は `CLAUDE_CONFIG_DIR=/home/warashi/.claude` として明示する。
 
 ```sh
@@ -129,7 +135,8 @@ main の先端に合わせ直す。update は未取得の commit や未コミッ
 ホストでの受け入れ確認では、専用ユーザーが本人の home に入れないこと、
 外側の Podman が rootless であること、コンテナ内の `nix store info --json` が
 `"trusted":false` を返すこと、複数作業で store・cache を共用できること、
-入れ子の Podman が動くことを確認する。runner と設定の回帰チェックは
+入れ子の Podman が動くこと、作業 clone のファイルがコンテナ内で gid 988 に見え
+`id` に 988 が含まれ、`nix fmt` が書き戻せることを確認する。runner と設定の回帰チェックは
 `nix build .#checks.aarch64-linux.chelly-agent-config` で実行するが、実機確認の代わりではない。
 
 既存ユーザーの Podman image・volume は移動・削除しない。新しい専用 storage での

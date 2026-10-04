@@ -8,6 +8,7 @@ let
   workbench = workbenchSystem.config;
   agent = workbench.users.users.chelly-agent or { };
   owner = workbench.users.users.warashi;
+  workspacesGid = workbench.users.groups.chelly-workspaces.gid;
   runnerRules = lib.filter (rule: rule.runAs == "chelly-agent") workbench.security.sudo.extraRules;
   runnerCommand = (lib.head (lib.head runnerRules).commands).command;
   ownerHome = workbench.home-manager.users.warashi;
@@ -119,6 +120,9 @@ let
     };
     test-agent-has-independent-subordinate-gids = {
       expr =
+        let
+          ranges = lib.filter (range: range.startGid != workspacesGid) (agent.subGidRanges or [ ]);
+        in
         lib.all (
           range:
           range.count >= 196608
@@ -126,9 +130,23 @@ let
             other:
             range.startGid + range.count <= other.startGid || other.startGid + other.count <= range.startGid
           ) owner.subGidRanges
-        ) (agent.subGidRanges or [ ])
-        && (agent.subGidRanges or [ ]) != [ ];
+        ) ranges
+        && ranges != [ ];
       expected = true;
+    };
+    # 作業領域のグループをコンテナへ対応させるには、newgidmap が許す subgid に含まれている必要がある。
+    test-agent-can-map-workspaces-group = {
+      expr = lib.filter (range: range.startGid == workspacesGid) (agent.subGidRanges or [ ]);
+      expected = [
+        {
+          startGid = workspacesGid;
+          count = 1;
+        }
+      ];
+    };
+    test-workspaces-group-keeps-allocated-gid = {
+      expr = workspacesGid;
+      expected = 988;
     };
     test-agent-can-use-untrusted-proxy = {
       expr = workbench.systemd.sockets.chelly-nix-proxy.socketConfig.SocketGroup or null;
@@ -202,8 +220,13 @@ runCommand "chelly-agent-config-check"
     assert config["inherit_env"] == ["COLORTERM", "TERM", "TERM_PROGRAM", "TERM_PROGRAM_VERSION"]
     run = next(item["args"] for item in config["runtime_options"]
                if item["runtime"] == "podman" and item["subcommand"] == "run")
-    assert "--userns=keep-id:uid=1000,gid=100" in run, run
-    assert "--userns=keep-id" not in run, run
+    # 作業 clone のグループをコンテナ内でも同じ gid に見せ、所属させる。
+    # --gidmap は --userns と併用できないので、keep-id 相当も対応表で渡す。
+    assert not any(arg.startswith("--userns") for arg in run), run
+    assert "--uidmap=+u1000:0:1" in run, run
+    assert "--gidmap=+g100:0:1" in run, run
+    assert "--gidmap=+g988:@988" in run, run
+    assert "--group-add=988" in run, run
     assert "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude" in run, run
     assert "--env=IS_DEMO=1" in run, run
     # 配布 bundle は /nix の read-only mount 越しに store path で渡す。
