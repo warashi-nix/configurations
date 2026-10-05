@@ -1720,11 +1720,11 @@
         "zig": "zig"
       },
       "locked": {
-        "lastModified": 1790983378,
-        "narHash": "sha256-RB1SiCcumk7Y9NkBKJDq/Hg0NLyCmX/TX02EXp7QRco=",
+        "lastModified": 1791143591,
+        "narHash": "sha256-Z0jYkEqGgWoovZWSvQqwUDXzUn79QcG1ybpJG8fMQk0=",
         "owner": "jcollie",
         "repo": "zon2nix",
-        "rev": "d1c869946e98c380ff474c6bd30e2fe2f5110473",
+        "rev": "d5a6545496dfb17878fe23d026e0a880ee9e12c9",
         "type": "github"
       },
       "original": {
