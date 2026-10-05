@@ -18,7 +18,7 @@ in
   xdg.configFile."niri/config.kdl".text = ''
     include "quick-input.kdl"
   '';
-  # athena で vime を呼ぶ skhd の meh+i と同じ指の動きで開けるようにする。
+  # athena で quick-input を呼ぶ skhd の meh+i と同じ指の動きで開けるようにする。
   xdg.configFile."niri/quick-input.kdl".text = ''
     binds {
         Ctrl+Shift+Alt+I hotkey-overlay-title="Write Japanese in Emacs" { spawn "${lib.getExe quickInput}"; }
