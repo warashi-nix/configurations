@@ -26,6 +26,9 @@
   ;; `while-no-input' の中で capf を呼ぶため。call-process の最中に打鍵が
   ;; 来ると中断が quit として扱われ、ベルが鳴って打鍵が捨てられる。
   ;; accept-process-output で待てば、中断は打鍵を残したままの throw になる。
+  ;; corfu は post-command-hook からも capf を呼び、そこでは quit が抑止
+  ;; される。抑止されたまま待つと C-g でも抜けられず警告も出るので、待つ
+  ;; 間だけ with-local-quit で抑止を外す。
   (let ((stdout (generate-new-buffer " *warashi-fish-completion*" t))
         (stderr (generate-new-buffer " *warashi-fish-completion-stderr*" t)))
     (unwind-protect
@@ -37,7 +40,8 @@
                                      :noquery t
                                      :sentinel #'ignore)))
           (unwind-protect
-              (while (accept-process-output process))
+              (with-local-quit
+                (while (accept-process-output process)))
             (delete-process process))
           (with-current-buffer stdout
             (buffer-string)))

@@ -37,6 +37,34 @@
     (should (< (- (float-time) start) 2)))
   (should-not (warashi-fish-completion-test--live-processes)))
 
+(ert-deftest warashi-fish-completion-test-call-with-quit-inhibited-does-not-warn ()
+  "quit が抑止された文脈から呼んでも、ブロッキング待ちの警告を出さない。"
+  (with-current-buffer (messages-buffer)
+    (let ((start (point-max)))
+      ;; corfu は post-command-hook から capf を呼び、そこでは quit が抑止される。
+      (should (equal "out\n"
+                     (let ((inhibit-quit t))
+                       (warashi-fish-completion--call "echo" "out"))))
+      (should-not (string-match-p
+                   "Blocking call to accept-process-output"
+                   (buffer-substring start (point-max)))))))
+
+(ert-deftest warashi-fish-completion-test-call-with-quit-inhibited-is-quittable ()
+  "quit が抑止された文脈から呼んでも、C-g で待ちを抜けられ、プロセスを残さない。"
+  (let ((start (float-time)))
+    ;; 抜けた後の quit は抑止が解けた直後の関数呼び出しで呼び出し元に
+    ;; 伝わるので、ここで受け止める。
+    (condition-case nil
+        (progn
+          (let ((inhibit-quit t))
+            ;; C-g が押されたときに Emacs が立てるのと同じ印を立てる。
+            (setq quit-flag t)
+            (warashi-fish-completion--call "sleep" "5"))
+          (ignore))
+      (quit nil))
+    (should (< (- (float-time) start) 2)))
+  (should-not (warashi-fish-completion-test--live-processes)))
+
 ;;;; 候補の使い回し
 
 (defvar warashi-fish-completion-test--asked nil
