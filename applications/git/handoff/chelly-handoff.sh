@@ -131,6 +131,32 @@ if [ -n "$previous" ] && [ "$previous" != "$branch" ]; then
 fi
 '
 
+# submodule の URL に bundle を置くと protocol.file.allow を緩める必要があるので、
+# submodule の repo を直接 init して bundle を fetch し、absorbgitdirs で .git/modules に移す。
+# 既に初期化済みなら同じ repo に fetch するだけで、元の remote には触れない。
+submodule_script='
+umask 0027
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_LITERAL_PATHSPECS=1
+parent=$1 workspace=$2 path=$3 commit=$4
+case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
+case "$workspace" in *..*) exit 90 ;; esac
+cd "$workspace"
+test "$(git ls-tree --format="%(objecttype) %(objectname)" HEAD -- "$path")" = "commit $commit" || exit 90
+bundle="${workspace}.bundle.$$"
+trap "rm -f -- \"$bundle\"" EXIT
+cat >"$bundle"
+if [ ! -e "$path/.git" ]; then
+  git init --quiet --template= -- "$path"
+fi
+git -C "$path" -c core.hooksPath=/dev/null fetch --quiet --no-tags --recurse-submodules=no "$bundle" refs/chelly-handoff/transfer
+test "$(git -C "$path" rev-parse --verify FETCH_HEAD^{commit})" = "$commit"
+git -C "$path" -c core.hooksPath=/dev/null switch --quiet --detach "$commit"
+git submodule --quiet absorbgitdirs -- "$path"
+test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all)" ||
+  { echo "agent workspace is not clean after updating submodule $path" >&2; exit 1; }
+'
+
 remove_script='
 parent=$1 workspace=$2
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
@@ -160,6 +186,40 @@ repo_paths() {
   bundle="$gitdir/chelly-handoff/$name.bundle"
 }
 
+# COMMIT の gitlink のうち、本人側で初期化済みの submodule を送る対象として集める。
+# 専用 clone を変える前に、送れない submodule が無いことをここで確かめておく。
+collect_submodules() {
+  local entry meta path commit
+  sub_paths=()
+  sub_commits=()
+  while IFS= read -r -d '' entry; do
+    meta=${entry%%$'\t'*}
+    path=${entry#*$'\t'}
+    [[ $meta == "160000 commit "* ]] || continue
+    commit=${meta##* }
+    if [[ ! -e $toplevel/$path/.git ]]; then
+      echo "chelly-handoff: submodule $path is not initialized here; not sent" >&2
+      continue
+    fi
+    git -C "$toplevel/$path" cat-file -e "$commit^{commit}" 2>/dev/null ||
+      fail "submodule $path does not have $commit; run git submodule update first"
+    sub_paths+=("$path")
+    sub_commits+=("$commit")
+  done < <(git ls-tree -r -z "$1")
+}
+
+# bundle は ref が無いと作れないので、本人側の submodule に一時 ref を置いて送り、すぐ消す。
+send_submodule() {
+  local path=$1 commit=$2 repo="$toplevel/$1"
+  git -C "$repo" update-ref refs/chelly-handoff/transfer "$commit"
+  if ! git -C "$repo" bundle create --quiet - refs/chelly-handoff/transfer |
+    agent "$submodule_script" "$workspaces" "$workspace" "$path" "$commit"; then
+    git -C "$repo" update-ref -d refs/chelly-handoff/transfer
+    fail "cannot send submodule $path to $workspace"
+  fi
+  git -C "$repo" update-ref -d refs/chelly-handoff/transfer
+}
+
 create() {
   resolve_name "$1"
   repo_paths
@@ -176,6 +236,7 @@ create() {
   project=${project%.git}
   [[ $project =~ $name_pattern ]] || fail "repository directory name '$project' is not usable under $workspaces"
   workspace="$workspaces/$project/$name"
+  collect_submodules "$base"
   git bundle create --quiet - HEAD |
     agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$name}"
   mkdir -p "$gitdir/chelly-handoff"
@@ -185,6 +246,10 @@ create() {
     git config "remote.$remote.chelly-branch" "$branch"
   fi
   git config "remote.$remote.chelly-workspace" "$workspace"
+  # 途中で失敗しても remove で片付けられるよう、submodule は remote を記録してから送る。
+  for i in "${!sub_paths[@]}"; do
+    send_submodule "${sub_paths[i]}" "${sub_commits[i]}"
+  done
   echo "$workspace"
 }
 

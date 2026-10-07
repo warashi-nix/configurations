@@ -96,6 +96,21 @@ the remote `handoff-NAME` whose URL is a bundle file under
 An existing remote or workspace is rejected without changes. Uncommitted owner
 changes are not transferred.
 
+Submodules, including private ones, reach the agent without credentials:
+`create` bundles the recorded commit of each top-level submodule that is
+initialized in the owner's checkout and sends it separately. The agent side
+initializes the submodule repository directly from the bundle, checks out the
+commit detached, and moves its Git directory under `.git/modules`, so no
+`submodule.*.url` points at a local path and `protocol.file.allow` stays at its
+default. The submodule has no remote. A submodule that is not initialized in
+the owner's checkout is skipped with a warning and stays empty; one that is
+initialized but lacks the recorded commit stops `create` before the workspace
+is made. While a bundle is created, the owner's submodule briefly holds the ref
+`refs/chelly-handoff/transfer`. Nested submodules are not sent, and the agent is
+expected only to read submodules: changes inside one make the workspace
+unclean, so `fetch` refuses them. If sending a submodule fails, run
+`remove --force` and `create` again.
+
 `create` also works from a detached `HEAD`, as in a git-wit worktree. `NAME` is
 then required, the agent workspace starts on a branch named `NAME`, and no
 branch is recorded in `remote.handoff-NAME.chelly-branch`. Such a handoff

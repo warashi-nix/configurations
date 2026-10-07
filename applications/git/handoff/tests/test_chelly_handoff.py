@@ -195,6 +195,33 @@ class HandoffTest(unittest.TestCase):
         self.assertIn(b"NAME", result.stderr)
         self.assertFalse(self.workspace.exists())
 
+    def test_create_delivers_initialized_submodules_without_their_remotes(self):
+        self.add_submodule("deps/sub")
+        self.handoff("create", "fix")
+        submodule = self.workspace / "deps" / "sub"
+        self.assertEqual(self.rev(submodule), self.rev(self.repo / "deps" / "sub"))
+        self.assertEqual(self.git("-C", self.workspace, "status", "--porcelain").stdout, b"")
+        self.assertTrue((self.workspace / ".git" / "modules" / "deps" / "sub").is_dir())
+        self.assertEqual(self.git("-C", submodule, "remote").stdout, b"")
+        # 本人側の submodule には受け渡し用の ref を残さない。
+        self.assertEqual(self.git("-C", self.repo / "deps" / "sub", "for-each-ref", "refs/chelly-handoff/").stdout, b"")
+
+    def test_create_skips_uninitialized_submodules_and_rejects_missing_commits(self):
+        self.add_submodule("sub")
+        self.git("-C", self.repo, "submodule", "deinit", "-q", "sub")
+        result = self.handoff("create", "fix")
+        self.assertIn(b"submodule sub is not initialized", result.stderr)
+        self.assertEqual(list((self.workspace / "sub").iterdir()), [])
+        self.handoff("remove", "fix")
+        self.git("-C", self.repo, "submodule", "update", "-q", "--init")
+        missing = "0" * 39 + "1"
+        self.git("-C", self.repo, "update-index", "--cacheinfo", f"160000,{missing},sub")
+        self.git("-C", self.repo, "commit", "-q", "--no-verify", "-m", "dangling gitlink")
+        result = self.handoff("create", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"git submodule update", result.stderr)
+        self.assertFalse(self.workspace.exists())
+
     def test_detached_worktree_hands_off_and_follows_its_own_head(self):
         # git-wit の worktree は detached HEAD のまま作業し、そこで取り込みも行う。
         worktree = self.root / "wit-1234"
@@ -441,8 +468,8 @@ class HandoffTest(unittest.TestCase):
         # 本人が共有領域で手動 init した submodule は、transport から届かない remote を向いている。
         self.add_submodule("sub")
         self.handoff("create", "fix")
-        self.git("-C", self.workspace, "-c", "protocol.file.allow=always", "submodule", "update", "-q", "--init")
-        self.git("-C", self.workspace / "sub", "remote", "set-url", "origin", self.root / "unreachable")
+        self.git("-C", self.workspace, "submodule", "init", "-q")
+        self.git("-C", self.workspace / "sub", "remote", "add", "origin", self.root / "unreachable")
         owner_tip = self.bump_submodule("sub")
         self.handoff("update", "fix")
         self.assertEqual(self.rev(self.workspace), owner_tip)
