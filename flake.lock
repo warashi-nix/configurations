@@ -905,11 +905,11 @@
     "magit": {
       "flake": false,
       "locked": {
-        "lastModified": 1791176935,
-        "narHash": "sha256-A68Zr1WDnWe0C0JEu2KHEQ+/ye/6ADYocSwzca+D4QY=",
+        "lastModified": 1791396708,
+        "narHash": "sha256-rXdItv9BB214gga4ZexaC16Pl75Qy0qjnJ24iz+wkoY=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "bd9bce524cce1557db37c4e2260b0a7874c1075c",
+        "rev": "49504a982b7d8948da297e1ab515bece4008273d",
         "type": "github"
       },
       "original": {
