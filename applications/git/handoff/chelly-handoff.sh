@@ -46,7 +46,7 @@ agent() {
 
 create_script='
 umask 0027
-export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
 parent=$1 dest=$2 base=$3 branch=$4
 case "$dest" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$dest" in *..*) exit 90 ;; esac
@@ -73,7 +73,7 @@ test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=a
 # bundle の head 名 (refs/heads/… か、detached なら HEAD) は本人側が読んで ref 名を決める。
 fetch_script='
 umask 0077
-export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
 parent=$1 workspace=$2 base=$3
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
@@ -90,7 +90,7 @@ cat "$bundle"
 '
 
 probe_script='
-export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
 parent=$1 workspace=$2
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
@@ -107,7 +107,7 @@ git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all | wc -l
 # 先端が base から動いていないと bundle は作れないので、stdin が空なら先端の存在だけ確かめる。
 update_script='
 umask 0027
-export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
 parent=$1 workspace=$2 branch=$3 tip=$4 source=$5
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
@@ -119,7 +119,7 @@ trap "rm -f -- \"$bundle\"" EXIT
 cat >"$bundle"
 if [ -s "$bundle" ]; then
   git bundle verify --quiet "$bundle"
-  git -c core.hooksPath=/dev/null fetch --quiet --no-tags "$bundle" "$source"
+  git -c core.hooksPath=/dev/null fetch --quiet --no-tags --recurse-submodules=no "$bundle" "$source"
   test "$(git rev-parse --verify FETCH_HEAD^{commit})" = "$tip"
 else
   git cat-file -e "$tip^{commit}"

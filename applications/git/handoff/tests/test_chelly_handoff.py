@@ -105,6 +105,19 @@ class HandoffTest(unittest.TestCase):
             os.close(follower)
             os.close(leader)
 
+    def add_submodule(self, path):
+        upstream = self.root / f"{path}-upstream"
+        self.git("init", "-q", "-b", "main", upstream)
+        self.git("-C", upstream, "commit", "-q", "--allow-empty", "-m", "first")
+        self.git("-C", self.repo, "-c", "protocol.file.allow=always", "submodule", "add", "-q", upstream, path)
+        return self.commit(self.repo, f"add {path}")
+
+    def bump_submodule(self, path):
+        upstream = self.root / f"{path}-upstream"
+        self.git("-C", upstream, "commit", "-q", "--allow-empty", "-m", "next")
+        self.git("-C", self.repo / path, "pull", "-q", "--ff-only")
+        return self.commit(self.repo, f"bump {path}")
+
     def agent_commit(self, name, content, message="agent work"):
         self.write(self.workspace, name, content)
         # ignore 対象を故意に追跡させる場合もあるので、個別に強制追加する。
@@ -423,6 +436,16 @@ class HandoffTest(unittest.TestCase):
         )
         result = self.handoff("update", "fix")
         self.assertIn(b"up to date", result.stdout)
+
+    def test_update_does_not_fetch_submodules_from_their_remotes(self):
+        # 本人が共有領域で手動 init した submodule は、transport から届かない remote を向いている。
+        self.add_submodule("sub")
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "-c", "protocol.file.allow=always", "submodule", "update", "-q", "--init")
+        self.git("-C", self.workspace / "sub", "remote", "set-url", "origin", self.root / "unreachable")
+        owner_tip = self.bump_submodule("sub")
+        self.handoff("update", "fix")
+        self.assertEqual(self.rev(self.workspace), owner_tip)
 
     def test_update_refuses_unfetched_or_uncommitted_agent_work(self):
         self.handoff("create", "fix")
