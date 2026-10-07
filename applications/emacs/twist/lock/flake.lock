@@ -579,11 +579,11 @@
     "org": {
       "flake": false,
       "locked": {
-        "lastModified": 1791128814,
-        "narHash": "sha256-McXNLjBbkVK8fECCwZjQoFSX+sPdVQCroDf5DXnV/tc=",
+        "lastModified": 1791312504,
+        "narHash": "sha256-ynRBQWu24Rr3Y2hw/SIRodo2/BxkS5ikNAFl650FEno=",
         "owner": "bzg",
         "repo": "org-mode",
-        "rev": "f7d225282283923eb41c90c9d03faf91b7abf425",
+        "rev": "685c50de8bcadec47fa32628dd222f5abd6bec15",
         "type": "github"
       },
       "original": {
