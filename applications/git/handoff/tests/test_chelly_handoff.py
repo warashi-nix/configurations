@@ -491,6 +491,20 @@ class HandoffTest(unittest.TestCase):
         self.agent_commit("feature", "done\n")
         self.handoff("fetch", "fix")
 
+    def test_workspace_left_behind_by_a_failed_submodule_send_is_recreated(self):
+        self.add_submodule("sub")
+        self.handoff("create", "fix")
+        owner_tip = self.bump_submodule("sub")
+        # 本体だけ先端に進み、submodule の送信前に止まった状態。
+        self.git("-C", self.workspace, "fetch", "-q", "--recurse-submodules=no", self.repo, "main")
+        self.git("-C", self.workspace, "switch", "-q", "--force", "-C", "main", owner_tip)
+        result = self.handoff("update", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.handoff("remove", "fix", "--force")
+        self.handoff("create", "fix")
+        self.assertEqual(self.rev(self.workspace / "sub"), self.rev(self.repo / "sub"))
+        self.assertEqual(self.git("-C", self.workspace, "status", "--porcelain").stdout, b"")
+
     def test_update_refuses_unfetched_or_uncommitted_agent_work(self):
         self.handoff("create", "fix")
         self.agent_commit("feature", "done\n")
