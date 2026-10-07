@@ -474,6 +474,23 @@ class HandoffTest(unittest.TestCase):
         self.handoff("update", "fix")
         self.assertEqual(self.rev(self.workspace), owner_tip)
 
+    def test_update_moves_submodules_to_the_recorded_commits(self):
+        self.add_submodule("one")
+        self.add_submodule("two")
+        self.handoff("create", "fix")
+        self.bump_submodule("one")
+        self.bump_submodule("two")
+        self.add_submodule("three")
+        owner_tip = self.rev(self.repo)
+        self.handoff("update", "fix")
+        self.assertEqual(self.rev(self.workspace), owner_tip)
+        for path in ("one", "two", "three"):
+            self.assertEqual(self.rev(self.workspace / path), self.rev(self.repo / path))
+        self.assertEqual(self.git("-C", self.workspace, "status", "--porcelain").stdout, b"")
+        # 次の受け渡しが clean な workspace を前提に続けられる。
+        self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+
     def test_update_refuses_unfetched_or_uncommitted_agent_work(self):
         self.handoff("create", "fix")
         self.agent_commit("feature", "done\n")

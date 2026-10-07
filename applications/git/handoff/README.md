@@ -145,6 +145,14 @@ already on the recorded branch at the tip. The owner's checked-out branch does
 not matter; the recorded branch is sent. Without a recorded branch, the `HEAD`
 of the checkout where `update` runs is sent and the workspace is put back on
 the branch `NAME`.
+`update` then sends every submodule whose recorded commit differs from the
+base, in the same way as `create`, including submodules added since the base. A
+submodule already initialized in the workspace, even by hand with a remote that
+the transport cannot reach, receives the commit from the bundle and its remote
+is never contacted. Each such submodule is sent as a full bundle. A submodule
+removed by the new tip is left behind as an untracked directory. If sending
+fails after the workspace has moved, the workspace is left unclean; run
+`remove --force` and `create` again.
 
 `remove` deletes the agent workspace, the remote, its remote-tracking refs, and
 the bundle. Without `--force` it refuses when the workspace has uncommitted

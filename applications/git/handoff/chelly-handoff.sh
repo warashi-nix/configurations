@@ -153,8 +153,8 @@ git -C "$path" -c core.hooksPath=/dev/null fetch --quiet --no-tags --recurse-sub
 test "$(git -C "$path" rev-parse --verify FETCH_HEAD^{commit})" = "$commit"
 git -C "$path" -c core.hooksPath=/dev/null switch --quiet --detach "$commit"
 git submodule --quiet absorbgitdirs -- "$path"
-test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all)" ||
-  { echo "agent workspace is not clean after updating submodule $path" >&2; exit 1; }
+test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all -- "$path")" ||
+  { echo "submodule $path is not clean after checkout" >&2; exit 1; }
 '
 
 remove_script='
@@ -328,12 +328,23 @@ update() {
     echo "$remote is up to date at $(git rev-parse --short "$tip")"
     return
   fi
+  # 専用 clone の submodule は base の gitlink に揃っているので、gitlink が変わったものだけ送る。
+  collect_submodules "$tip"
+  local changed_paths=() changed_commits=()
+  for i in "${!sub_paths[@]}"; do
+    [[ $(git rev-parse --verify --quiet "$base:${sub_paths[i]}") == "${sub_commits[i]}" ]] && continue
+    changed_paths+=("${sub_paths[i]}")
+    changed_commits+=("${sub_commits[i]}")
+  done
   if [[ $base == "$tip" ]]; then
     agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source" </dev/null
   else
     git bundle create --quiet - "^$base" "$source" |
       agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source"
   fi
+  for i in "${!changed_paths[@]}"; do
+    send_submodule "${changed_paths[i]}" "${changed_commits[i]}"
+  done
   git config "remote.$remote.chelly-base" "$tip"
   git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
   rm -f -- "$bundle" "$bundle.tmp"
