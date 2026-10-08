@@ -171,10 +171,13 @@ class HandoffTest(unittest.TestCase):
         )
         self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / "other" / "main"))
         self.assertTrue((self.agent_root / "source" / "main").is_dir())
+        # '/' を含む branch 名も、path に使える ID に置き換えて名前にする。
         self.git("-C", self.repo, "switch", "-q", "-c", "feature/x")
-        result = self.handoff("create", check=False)
-        self.assertEqual(result.returncode, 1)
-        self.assertIn(b"NAME", result.stderr)
+        result = self.handoff("create")
+        self.assertEqual(
+            result.stdout.decode().strip(),
+            str(self.agent_root / "source" / ("x-" + b"feature/x".hex())),
+        )
 
     def test_create_from_linked_worktree_scopes_by_repository_name(self):
         # git-wit などの worktree はディレクトリ名が repo 名と無関係な ID になる。
@@ -184,11 +187,41 @@ class HandoffTest(unittest.TestCase):
         self.assertEqual(result.stdout.decode().strip(), str(self.workspace))
         self.assertEqual(self.rev(self.workspace), self.base)
 
-    def test_create_rejects_bad_names_and_unnamed_detached_head(self):
-        for name in ("-x", "a/b", "a b", "..", ".hidden"):
+    def test_name_outside_the_ascii_rule_is_handed_off_under_a_hex_id(self):
+        name = "ログイン 修正"
+        workspace = self.agent_root / "source" / ("x-" + name.encode().hex())
+        result = self.handoff("create", name)
+        self.assertEqual(result.stdout.decode().strip(), str(workspace))
+        remote = "handoff-x-" + name.encode().hex()
+        self.assertEqual(
+            self.git("-C", self.repo, "config", f"remote.{remote}.chelly-workspace").stdout.decode().strip(),
+            str(workspace),
+        )
+        self.handoff("update", name)
+        self.write(workspace, "feature", "done\n")
+        self.commit(workspace, "agent work")
+        self.handoff("fetch", name)
+        self.assertEqual(self.rev(self.repo, f"refs/remotes/{remote}/main"), self.rev(workspace))
+        self.handoff("remove", name, "--force")
+        self.assertFalse(workspace.exists())
+        self.assertEqual(self.git("-C", self.repo, "remote").stdout, b"")
+
+    def test_names_that_would_be_unsafe_as_paths_or_refs_get_hex_ids(self):
+        # 先頭の記号、'/'、ref に使えない並び、ID の接頭辞と紛れる名前は、そのまま使わない。
+        for name in ("-x", "a/b", "a..b", ".hidden", "x-foo", "a.lock"):
+            result = self.handoff("create", name)
+            self.assertEqual(
+                result.stdout.decode().strip(),
+                str(self.agent_root / "source" / ("x-" + name.encode().hex())),
+                name,
+            )
+
+    def test_create_rejects_unusable_names_and_unnamed_detached_head(self):
+        for name in ("a\tb", "a\nb", "あ" * 34):
             result = self.handoff("create", name, check=False)
-            self.assertNotEqual(result.returncode, 0, name)
-        self.assertFalse(self.workspace.exists())
+            self.assertEqual(result.returncode, 1, name)
+            self.assertIn(b"NAME", result.stderr, name)
+        self.assertEqual(list(self.agent_root.iterdir()), [])
         self.git("-C", self.repo, "switch", "-q", "--detach")
         result = self.handoff("create", check=False)
         self.assertEqual(result.returncode, 1)

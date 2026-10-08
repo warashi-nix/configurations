@@ -68,8 +68,8 @@ trusted rule origin, line, and pattern. A successful check prints fixed
 clone owned by the dedicated `chelly-agent` account (on NixOS) or placed in the
 directory shared with the dedicated Podman machine (on macOS). Review and integration are
 ordinary Git operations on a remote-tracking branch, so Magit or any Git client
-can show the diff, cherry-pick the whole `BASE..handoff-NAME/branch` range in
-one step, or merge with the owner's usual signing configuration. The command keeps no state file: the remote `handoff-NAME` in
+can show the diff, cherry-pick the whole `BASE..handoff-ID/branch` range in
+one step, or merge with the owner's usual signing configuration. The command keeps no state file: the remote `handoff-ID` in
 the owner's repository is the only record.
 
 ```console
@@ -81,18 +81,23 @@ chelly-handoff remove [fix-issue-123] [--force]
 ```
 
 `create` bundles the current `HEAD` and lets `chelly-agent` clone it into
-`/srv/chelly-workspaces/PROJECT/NAME` on a branch with the owner's current
+`/srv/chelly-workspaces/PROJECT/ID` on a branch with the owner's current
 branch name, without `origin`, hooks, or the owner's Git configuration.
 `PROJECT` is the name of the owner's repository, taken from its shared Git
 directory rather than the checkout, so a linked worktree such as a git-wit
 worktree uses the repository name, and the same `NAME` can be in use for
 different projects at once. `NAME` defaults to the current
-branch name; pass it explicitly to run several workspaces from one branch or
-when the branch name contains `/`. It starts with an ASCII letter or digit and
-then contains only ASCII letters, digits, `.`, `_`, or `-`. `create` then adds
-the remote `handoff-NAME` whose URL is a bundle file under
+branch name; pass it explicitly to run several workspaces from one branch. It
+may be any text without control characters, such as a git-wit memo in Japanese
+with spaces. The workspace directory, remote, and bundle use `ID` instead:
+`NAME` itself when it starts with an ASCII letter or digit, contains only ASCII
+letters, digits, `.`, `_`, or `-`, is a valid Git ref component, and does not
+start with `x-`; otherwise `x-` followed by the lowercase hex of its UTF-8
+bytes, so paths never carry other symbols and `ID` decodes back to `NAME`.
+`ID` is at most 200 bytes. `create` then adds
+the remote `handoff-ID` whose URL is a bundle file under
 `.git/chelly-handoff/`, and records the fixed base and workspace path in
-`remote.handoff-NAME.chelly-base` and `remote.handoff-NAME.chelly-workspace`.
+`remote.handoff-ID.chelly-base` and `remote.handoff-ID.chelly-workspace`.
 An existing remote or workspace is rejected without changes. Uncommitted owner
 changes are not transferred.
 
@@ -112,18 +117,18 @@ unclean, so `fetch` refuses them. If sending a submodule fails, run
 `remove --force` and `create` again.
 
 `create` also works from a detached `HEAD`, as in a git-wit worktree. `NAME` is
-then required, the agent workspace starts on a branch named `NAME`, and no
-branch is recorded in `remote.handoff-NAME.chelly-branch`. Such a handoff
+then required, the agent workspace starts on a branch named `ID`, and no
+branch is recorded in `remote.handoff-ID.chelly-branch`. Such a handoff
 follows the detached `HEAD` instead of a branch: run `fetch`, integration, and
 `update` from the same worktree.
 
 `fetch` requires the agent workspace to be clean and ahead of the base. It
 follows the agent's `HEAD` rather than a fixed branch, because agent harnesses
 often start a branch before committing: it streams `BASE..HEAD` back as a
-bundle, verifies it, and fetches it into `refs/remotes/handoff-NAME/<branch>`
-named after the agent's current branch, or after the recorded branch (`NAME`
+bundle, verifies it, and fetches it into `refs/remotes/handoff-ID/<branch>`
+named after the agent's current branch, or after the recorded branch (`ID`
 when none is recorded) when the agent's `HEAD` is detached. Remote-tracking refs left from an earlier fetch on
-another branch name are dropped, so `handoff-NAME/` always shows the single
+another branch name are dropped, so `handoff-ID/` always shows the single
 current tip. It finally runs `git-check-new-ignored` with the owner's own Git
 directory as the object repository. The exit status is the checker's, so
 findings return `1` while the fetched ref stays available for inspection.
@@ -138,13 +143,13 @@ integrate first. Integration rewrites commit IDs, so the workspace is not
 rebased but replaced by the owner's tip: the workspace is put back on the
 recorded branch at that tip as if freshly created, a branch the agent had
 started is deleted, the recorded base moves to that tip, and all stale
-remote-tracking refs under `handoff-NAME/` are dropped. This also applies when
+remote-tracking refs under `handoff-ID/` are dropped. This also applies when
 the tip is unchanged, for example after a fast-forward merge that kept the
 agent's commit IDs; `update` reports "up to date" only when the workspace is
 already on the recorded branch at the tip. The owner's checked-out branch does
 not matter; the recorded branch is sent. Without a recorded branch, the `HEAD`
 of the checkout where `update` runs is sent and the workspace is put back on
-the branch `NAME`.
+the branch `ID`.
 `update` then sends every submodule whose recorded commit differs from the
 base, in the same way as `create`, including submodules added since the base. A
 submodule already initialized in the workspace, even by hand with a remote that

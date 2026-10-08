@@ -13,14 +13,15 @@ usage: chelly-handoff create [NAME]
        chelly-handoff update [NAME]
        chelly-handoff remove [NAME] [--force]
 
-create  現在の HEAD から専用領域の <repo 名>/NAME に clone を作り、remote handoff-NAME を追加する
-fetch   専用 clone の HEAD までの commit を remote handoff-NAME に取り込み、新規追跡ファイルを検査する
+create  現在の HEAD から専用領域の <repo 名>/ID に clone を作り、remote handoff-ID を追加する
+fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り込み、新規追跡ファイルを検査する
 update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
         agent が切った branch は消し、create 時の branch に戻す
         detached HEAD から create したときは、update を実行した場所の HEAD に合わせる
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 
 NAME を省略すると現在の branch 名を使う。detached HEAD では NAME が要る。
+ID は NAME が英数字と '.' '_' '-' だけならそのもの、それ以外は x- に UTF-8 の 16 進を続けたもの。
 EOF
   exit 2
 }
@@ -166,24 +167,38 @@ rmdir -- "${workspace%/*}" 2>/dev/null || true
 '
 
 name_pattern='^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
+id_prefix=x-
+id_max_bytes=200
 
-# NAME を省略したら現在の branch 名を使う。専用領域の path になるので '/' は許さない。
+# NAME を省略したら現在の branch 名を使う。
+# ID は専用領域の path、remote 名、bundle 名になる。そのまま使えない NAME は
+# 記号を path に入れないよう 16 進にし、接頭辞で元の NAME に戻せるようにする。
+# 上限は path の 1 要素 (255 bytes) に bundle の一時ファイルの接尾辞が収まる長さ。
 resolve_name() {
   if [[ -n $1 ]]; then
-    [[ $1 =~ $name_pattern ]] ||
-      fail "NAME must start with an ASCII letter or digit and contain only letters, digits, '.', '_' or '-'"
     name=$1
+  else
+    name=$(git symbolic-ref --quiet --short HEAD) || fail "check out a named branch first or pass NAME"
+  fi
+  [[ $name != *[[:cntrl:]]* ]] || fail "NAME must not contain control characters"
+  if [[ $name =~ $name_pattern && $name != "$id_prefix"* ]] &&
+    git check-ref-format "refs/remotes/handoff-$name/HEAD"; then
+    id=$name
     return
   fi
-  name=$(git symbolic-ref --quiet --short HEAD) || fail "check out a named branch first or pass NAME"
-  [[ $name =~ $name_pattern ]] || fail "branch '$name' is not usable as a workspace name; pass NAME"
+  local LC_ALL=C hex='' i
+  for ((i = 0; i < ${#name}; i++)); do
+    printf -v hex '%s%02x' "$hex" "'${name:i:1}"
+  done
+  id=$id_prefix$hex
+  ((${#id} <= id_max_bytes)) || fail "NAME '$name' is too long"
 }
 
 repo_paths() {
   toplevel=$(git rev-parse --show-toplevel) || fail "run inside the owner's repository"
   gitdir=$(git rev-parse --path-format=absolute --git-common-dir)
-  remote="handoff-$name"
-  bundle="$gitdir/chelly-handoff/$name.bundle"
+  remote="handoff-$id"
+  bundle="$gitdir/chelly-handoff/$id.bundle"
 }
 
 # COMMIT の gitlink のうち、本人側で初期化済みの submodule を送る対象として集める。
@@ -235,10 +250,10 @@ create() {
   project=${project##*/}
   project=${project%.git}
   [[ $project =~ $name_pattern ]] || fail "repository directory name '$project' is not usable under $workspaces"
-  workspace="$workspaces/$project/$name"
+  workspace="$workspaces/$project/$id"
   collect_submodules "$base"
   git bundle create --quiet - HEAD |
-    agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$name}"
+    agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$id}"
   mkdir -p "$gitdir/chelly-handoff"
   git remote add "$remote" "$bundle"
   git config "remote.$remote.chelly-base" "$base"
@@ -254,11 +269,11 @@ create() {
 }
 
 # worktree から create した場合も同じ領域を指せるよう、path は remote 設定から読む。
-# detached HEAD から create したときは branch を記録せず、専用 clone の branch は NAME になる。
+# detached HEAD から create したときは branch を記録せず、専用 clone の branch は ID になる。
 recorded_paths() {
   base=$(git config --get "remote.$remote.chelly-base") || fail "remote $remote was not created by chelly-handoff"
   branch=$(git config --get "remote.$remote.chelly-branch") || branch=
-  agent_branch=${branch:-$name}
+  agent_branch=${branch:-$id}
   workspace=$(git config --get "remote.$remote.chelly-workspace")
 }
 
