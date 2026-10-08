@@ -126,13 +126,30 @@ ID は '.' を含んでよく、16 進の ID は元の名前に戻す。"
 (ert-deftest warashi-chelly-handoff-test-create ()
   "create は既定を現在の branch 名にして、読んだ名前で chelly-handoff create を起動する。"
   (warashi-chelly-handoff-test--with-repository nil
-    (cl-letf (((symbol-function 'magit-get-current-branch) (lambda () "feature-x"))
+    (cl-letf (((symbol-function 'warashi-git-wit-memo) (lambda (_) nil))
+              ((symbol-function 'magit-get-current-branch) (lambda () "feature-x"))
               ((symbol-function 'read-string)
                (lambda (_prompt _initial _history default &rest _)
                  (should (equal "feature-x" default))
                  default)))
       (call-interactively #'warashi-chelly-handoff-create))
     (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "create" "feature-x"))
+                   warashi-chelly-handoff-test--started))))
+
+(ert-deftest warashi-chelly-handoff-test-create-defaults-to-wit-memo ()
+  "git-wit の worktree では、branch より worktree の memo を既定にする。"
+  (warashi-chelly-handoff-test--with-repository nil
+    (cl-letf (((symbol-function 'warashi-git-wit-memo)
+               (lambda (directory)
+                 (should (equal warashi-chelly-handoff-test--repository directory))
+                 "ログイン 修正"))
+              ((symbol-function 'magit-get-current-branch) (lambda () "feature-x"))
+              ((symbol-function 'read-string)
+               (lambda (_prompt _initial _history default &rest _)
+                 (should (equal "ログイン 修正" default))
+                 default)))
+      (call-interactively #'warashi-chelly-handoff-create))
+    (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "create" "ログイン 修正"))
                    warashi-chelly-handoff-test--started))))
 
 (ert-deftest warashi-chelly-handoff-test-create-accepts-any-name ()

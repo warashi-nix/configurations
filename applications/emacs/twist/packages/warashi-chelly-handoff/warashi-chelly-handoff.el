@@ -4,7 +4,7 @@
 
 ;; Author: Shinnosuke Sawada-Dazai <shin@warashi.dev>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (magit "4.0") (transient "0.5") (warashi-chelly-workspace "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (magit "4.0") (transient "0.5") (warashi-chelly-workspace "0.1.0") (warashi-git-wit "0.1.0"))
 ;; Keywords: convenience, vc
 
 ;;; Commentary:
@@ -23,6 +23,7 @@
 (require 'magit)
 (require 'transient)
 (require 'warashi-chelly-workspace)
+(require 'warashi-git-wit)
 
 ;;;; handoff 名
 
@@ -122,9 +123,13 @@ ref が一つでなければ範囲は決まらないので nil。"
 ;;;; create と remove
 
 (defun warashi-chelly-handoff-create (name)
-  "現在の HEAD から handoff NAME の専用 clone を作る。移らずにその場に留まる。"
+  "現在の HEAD から handoff NAME の専用 clone を作る。移らずにその場に留まる。
+既定の NAME は、git-wit の worktree ならその memo、それ以外は現在の branch 名。"
   (interactive
-   (let ((default (magit-get-current-branch)))
+   ;; git-wit の worktree は detached なので branch 名が無く、作業の名前は memo にある。
+   (let ((default (or (when-let* ((toplevel (magit-toplevel)))
+                        (warashi-git-wit-memo toplevel))
+                      (magit-get-current-branch))))
      (list (read-string (format-prompt "Create handoff" default) nil nil default))))
   ;; chelly-handoff は空の NAME を省略とみなし、branch 名で作ってしまう。
   (when (string-empty-p name)

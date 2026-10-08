@@ -87,6 +87,23 @@
   (warashi-git-wit-test--with-process "no tab separated line" 0
     (should-error (warashi-git-wit-add "/home/me/repo/" "m") :type 'user-error)))
 
+(ert-deftest warashi-git-wit-test-memo-of-current-worktree ()
+  "memo は DIRECTORY の worktree の memo を返す。"
+  (warashi-git-wit-test--with-process "ログイン 修正\n" 0
+    (should (equal "ログイン 修正" (warashi-git-wit-memo "/home/me/wt/a1b2/")))
+    (should (equal '(("/home/me/wt/a1b2/" "git-wit" "memo"))
+                   warashi-git-wit-test--calls))))
+
+(ert-deftest warashi-git-wit-test-memo-outside-worktree ()
+  "管理外のディレクトリ、空の memo、git-wit を呼べないときは nil。"
+  (warashi-git-wit-test--with-process "Error: run memo: not in a managed worktree" 1
+    (should-not (warashi-git-wit-memo "/home/me/repo/")))
+  (warashi-git-wit-test--with-process "\n" 0
+    (should-not (warashi-git-wit-memo "/home/me/wt/c3d4/")))
+  (cl-letf (((symbol-function 'process-file)
+             (lambda (&rest _) (signal 'file-missing '("git-wit")))))
+    (should-not (warashi-git-wit-memo "/home/me/wt/a1b2/"))))
+
 ;;;; project 名
 
 (defconst warashi-git-wit-test--worktrees

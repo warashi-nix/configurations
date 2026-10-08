@@ -88,6 +88,17 @@
           (user-error "%s add did not report the worktree path: %s"
                       warashi-git-wit-program (string-trim output))))))
 
+(defun warashi-git-wit-memo (directory)
+  "DIRECTORY の worktree の memo を返す。
+管理外のディレクトリ、memo が空のとき、git-wit を呼べないときは nil。"
+  (with-temp-buffer
+    (let* ((default-directory directory)
+           (status (ignore-errors
+                     (process-file warashi-git-wit-program nil t nil "memo")))
+           (memo (string-trim (buffer-string))))
+      (when (and (eql status 0) (not (string-empty-p memo)))
+        memo))))
+
 ;;;; project 名
 
 (defvar warashi-git-wit--project-name-cache (make-hash-table :test #'equal)

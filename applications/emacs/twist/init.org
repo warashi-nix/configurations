@@ -741,7 +741,8 @@ agent を専用 =chelly-agent= で動かす。専用領域に見えて実体が�
 本人の repository の Magit で =@= を押すと、専用 clone との受け渡し
 (=chelly-handoff=) の transient が開き、create・fetch・update・remove を選べる。
 =magit-dispatch= にも並ぶ。handoff 名はその repository の remote から選び、一つしか
-無ければ聞かない。create は作るだけでその場に留まり、作ってそこへ移るなら
+無ければ聞かない。create の名前は git-wit の worktree ならその memo、それ以外は
+branch 名が既定になり、日本語や空白も使える。create は作るだけでその場に留まり、作ってそこへ移るなら
 =C-x p p= を使う。remove は確認してから走り、=-f= で未取得の作業も捨てる。受け取りの後は
 その範囲の log が開くので、そのまま region を選んで =A A= で取り込める。
 新規追跡ファイルの検査で引っかかった場合も ref は受け取り済みなので log を開き、
