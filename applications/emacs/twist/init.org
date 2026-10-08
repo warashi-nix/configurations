@@ -754,6 +754,20 @@ branch 名が既定になり、日本語や空白も使える。create は作る
     (warashi-chelly-handoff-install)))
 #+end_src
 
+*** 同じ repository の作業場所へ移る
+本人の checkout や git-wit の worktree の Magit で =&= を押すと、=C-x p p= の後段と
+同じ prompt でその repository の作業場所 (checkout、worktree、専用 clone) を選び、
+移った先の eshell が開く。=magit-dispatch= にも並ぶ。専用 clone は本人ユーザーの
+Magit では開けないので、どこへ移っても同じ動作になるよう eshell にしている。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-project-workspace)
+  (with-eval-after-load 'magit
+    (keymap-set magit-mode-map "&" #'warashi-project-workspace-eshell)
+    (transient-append-suffix 'magit-dispatch "!"
+      '("&" "Workspace eshell" warashi-project-workspace-eshell))))
+#+end_src
+
 ** compile
 #+begin_src emacs-lisp
 (setup compile

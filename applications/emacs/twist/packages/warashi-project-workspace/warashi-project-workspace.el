@@ -21,6 +21,11 @@
 ;;
 ;; git-wit の worktree は repository ごとの metadata にしか載らないので、
 ;; 全 repository を一つの一覧にはせず、repository を選んでから列挙する。
+;;
+;; `warashi-project-workspace-eshell' は、今いる checkout か git-wit の
+;; worktree の repository から同じ prompt で選び、移った先の eshell を開く。
+;; Magit から呼ぶための入口で、移る先が専用 clone でも同じ動作にするため、
+;; 本人ユーザーでは開けない Magit ではなく eshell にしている。
 
 ;;; Code:
 
@@ -140,19 +145,53 @@ ANNOTATION は候補の右に出す補足。"
 
 ;;;; 切り替え
 
+(defun warashi-project-workspace--select (repository)
+  "REPOSITORY の作業場所を選び、そのディレクトリを返す。
+候補に無い名前なら、その名前で worktree か専用 clone を作る。"
+  (let* ((repository (file-name-as-directory (expand-file-name repository)))
+         (workspace (warashi-project-workspace--read repository)))
+    (if (eq (plist-get workspace :kind) 'new)
+        (warashi-project-workspace--create repository (plist-get workspace :name))
+      (plist-get workspace :directory))))
+
 ;;;###autoload
 (defun warashi-project-workspace-switch (repository)
   "REPOSITORY の作業場所を選び、project として切り替える。
 候補に無い名前を打てば、その名前で worktree か専用 clone を作って移る。
 `consult-ghq-switch-project-function' に設定して使う。"
   (interactive (list (project-root (project-current t))))
-  (let* ((repository (file-name-as-directory (expand-file-name repository)))
-         (workspace (warashi-project-workspace--read repository))
-         (directory (if (eq (plist-get workspace :kind) 'new)
-                        (warashi-project-workspace--create
-                         repository (plist-get workspace :name))
-                      (plist-get workspace :directory))))
-    (project-switch-project directory)))
+  (project-switch-project (warashi-project-workspace--select repository)))
+
+;;;; checkout や worktree の中から
+
+(defun warashi-project-workspace--repository-in (git-common-dir)
+  "GIT-COMMON-DIR (git rev-parse --git-common-dir の出力) から本人の checkout を返す。
+bare repository のように checkout が無ければ nil。"
+  (let ((directory (directory-file-name git-common-dir)))
+    (when (equal ".git" (file-name-nondirectory directory))
+      (file-name-directory directory))))
+
+(defun warashi-project-workspace--repository (directory)
+  "DIRECTORY の属する本人の checkout を返す。git-wit の worktree の中からでも同じ。"
+  ;; worktree の toplevel は ID のディレクトリで、そこを起点にすると専用 clone
+  ;; の置き場 (repo 名) も本人の checkout の候補も引けない。
+  (with-temp-buffer
+    (let* ((default-directory directory)
+           (status (ignore-errors
+                     (process-file "git" nil t nil "rev-parse"
+                                   "--path-format=absolute" "--git-common-dir"))))
+      (or (and (eql status 0)
+               (warashi-project-workspace--repository-in (string-trim (buffer-string))))
+          (user-error "Not inside a Git checkout")))))
+
+;;;###autoload
+(defun warashi-project-workspace-eshell (repository)
+  "REPOSITORY の作業場所を選び、その project の eshell を開く。
+対話的には、今いる checkout か git-wit の worktree の repository を使う。
+候補に無い名前を打てば、その名前で worktree か専用 clone を作って移る。"
+  (interactive (list (warashi-project-workspace--repository default-directory)))
+  (let ((project-switch-commands #'project-eshell))
+    (project-switch-project (warashi-project-workspace--select repository))))
 
 (provide 'warashi-project-workspace)
 ;;; warashi-project-workspace.el ends here

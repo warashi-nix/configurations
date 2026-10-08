@@ -191,5 +191,65 @@ SELECTOR は候補リストを受け取り、候補か入力文字列を返す�
                     :type 'user-error)
       (should-not switched))))
 
+;;;; checkout や worktree の中から
+
+(ert-deftest warashi-project-workspace-test-repository-from-common-dir ()
+  "本人の checkout は git の共有ディレクトリの親で、worktree の中からでも同じになる。"
+  (should (equal "/home/me/ghq/github.com/Warashi/configurations/"
+                 (warashi-project-workspace--repository-in
+                  "/home/me/ghq/github.com/Warashi/configurations/.git")))
+  (should (equal "/home/me/ghq/github.com/Warashi/configurations/"
+                 (warashi-project-workspace--repository-in
+                  "/home/me/ghq/github.com/Warashi/configurations/.git/")))
+  ;; bare repository には checkout が無い。
+  (should-not (warashi-project-workspace--repository-in "/home/me/repo.git"))
+  (should-not (warashi-project-workspace--repository-in "")))
+
+(ert-deftest warashi-project-workspace-test-repository-runs-git-in-directory ()
+  "共有ディレクトリは対象のディレクトリの中で git に聞く。git の外では user-error。"
+  (let (called)
+    (cl-letf (((symbol-function 'process-file)
+               (lambda (program _infile _destination _display &rest args)
+                 (setq called (cons default-directory (cons program args)))
+                 (insert "/home/me/ghq/github.com/Warashi/configurations/.git\n")
+                 0)))
+      (should (equal "/home/me/ghq/github.com/Warashi/configurations/"
+                     (warashi-project-workspace--repository "/home/me/wt/a1b2/")))
+      (should (equal '("/home/me/wt/a1b2/" "git" "rev-parse" "--path-format=absolute"
+                       "--git-common-dir")
+                     called))))
+  (cl-letf (((symbol-function 'process-file)
+             (lambda (&rest _) (insert "fatal: not a git repository") 128)))
+    (should-error (warashi-project-workspace--repository "/home/me/") :type 'user-error)))
+
+(ert-deftest warashi-project-workspace-test-eshell-opens-selected-workspace ()
+  "eshell は今いる checkout か worktree の repository から作業場所を選び、
+その project の eshell を開く。"
+  (warashi-project-workspace-test--with-sources
+    (let ((command nil))
+      (warashi-project-workspace-test--with-selection (lambda (candidates) (nth 3 candidates))
+        (cl-letf (((symbol-function 'warashi-project-workspace--repository)
+                   (lambda (directory)
+                     (should (equal "/home/me/wt/a1b2/" directory))
+                     (concat warashi-project-workspace-test--repository "/")))
+                  ((symbol-function 'project-switch-project)
+                   (lambda (directory)
+                     (setq switched directory
+                           command project-switch-commands))))
+          (let ((default-directory "/home/me/wt/a1b2/"))
+            (call-interactively #'warashi-project-workspace-eshell))
+          (should (equal "/srv/chelly-workspaces/configurations/main/" switched))
+          (should (eq 'project-eshell command)))))))
+
+(ert-deftest warashi-project-workspace-test-eshell-creates-missing-workspace ()
+  "候補に無い名前なら作ってから、その project の eshell を開く。"
+  (warashi-project-workspace-test--with-sources
+    (cl-letf (((symbol-function 'warashi-chelly-workspace-available-p) (lambda () t))
+              ((symbol-function 'read-multiple-choice)
+               (lambda (&rest _) '(?c "chelly clone"))))
+      (warashi-project-workspace-test--with-selection (lambda (_) "ログイン 修正")
+        (warashi-project-workspace-eshell warashi-project-workspace-test--repository)
+        (should (equal "/srv/chelly-workspaces/configurations/ログイン 修正/" switched))))))
+
 (provide 'warashi-project-workspace-test)
 ;;; warashi-project-workspace-test.el ends here
