@@ -10,8 +10,9 @@
 ;;; Commentary:
 
 ;; chelly-handoff が置く専用 clone の場所と命名規則を、一箇所で持つ。
-;; clone は <root>/<repo 名>/<handoff 名> に置かれ、repo 名は本人の
-;; repository の toplevel の basename になる。
+;; clone は <root>/<repo 名>/<ID> に置かれ、repo 名は本人の
+;; repository の toplevel の basename になる。ID は handoff 名そのものか、
+;; path に使えない名前なら x- に UTF-8 の 16 進を続けたもの。
 ;;
 ;; agentel の専用 runner への振り分けや project の切り替えなど、専用 clone
 ;; を扱う側はここだけを見る。root や命名が変わるときに直す場所を一つにするため。
@@ -23,7 +24,9 @@
 
 ;;; Code:
 
+(require 'hex-util)
 (require 'project)
+(require 'seq)
 (require 'subr-x)
 
 (defgroup warashi-chelly-workspace nil
@@ -44,6 +47,14 @@ NixOS では chelly-agent runner の作業領域、macOS では Podman machine �
   "symlink を解決した root をディレクトリ形式で返す。"
   (file-name-as-directory (file-truename warashi-chelly-workspace-root)))
 
+(defun warashi-chelly-workspace--name (id)
+  "clone のディレクトリ名 ID から handoff 名を返す。"
+  ;; 名前から ID への変換は chelly-handoff だけが持ち、ここは戻す向きだけを持つ。
+  ;; 両側に変換を置くと、path に使える名前の判定がずれたときに別の clone を指す。
+  (if (string-match "\\`x-\\(\\(?:[0-9a-f][0-9a-f]\\)+\\)\\'" id)
+      (decode-coding-string (decode-hex-string (match-string 1 id)) 'utf-8)
+    id))
+
 (defun warashi-chelly-workspace-parse (directory)
   "ローカルの DIRECTORY が専用 clone そのものなら (REPO . NAME) を返す。
 root の 1 段目は repo 名の置き場で clone ではなく、clone の下の
@@ -54,7 +65,7 @@ root の 1 段目は repo 名の置き場で clone ではなく、clone の下�
               ((string-prefix-p root directory))
               (parts (split-string (string-remove-prefix root directory) "/" t))
               ((= 2 (length parts))))
-    (cons (car parts) (cadr parts))))
+    (cons (car parts) (warashi-chelly-workspace--name (cadr parts)))))
 
 ;;;; project 名
 
@@ -101,14 +112,6 @@ handoff 名が同じでも別の名前にするため。"
 chelly-handoff は toplevel の basename を使う。"
   (file-name-nondirectory (directory-file-name repository)))
 
-(defun warashi-chelly-workspace-path (repository name)
-  "本人の REPOSITORY の handoff NAME の clone のディレクトリを返す。"
-  (file-name-as-directory
-   (expand-file-name name
-                     (expand-file-name
-                      (warashi-chelly-workspace--repository-name repository)
-                      warashi-chelly-workspace-root))))
-
 (defun warashi-chelly-workspace-list (repository)
   "本人の REPOSITORY から作られた専用 clone を (NAME . DIRECTORY) で返す。
 専用領域が無いホストでは nil。"
@@ -116,12 +119,21 @@ chelly-handoff は toplevel の basename を使う。"
                  (warashi-chelly-workspace--repository-name repository)
                  warashi-chelly-workspace-root)))
     (when (file-directory-p parent)
-      (mapcar (lambda (name)
-                (cons name (file-name-as-directory (expand-file-name name parent))))
+      (mapcar (lambda (id)
+                (cons (warashi-chelly-workspace--name id)
+                      (file-name-as-directory (expand-file-name id parent))))
               (seq-filter (lambda (name)
                             (and (not (string-prefix-p "." name))
                                  (file-directory-p (expand-file-name name parent))))
                           (directory-files parent))))))
+
+(defun warashi-chelly-workspace--parse-create (output)
+  "OUTPUT (`chelly-handoff create' の出力) から作られた clone のパスを返す。
+最終行がパスで、その前に submodule の警告などが混ざる。"
+  (when-let* ((line (seq-find (lambda (line) (not (string-empty-p line)))
+                              (reverse (split-string output "\n"))))
+              ((file-name-absolute-p line)))
+    (file-name-as-directory line)))
 
 (defun warashi-chelly-workspace-create (repository name)
   "本人の REPOSITORY の HEAD から handoff NAME の専用 clone を作る。
@@ -143,7 +155,12 @@ chelly-handoff は toplevel の basename を使う。"
         (display-buffer buffer)
         (user-error "%s create %s failed (%s)"
                     warashi-chelly-workspace-handoff-program name status))
-      (warashi-chelly-workspace-path repository name))))
+      (or (warashi-chelly-workspace--parse-create
+           (with-current-buffer buffer (buffer-string)))
+          (progn
+            (display-buffer buffer)
+            (user-error "%s create %s did not report the workspace path"
+                        warashi-chelly-workspace-handoff-program name))))))
 
 (provide 'warashi-chelly-workspace)
 ;;; warashi-chelly-workspace.el ends here
