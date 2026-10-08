@@ -27,8 +27,9 @@ in
     window-rule {
         match title="^quick-input$"
         open-floating true
-        default-column-width { fixed 800; }
-        default-window-height { fixed 400; }
+        default-column-width { fixed 600; }
+        default-window-height { fixed 200; }
+        default-floating-position x=16 y=16 relative-to="bottom-right"
     }
   '';
 }
