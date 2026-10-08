@@ -21,7 +21,7 @@ let
 in
 {
   # Alacritty は他に使っていないので、開くとこの入力のウィンドウだけが前に出る。
-  services.skhd.config = ''
+  services.skhd.config = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin ''
     meh - i : open -a Alacritty.app --args --command ${lib.getExe quickInput}
     hyper - i : open -na Alacritty.app --args --command ${lib.getExe quickInput}
   '';
