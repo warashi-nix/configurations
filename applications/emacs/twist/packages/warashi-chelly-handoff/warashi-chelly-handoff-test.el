@@ -18,9 +18,15 @@
 (defconst warashi-chelly-handoff-test--repository "/home/me/ghq/github.com/Warashi/brainium/"
   "本人の repository の toplevel。")
 
+(defconst warashi-chelly-handoff-test--hex-id
+  "x-e383ade382b0e382a4e383b320e4bfaee6ada3"
+  "\"ログイン 修正\" の ID。chelly-handoff が path に使えない名前に付ける。")
+
 (defconst warashi-chelly-handoff-test--config
-  '("remote.handoff-brainium.chelly-base 1111111111111111111111111111111111111111"
-    "remote.handoff-v1.2.chelly-base 2222222222222222222222222222222222222222")
+  `("remote.handoff-brainium.chelly-base 1111111111111111111111111111111111111111"
+    "remote.handoff-v1.2.chelly-base 2222222222222222222222222222222222222222"
+    ,(format "remote.handoff-%s.chelly-base 3333333333333333333333333333333333333333"
+             warashi-chelly-handoff-test--hex-id))
   "`git config --get-regexp' が返す chelly-base の行。")
 
 (defvar warashi-chelly-handoff-test--started nil
@@ -49,8 +55,11 @@ chelly-handoff の起動は `warashi-chelly-handoff-test--started' に積むだ�
 ;;;; handoff 名の列挙
 
 (ert-deftest warashi-chelly-handoff-test-names-from-config ()
-  "chelly-base を持つ remote handoff-NAME の NAME を並べる。NAME は '.' を含んでよい。"
-  (should (equal '("brainium" "v1.2")
+  "chelly-base を持つ remote handoff-ID から (NAME . ID) を並べる。
+ID は '.' を含んでよく、16 進の ID は元の名前に戻す。"
+  (should (equal `(("brainium" . "brainium")
+                   ("v1.2" . "v1.2")
+                   ("ログイン 修正" . ,warashi-chelly-handoff-test--hex-id))
                  (warashi-chelly-handoff--parse-names warashi-chelly-handoff-test--config)))
   (should-not (warashi-chelly-handoff--parse-names nil)))
 
@@ -67,7 +76,8 @@ chelly-handoff の起動は `warashi-chelly-handoff-test--started' に積むだ�
   (warashi-chelly-handoff-test--with-repository warashi-chelly-handoff-test--config
     (cl-letf (((symbol-function 'completing-read)
                (lambda (_prompt collection &optional _predicate require-match &rest _)
-                 (should (equal '("brainium" "v1.2") collection))
+                 (should (equal '("brainium" "v1.2" "ログイン 修正")
+                                (all-completions "" collection)))
                  (should require-match)
                  "v1.2")))
       (should (equal "v1.2" (warashi-chelly-handoff--read-name "Fetch"))))))
@@ -80,14 +90,25 @@ chelly-handoff の起動は `warashi-chelly-handoff-test--started' に積むだ�
 ;;;; fetch と update
 
 (ert-deftest warashi-chelly-handoff-test-fetch-and-update-run-in-toplevel ()
-  "fetch と update は本人の repository の toplevel で chelly-handoff を起動する。"
+  "fetch と update は本人の repository の toplevel で chelly-handoff を名前で起動する。"
   (warashi-chelly-handoff-test--with-repository warashi-chelly-handoff-test--config
     (let ((default-directory (concat warashi-chelly-handoff-test--repository "notes/")))
-      (warashi-chelly-handoff-fetch "brainium")
+      (warashi-chelly-handoff-fetch "ログイン 修正")
       (warashi-chelly-handoff-update "v1.2"))
     (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "update" "v1.2")
-                     (,warashi-chelly-handoff-test--repository "chelly-handoff" "fetch" "brainium"))
+                     (,warashi-chelly-handoff-test--repository "chelly-handoff" "fetch" "ログイン 修正"))
                    warashi-chelly-handoff-test--started))))
+
+(ert-deftest warashi-chelly-handoff-test-fetch-opens-log-of-the-id-remote ()
+  "fetch の後の log は名前ではなく ID の remote handoff-ID から引く。"
+  (let (after-fetch)
+    (warashi-chelly-handoff-test--with-repository warashi-chelly-handoff-test--config
+      (cl-letf (((symbol-function 'warashi-chelly-handoff--start)
+                 (lambda (_args after) (funcall after 0)))
+                ((symbol-function 'warashi-chelly-handoff--after-fetch)
+                 (lambda (id status) (setq after-fetch (list id status)))))
+        (warashi-chelly-handoff-fetch "ログイン 修正")))
+    (should (equal (list warashi-chelly-handoff-test--hex-id 0) after-fetch))))
 
 (ert-deftest warashi-chelly-handoff-test-refuses-without-handoff ()
   "chelly-handoff か専用領域の無いホストとリモートの repository では起動しない。"
@@ -114,22 +135,19 @@ chelly-handoff の起動は `warashi-chelly-handoff-test--started' に積むだ�
     (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "create" "feature-x"))
                    warashi-chelly-handoff-test--started))))
 
-(ert-deftest warashi-chelly-handoff-test-create-default-must-be-usable ()
-  "'/' を含む branch 名は handoff 名にできないので既定にしない。"
+(ert-deftest warashi-chelly-handoff-test-create-accepts-any-name ()
+  "日本語や空白、'/' を含む名前も chelly-handoff に渡す。path に使える形には chelly-handoff が直す。"
   (warashi-chelly-handoff-test--with-repository nil
-    (cl-letf (((symbol-function 'magit-get-current-branch) (lambda () "feat/x"))
-              ((symbol-function 'read-string)
-               (lambda (_prompt _initial _history default &rest _)
-                 (should-not default)
-                 "feat-x")))
-      (call-interactively #'warashi-chelly-handoff-create))
-    (should (equal "feat-x" (car (last (car warashi-chelly-handoff-test--started)))))))
+    (dolist (name '("feat/x" "ログイン 修正"))
+      (warashi-chelly-handoff-create name))
+    (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "create" "ログイン 修正")
+                     (,warashi-chelly-handoff-test--repository "chelly-handoff" "create" "feat/x"))
+                   warashi-chelly-handoff-test--started))))
 
-(ert-deftest warashi-chelly-handoff-test-create-rejects-unusable-name ()
-  "chelly-handoff が受け付けない名前は起動する前に拒否する。"
+(ert-deftest warashi-chelly-handoff-test-create-rejects-empty-name ()
+  "空の名前を渡すと chelly-handoff は branch 名で作ってしまうので、起動する前に拒否する。"
   (warashi-chelly-handoff-test--with-repository nil
-    (dolist (name '("" "feat/x" "-x" ".x" "a b"))
-      (should-error (warashi-chelly-handoff-create name) :type 'user-error))
+    (should-error (warashi-chelly-handoff-create "") :type 'user-error)
     (should-not warashi-chelly-handoff-test--started)))
 
 (ert-deftest warashi-chelly-handoff-test-remove ()

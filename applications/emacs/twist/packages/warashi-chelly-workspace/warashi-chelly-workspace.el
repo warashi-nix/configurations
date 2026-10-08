@@ -47,8 +47,8 @@ NixOS では chelly-agent runner の作業領域、macOS では Podman machine �
   "symlink を解決した root をディレクトリ形式で返す。"
   (file-name-as-directory (file-truename warashi-chelly-workspace-root)))
 
-(defun warashi-chelly-workspace--name (id)
-  "clone のディレクトリ名 ID から handoff 名を返す。"
+(defun warashi-chelly-workspace-name (id)
+  "clone のディレクトリ名や remote handoff-ID の ID から handoff 名を返す。"
   ;; 名前から ID への変換は chelly-handoff だけが持ち、ここは戻す向きだけを持つ。
   ;; 両側に変換を置くと、path に使える名前の判定がずれたときに別の clone を指す。
   (if (string-match "\\`x-\\(\\(?:[0-9a-f][0-9a-f]\\)+\\)\\'" id)
@@ -65,7 +65,7 @@ root の 1 段目は repo 名の置き場で clone ではなく、clone の下�
               ((string-prefix-p root directory))
               (parts (split-string (string-remove-prefix root directory) "/" t))
               ((= 2 (length parts))))
-    (cons (car parts) (warashi-chelly-workspace--name (cadr parts)))))
+    (cons (car parts) (warashi-chelly-workspace-name (cadr parts)))))
 
 ;;;; project 名
 
@@ -120,7 +120,7 @@ chelly-handoff は toplevel の basename を使う。"
                  warashi-chelly-workspace-root)))
     (when (file-directory-p parent)
       (mapcar (lambda (id)
-                (cons (warashi-chelly-workspace--name id)
+                (cons (warashi-chelly-workspace-name id)
                       (file-name-as-directory (expand-file-name id parent))))
               (seq-filter (lambda (name)
                             (and (not (string-prefix-p "." name))

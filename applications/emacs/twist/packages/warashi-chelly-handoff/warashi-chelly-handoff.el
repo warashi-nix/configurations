@@ -14,7 +14,7 @@
 ;; process として走らせ、終わったら Magit の buffer を refresh する。
 ;; fetch の後は受け取った範囲の log を開き、そのまま cherry-pick できる。
 ;;
-;; 状態は chelly-handoff と同じく remote handoff-NAME の設定だけを読む。
+;; 状態は chelly-handoff と同じく remote handoff-ID の設定だけを読む。
 ;; `warashi-chelly-handoff-install' で `magit-dispatch' と Magit の
 ;; buffer の "@" から開けるようにする。
 
@@ -27,21 +27,28 @@
 ;;;; handoff 名
 
 (defun warashi-chelly-handoff--parse-names (lines)
-  "`git config --get-regexp' の LINES から chelly-handoff が作った handoff 名を返す。"
+  "`git config --get-regexp' の LINES から chelly-handoff が作った handoff を返す。
+各要素は (NAME . ID)。remote は handoff-ID で、ID は NAME を path に
+使える形にしたもの。"
   (delq nil
         (mapcar (lambda (line)
                   (when (string-match "\\`remote\\.handoff-\\(.+\\)\\.chelly-base " line)
-                    (match-string 1 line)))
+                    (let ((id (match-string 1 line)))
+                      (cons (warashi-chelly-workspace-name id) id))))
                 lines)))
 
 (defun warashi-chelly-handoff--names ()
-  "現在の repository の handoff 名を返す。"
+  "現在の repository の handoff を (NAME . ID) で返す。"
   (warashi-chelly-handoff--parse-names
    (magit-git-lines "config" "--get-regexp" "^remote\\.handoff-.*\\.chelly-base$")))
 
+(defun warashi-chelly-handoff--id (name)
+  "現在の repository の handoff NAME の ID を返す。見つからなければ NAME。"
+  (or (cdr (assoc name (warashi-chelly-handoff--names))) name))
+
 (defun warashi-chelly-handoff--read-name (verb)
   "VERB の対象にする handoff 名を読む。一つしか無ければ聞かない。"
-  (pcase (warashi-chelly-handoff--names)
+  (pcase (mapcar #'car (warashi-chelly-handoff--names))
     ('nil (user-error "No chelly-handoff workspace in this repository"))
     (`(,name) name)
     (names (completing-read (format "%s handoff: " verb) names nil t))))
@@ -82,12 +89,12 @@ ref が一つでなければ範囲は決まらないので nil。"
   (when (and base refs (null (cdr refs)))
     (format "%s..%s" base (car refs))))
 
-(defun warashi-chelly-handoff--after-fetch (name status)
-  "handoff NAME の fetch が STATUS で終わった後に、受け取った範囲の log を開く。"
+(defun warashi-chelly-handoff--after-fetch (id status)
+  "handoff ID の fetch が STATUS で終わった後に、受け取った範囲の log を開く。"
   ;; 1 は新規追跡ファイルの検査で見つかった場合で、ref は受け取り済み。
   ;; 何が引っかかったかは process buffer にしか出ないので、log と並べて見せる。
   (when (memq status '(0 1))
-    (let* ((remote (concat "handoff-" name))
+    (let* ((remote (concat "handoff-" id))
            (range (warashi-chelly-handoff--log-range
                    (magit-get "remote" remote "chelly-base")
                    (magit-git-lines "for-each-ref" "--format=%(refname:short)"
@@ -100,9 +107,10 @@ ref が一つでなければ範囲は決まらないので nil。"
 (defun warashi-chelly-handoff-fetch (name)
   "専用 clone の handoff NAME の commit を受け取り、その範囲の log を開く。"
   (interactive (list (warashi-chelly-handoff--read-name "Fetch")))
-  (warashi-chelly-handoff--start
-   (list "fetch" name)
-   (lambda (status) (warashi-chelly-handoff--after-fetch name status))))
+  (let ((id (warashi-chelly-handoff--id name)))
+    (warashi-chelly-handoff--start
+     (list "fetch" name)
+     (lambda (status) (warashi-chelly-handoff--after-fetch id status)))))
 
 ;;;; update
 
@@ -113,22 +121,14 @@ ref が一つでなければ範囲は決まらないので nil。"
 
 ;;;; create と remove
 
-(defconst warashi-chelly-handoff--name-pattern
-  "\\`[A-Za-z0-9][A-Za-z0-9._-]\\{0,127\\}\\'"
-  "chelly-handoff が受け付ける handoff 名。専用領域の path になる。")
-
-(defun warashi-chelly-handoff--usable-name-p (name)
-  "NAME を handoff 名に使えるなら非 nil。"
-  (and name (string-match-p warashi-chelly-handoff--name-pattern name)))
-
 (defun warashi-chelly-handoff-create (name)
   "現在の HEAD から handoff NAME の専用 clone を作る。移らずにその場に留まる。"
   (interactive
-   (let* ((branch (magit-get-current-branch))
-          (default (and (warashi-chelly-handoff--usable-name-p branch) branch)))
+   (let ((default (magit-get-current-branch)))
      (list (read-string (format-prompt "Create handoff" default) nil nil default))))
-  (unless (warashi-chelly-handoff--usable-name-p name)
-    (user-error "Handoff name must start with an ASCII letter or digit and contain only letters, digits, '.', '_' or '-'"))
+  ;; chelly-handoff は空の NAME を省略とみなし、branch 名で作ってしまう。
+  (when (string-empty-p name)
+    (user-error "Handoff name must not be empty"))
   (warashi-chelly-handoff--start (list "create" name)))
 
 (defun warashi-chelly-handoff-remove (name args)
