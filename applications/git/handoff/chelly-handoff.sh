@@ -174,7 +174,10 @@ id_max_bytes=200
 # ID は専用領域の path、remote 名、bundle 名になる。そのまま使えない NAME は
 # 記号を path に入れないよう 16 進にし、接頭辞で元の NAME に戻せるようにする。
 # 上限は path の 1 要素 (255 bytes) に bundle の一時ファイルの接尾辞が収まる長さ。
+# 判定も C locale で行う。UTF-8 locale の [A-Za-z] が非 ASCII の文字に一致するかは
+# libc によって違い、一致すると非 ASCII のまま path に入る。
 resolve_name() {
+  local LC_ALL=C hex='' i
   if [[ -n $1 ]]; then
     name=$1
   else
@@ -186,7 +189,6 @@ resolve_name() {
     id=$name
     return
   fi
-  local LC_ALL=C hex='' i
   for ((i = 0; i < ${#name}; i++)); do
     printf -v hex '%s%02x' "$hex" "'${name:i:1}"
   done
