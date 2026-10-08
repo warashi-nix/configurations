@@ -31,15 +31,17 @@ let
     function run() {
       const screen = $.NSScreen.screens.objectAtIndex(0);
       const scale = screen.backingScaleFactor;
+      // winit は渡された位置を、窓を置く画面ではなく mainScreen の拡大率で論理座標に戻す。
+      const positionScale = $.NSScreen.mainScreen.backingScaleFactor;
       const frame = screen.frame;
       const visible = screen.visibleFrame;
       const cellWidth = Math.floor(0.528 * ${toString font.size} * scale + ${toString font.offset.x});
-      const width = 2 * Math.floor(${toString window.padding.x} * scale) + ${toString columns} * cellWidth;
-      const right = (visible.origin.x + visible.size.width - ${toString margin}) * scale;
-      const bottom = (frame.size.height - visible.origin.y - ${toString margin}) * scale;
+      const width = (2 * Math.floor(${toString window.padding.x} * scale) + ${toString columns} * cellWidth) / scale;
+      const right = visible.origin.x + visible.size.width - ${toString margin};
+      const bottom = frame.size.height - visible.origin.y - ${toString margin};
       // winit は内側を 600 の高さで作ってから Alacritty が縮め、AppKit は下端を保って縮めるので、
       // 最終的な高さではなく 600 を引いて上端を決める。
-      return Math.round(right - width) + " " + Math.round(bottom - 600 * scale);
+      return Math.round((right - width) * positionScale) + " " + Math.round((bottom - 600) * positionScale);
     }
   '';
   # skhd から直接 open するのではなく、開く前に主ディスプレイの大きさから位置を決める。
