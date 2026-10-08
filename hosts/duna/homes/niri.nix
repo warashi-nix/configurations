@@ -22,7 +22,7 @@ in
     }
 
     output "eDP-1" {
-        scale 1.5
+        scale 1
     }
 
     prefer-no-csd
