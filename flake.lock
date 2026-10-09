@@ -1697,11 +1697,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791261699,
-        "narHash": "sha256-Y1s36Ny116/8wZNgZj8dOez3qJqA/QpnCfaVs2kuNC8=",
+        "lastModified": 1791501737,
+        "narHash": "sha256-T7MptQ+0iyCHqCxHZr4NEOSj0etiKfZAMdVch7k05i8=",
         "owner": "jcollie",
         "repo": "zon2nix",
-        "rev": "5efe627e5901a73a8b707f797d08f2835ab59ac2",
+        "rev": "07cebfc65ceea14832b6c7246808ab8c11c93cdd",
         "type": "github"
       },
       "original": {
