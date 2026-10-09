@@ -217,6 +217,8 @@ COPY --chmod=0644 <<'EOF' /etc/chelly/AGENTS.md
 - 必要なツール、DB、プロセスの状態は使用前に確認し、会話履歴だけを根拠に存在すると扱わない
 - 繰り返し必要な環境はリポジトリの devShell や既存のセットアップ手順で再現する
 - コンテナが起動しても devShell に入れたとは限らない。期待した環境が無ければ起動時の診断や nix develop で原因を確かめる
+- nix と podman が使える。その場だけ必要なツールは nix shell / nix run で用意できる
+- DB などのサービスが必要なら podman (docker 互換コマンド・podman-compose あり) でコンテナとして起動できる
 EOF
 
 RUN ln -s /etc/chelly/AGENTS.md /etc/claude-code/CLAUDE.md
