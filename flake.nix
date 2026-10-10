@@ -181,6 +181,7 @@
                   ];
                 };
                 git-check-new-ignored = pkgs.callPackage ./applications/git/handoff/package.nix { };
+                require-signed-push = pkgs.callPackage ./applications/git/signed-push/package.nix { };
                 duna-run-or-raise = pkgs.callPackage ./hosts/duna/homes/app-hotkeys/test.nix { };
                 chelly-go-proxy = pkgs.callPackage ./applications/chelly/go-proxy/package.nix { };
                 chelly-go-proxy-config = pkgs.callPackage ./applications/chelly/go-proxy/checks.nix {
