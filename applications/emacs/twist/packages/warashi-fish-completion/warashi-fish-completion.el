@@ -10,7 +10,7 @@
 ;;; Commentary:
 
 ;; fish-completion <https://github.com/LemonBreezes/emacs-fish-completion> を
-;; corfu-auto と組み合わせたときの問題を、advice で補う。
+;; corfu と組み合わせたときの問題を、advice で補う。
 ;;
 ;; `warashi-fish-completion-install-call' を呼ぶと、fish の呼び出しが
 ;; 打鍵で中断されても入力を取り零さなくなる。

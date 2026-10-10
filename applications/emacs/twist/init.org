@@ -824,6 +824,18 @@ Magit では開けないので、どこへ移っても同じ動作になるよ�
   (:after-init spectreshell-eshell-mode))
 #+end_src
 
+eshell では候補の自動表示を止め、TAB で補完する。corfu-auto は候補を
+=while-no-input= の中で集めるので、fish の補完を待つ間に打鍵すると入力が
+消えることがあり、取り零しを防ぐより自動表示を手放す方を選ぶ。
+=corfu-mode= は有効になる時点の =corfu-auto= を見るので、=global-corfu-mode=
+が buffer で有効にするより前に走る mode hook で buffer-local に切る。
+
+#+begin_src emacs-lisp
+(setup eshell
+  (:with-mode eshell-mode
+    (:local-set corfu-auto nil)))
+#+end_src
+
 fish から乗り換えて失われた、実行前にコマンドの存在が分かる手がかりを戻す。
 
 #+begin_src emacs-lisp
@@ -869,9 +881,9 @@ pcomplete は =pcomplete/COMMAND= があると既定関数に降りてこない�
                   #'warashi-fish-completion--find-completion-function))))
 #+end_src
 
-corfu-auto の自動表示と fish の補完を両立させる。fish-completion のままだと、
-候補を待つ間に打鍵すると入力が消えてベルが鳴り、ポップアップが出ている間は
-打鍵のたびに fish が起動して入力が遅れる。
+corfu のポップアップと fish の補完を両立させる。fish-completion のままだと、
+ポップアップが出ている間は打鍵のたびに fish が起動して入力が遅れ、その間は
+C-g でも抜けられない。
 
 #+begin_src emacs-lisp
 (setup (:package warashi-fish-completion)
