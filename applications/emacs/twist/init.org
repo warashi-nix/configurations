@@ -737,6 +737,16 @@ agent を専用 =chelly-agent= で動かす。専用領域に見えて実体が�
                             'append)))
 #+end_src
 
+*** cherry-pick で fast-forward しない
+cherry-pick の既定から =--ff= を外す。fast-forward すると agent が署名無しで作った
+commit がそのまま残り、署名の無い commit を止める pre-push hook に引っかかるので、
+取り込むときに作り直して署名させる。
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'magit-sequence
+  (oset (get 'magit-cherry-pick 'transient--prefix) default-value nil))
+#+end_src
+
 *** 専用 clone との受け渡し
 本人の repository の Magit で =@= を押すと、専用 clone との受け渡し
 (=chelly-handoff=) の transient が開き、create・fetch・update・remove を選べる。
