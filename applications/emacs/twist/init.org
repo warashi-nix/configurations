@@ -743,8 +743,9 @@ commit がそのまま残り、署名の無い commit を止める pre-push hook
 取り込むときに作り直して署名させる。
 
 #+begin_src emacs-lisp
+;; oset はマクロで、byte-compile 時に eieio が無いと slot 名を変数として評価してしまう。
 (with-eval-after-load 'magit-sequence
-  (oset (get 'magit-cherry-pick 'transient--prefix) default-value nil))
+  (eieio-oset (get 'magit-cherry-pick 'transient--prefix) 'default-value nil))
 #+end_src
 
 *** 専用 clone との受け渡し
