@@ -255,9 +255,12 @@ sekken が壊れたときの退路として残してある。C-u C-\ で入る�
 
 ** org
 #+begin_src emacs-lisp
+;; org-mem は org-id が読み込み済みのときだけスキャン結果を org-id-locations
+;; へ同期する。先に読み込まないと、起動直後は ID リンクを辿れない。
 (setup (:package org-mem)
-  (:when-loaded
-    (org-mem-updater-mode 1)))
+  (:after-init (lambda ()
+                 (require 'org-id)
+                 (org-mem-updater-mode 1))))
 
 (setup (:package org-node)
   (:global-keymap "C-c o n" org-node-global-prefix-map)
