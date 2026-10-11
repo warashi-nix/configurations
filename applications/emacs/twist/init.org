@@ -674,14 +674,17 @@ clone を作ったかどうかを覚えていなくても、同じ操作で辿�
 Claude Code と Copilot CLI は agentel で使う。
 
 =C-c a= で session の一覧を開く。どの session が許可や質問の答え待ちで止まって
-いるかを一覧の状態から拾う。
+いるかを一覧の状態から拾う。session の buffer は [[*sekken][sekken]] を最初から有効にして開く。
 
 #+begin_src emacs-lisp
 (setup (:package agentel)
   (:global-keymap "C-c a" #'agentel-list)
   (:opt agentel-command-prefix #'warashi-agentel-command-prefix)
   (:with-hook agentel-chat-mode-hook
-    (:hook agentel-focus-mode)))
+    (:hook agentel-focus-mode)
+    (:hook (lambda ()
+             (when default-input-method
+               (activate-input-method default-input-method))))))
 #+end_src
 
 *** 起動コマンド
