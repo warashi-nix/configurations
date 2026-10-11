@@ -1624,11 +1624,11 @@
     "vertico": {
       "flake": false,
       "locked": {
-        "lastModified": 1789313132,
-        "narHash": "sha256-Xg0yPOYWWYI5dxdY0e+aFHUNL8R+acMc1P+JwHrijGk=",
+        "lastModified": 1791706977,
+        "narHash": "sha256-3m/Jc/mM8b8+3dsILzAiBm/eGqRqLUFQDfU4MEEm1a0=",
         "owner": "minad",
         "repo": "vertico",
-        "rev": "a9998a777f1d92348f84d091bb15b87df933a7a2",
+        "rev": "c60d80215d19b4b36c0ba49599b6815ed35f2ac1",
         "type": "github"
       },
       "original": {
