@@ -8,15 +8,15 @@
 {
   denops-vim = {
     pname = "denops-vim";
-    version = "3cadd47a22eedc0a85d26c3b3ab5087fbfb67c73";
+    version = "56df0b8a980170dec728033f2f7dd1311bab294c";
     src = fetchFromGitHub {
       owner = "vim-denops";
       repo = "denops.vim";
-      rev = "3cadd47a22eedc0a85d26c3b3ab5087fbfb67c73";
+      rev = "56df0b8a980170dec728033f2f7dd1311bab294c";
       fetchSubmodules = false;
-      sha256 = "sha256-MOSIaQraPJTfbFE4DSl7bSVW780DBlS+xIRO0KlAuyE=";
+      sha256 = "sha256-DlEX7+8/RMJjQ11M7nzdsExlQDq3jBQN/Wzfh+NH9eI=";
     };
-    date = "2026-10-12";
+    date = "2026-10-13";
   };
   skkeleton = {
     pname = "skkeleton";

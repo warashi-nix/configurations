@@ -1,7 +1,7 @@
 {
     "denops-vim": {
         "cargoLock": null,
-        "date": "2026-10-12",
+        "date": "2026-10-13",
         "extract": null,
         "name": "denops-vim",
         "passthru": null,
@@ -13,12 +13,12 @@
             "name": null,
             "owner": "vim-denops",
             "repo": "denops.vim",
-            "rev": "3cadd47a22eedc0a85d26c3b3ab5087fbfb67c73",
-            "sha256": "sha256-MOSIaQraPJTfbFE4DSl7bSVW780DBlS+xIRO0KlAuyE=",
+            "rev": "56df0b8a980170dec728033f2f7dd1311bab294c",
+            "sha256": "sha256-DlEX7+8/RMJjQ11M7nzdsExlQDq3jBQN/Wzfh+NH9eI=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "3cadd47a22eedc0a85d26c3b3ab5087fbfb67c73"
+        "version": "56df0b8a980170dec728033f2f7dd1311bab294c"
     },
     "skkeleton": {
         "cargoLock": null,
