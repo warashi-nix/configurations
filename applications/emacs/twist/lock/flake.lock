@@ -451,11 +451,11 @@
     "llm": {
       "flake": false,
       "locked": {
-        "lastModified": 1791762269,
-        "narHash": "sha256-qMCD0vOyr21Wjxo+l/Blqyth+qvypghxAEM4jzoawIw=",
+        "lastModified": 1791924719,
+        "narHash": "sha256-SzbGweTxgSJff3bdfmPDj0LDIm/bh5z/zMxIe6rOaWI=",
         "owner": "ahyatt",
         "repo": "llm",
-        "rev": "721ce311278dbd54120116fbd1bf8edf4daaf9d8",
+        "rev": "21e79e0de52e1f134516b7c92d38e3b18b0a4ba1",
         "type": "github"
       },
       "original": {
