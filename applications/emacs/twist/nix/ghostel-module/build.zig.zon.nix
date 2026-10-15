@@ -68,10 +68,10 @@ let
       url = "https://deps.files.ghostty.org/gettext-0.24.tar.gz";
       hash = "sha256-FBb80LX5WtgB9O32HRhg9g8aQSyOmsFW8qonySSlaO4=";
     };
-    "ghostty-1.3.2-dev-5UdBC1AtcQWmWYtcqSHFSjhTO1jn8jD5dK9rJ_M7awf5" = fetchzip {
+    "ghostty-1.3.2-dev-5UdBC_qIewUDn1YOAhdr9LRbORjQ_zcsVMd8EygTzjWq" = fetchzip {
       name = "ghostty";
-      url = "https://github.com/ghostty-org/ghostty/archive/0c2a290d3a3e2a599be3a43435d778a5896667ee.tar.gz";
-      hash = "sha256-Zkww2/TN0Vkcjl0SyJ/t5tsDjpB4dRnApg7FpOHdjts=";
+      url = "https://github.com/ghostty-org/ghostty/archive/a2e440396403385680008e456a741a7776091412.tar.gz";
+      hash = "sha256-qTO5yOrawaHFtRqMHRE2lYXRT8ghdDqg0dJ2oo0zV0c=";
     };
     "N-V-__8AABzkUgISeKGgXAzgtutgJsZc0-kkeqBBscJgMkvy" = fetchzip {
       name = "glslang";
@@ -104,10 +104,10 @@ let
       url = "https://deps.files.ghostty.org/N-V-__8AAEbOfQBnvcFcCX2W5z7tDaN8vaNZGamEQtNOe0UI.tar.gz";
       hash = "sha256-/jVT7+874LCeSF/pdNVTFoSOfRisSqxCJnt5/SGCXPQ=";
     };
-    "N-V-__8AAEFmBABuDGOKxAI6VMg41b9euMZ-z7HS9EcUdaor" = fetchzip {
+    "N-V-__8AADNBBQDD4MFOa3Y7R_A8PHIeWQ1IZdOiBFZS3nZ7" = fetchzip {
       name = "iterm2_themes";
-      url = "https://deps.files.ghostty.org/ghostty-themes-release-20260831-151010-752a9c0.tgz";
-      hash = "sha256-F858IJ1jMhwkCmpWtTbKr7rYVJ59lmLy/tPQaMPaYxo=";
+      url = "https://deps.files.ghostty.org/ghostty-themes-release-20261005-151109-31756e7.tgz";
+      hash = "sha256-Wg7XrJsQ7wJYPMAN/5EVjA5G2FXTpzhc6O+c9LRUIUU=";
     };
     "N-V-__8AAIC5lwAVPJJzxnCAahSvZTIlG-HhtOvnM1uh-66x" = fetchurl {
       url = "https://deps.files.ghostty.org/JetBrainsMono-2.304.tar.gz";
@@ -162,10 +162,16 @@ let
       url = "https://codeberg.org/vancluever/translate-c/archive/4e879eb8aba615de112eabd1231ea6e01920cead.tar.gz";
       hash = "sha256-/sT7W8Kp+O11xaFBgpb/kDiWzfQ0MuXk/d/TuGq1Am8=";
     };
-    "uucode-0.2.0-ZZjBPlK5VADj7fdoq7G8LIHzD5o6FSkcBXXrRWr4jnrA" = fetchzip {
+    "uucode-0.2.0-ZZjBPlK5VADj7fdoq7G8LIHzD5o6FSkcBXXrRWr4jnrA" = fetchZigGit {
       name = "uucode";
-      url = "https://deps.files.ghostty.org/uucode-2826a37a4562284fdacd8fa029d49509cc9bffcd.tar.gz";
+      url = "https://github.com/jacobsandlund/uucode";
+      rev = "2826a37a4562284fdacd8fa029d49509cc9bffcd";
       hash = "sha256-R5RXW5tWIaDq5JOF2+oWd5YOYOyns6WH7f687WE+b20=";
+    };
+    "uucode-0.2.0-ZZjBPuuFVgC8YZ8eld4fOKsZANLIhTFMzULQxhkLi1C7" = fetchzip {
+      name = "uucode";
+      url = "https://github.com/jacobsandlund/uucode/archive/9d55524551411b493cca41ca06363625d90aff1e.tar.gz";
+      hash = "sha256-KZbp/0dlJc5BdxM19ZOXH74WEjEilTvzie/BjT1aYvw=";
     };
     "vaxis-0.6.0-BWNV_MjFCQCs9UDHiRkrgw_ayeiPkzOe4xVbaAqXkUWW" = fetchZigGit {
       name = "vaxis";
@@ -244,7 +250,7 @@ let
   # `--system` copies each of these into its build root and passes `--fork=`;
   # see the README.
   pathDependencyPackages = [
-    "ghostty-1.3.2-dev-5UdBC1AtcQWmWYtcqSHFSjhTO1jn8jD5dK9rJ_M7awf5"
+    "ghostty-1.3.2-dev-5UdBC_qIewUDn1YOAhdr9LRbORjQ_zcsVMd8EygTzjWq"
   ];
 in
 # One directory holding every package the way Zig unpacks it -- filtered by
