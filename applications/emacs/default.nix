@@ -20,7 +20,7 @@ let
   };
   sekkenLm = pkgs.fetchurl {
     url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/lm.zst";
-    hash = "sha256-ez1+YXPzYWVcI5k4Qz1VvxC53hdRVef3kvl2lpQUv84=";
+    hash = "sha256-+EmWlqqAKcwi/YB0hM7LDbo3E8uleOMynZhqZCDjwV4=";
   };
   sekkenServer = lib.getExe' sekkenPackage "sekken";
 in
