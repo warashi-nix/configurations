@@ -8,14 +8,14 @@
 {
   vim = {
     pname = "vim";
-    version = "02ac80e4fd5bd0483730694d7fb0954566a87949";
+    version = "5a9a0518b153b8571ff4d55c5727b72341080cef";
     src = fetchFromGitHub {
       owner = "vim";
       repo = "vim";
-      rev = "02ac80e4fd5bd0483730694d7fb0954566a87949";
+      rev = "5a9a0518b153b8571ff4d55c5727b72341080cef";
       fetchSubmodules = false;
-      sha256 = "sha256-mSg5I0r23w9WLbokYaU8xi61qHjafbR+bZu98+lm9/I=";
+      sha256 = "sha256-WdFA51aTP6wv+aAlCCONJRxGEpD+n7ZTDes7k04f1fo=";
     };
-    date = "2026-10-14";
+    date = "2026-10-15";
   };
 }
