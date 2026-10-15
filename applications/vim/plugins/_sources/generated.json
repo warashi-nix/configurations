@@ -64,7 +64,7 @@
     },
     "vim-lsp-settings": {
         "cargoLock": null,
-        "date": "2026-10-01",
+        "date": "2026-10-15",
         "extract": null,
         "name": "vim-lsp-settings",
         "passthru": null,
@@ -76,12 +76,12 @@
             "name": null,
             "owner": "mattn",
             "repo": "vim-lsp-settings",
-            "rev": "adbd9698b7cd417d76038487fc9158208c1e8566",
-            "sha256": "sha256-X8Yo3XYFodgpp9R1KFzsyj292iIbY/QPwU4jn/LU7LM=",
+            "rev": "d33977aad57dffe813219ab6dff8e3dbc15a7ba4",
+            "sha256": "sha256-mRDfOjMITxyQmHeXFg7NCaB3RA4KIGQa2QFYItfzvpI=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "adbd9698b7cd417d76038487fc9158208c1e8566"
+        "version": "d33977aad57dffe813219ab6dff8e3dbc15a7ba4"
     },
     "vim-nix": {
         "cargoLock": null,
