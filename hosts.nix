@@ -8,6 +8,10 @@
     duna = {
       system = "x86_64-linux";
     };
+    # home server (GMKtec M6 Ultra)
+    hestia = {
+      system = "x86_64-linux";
+    };
     # remote workbench (OCI A1 Flex)
     workbench = {
       system = "aarch64-linux";
