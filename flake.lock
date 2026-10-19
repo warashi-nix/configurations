@@ -921,11 +921,11 @@
     "magit-section": {
       "flake": false,
       "locked": {
-        "lastModified": 1792310844,
-        "narHash": "sha256-kzbH2HMu0GiZFqYIpaqTNTDHL+MQaImmJXCCePWnNRg=",
+        "lastModified": 1792431800,
+        "narHash": "sha256-7sgMzTBMv42fTen1sPss9JiqSXN4f7hJXoFYu1bQ74Q=",
         "owner": "magit",
         "repo": "magit",
-        "rev": "5616506921afb39933f02ccba2c2f8b769b7efff",
+        "rev": "1760a5281d09c0a79a363915231ccdb7a4c7cb1d",
         "type": "github"
       },
       "original": {
