@@ -1640,11 +1640,11 @@
     "with-editor": {
       "flake": false,
       "locked": {
-        "lastModified": 1792355178,
-        "narHash": "sha256-kiVpVOcBhcBvhsfUJCMQzjq6g61gtRQTUUhtJGklF0k=",
+        "lastModified": 1792509198,
+        "narHash": "sha256-B4dMLLuSapTUOB3NkL5MB4ukN4Mrf7jyMcQzpQiE858=",
         "owner": "magit",
         "repo": "with-editor",
-        "rev": "fd559b37da8eb7afd93bf48db266410b1821dc02",
+        "rev": "4d887efc750b7a69554dbd2d0c79ca447f8f08f3",
         "type": "github"
       },
       "original": {
