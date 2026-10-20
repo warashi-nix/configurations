@@ -16,6 +16,7 @@ in
     inputs.home-manager.darwinModules.home-manager
     inputs.sops-nix.darwinModules.sops
     # keep-sorted end
+    ./sops-key.nix
   ];
 
   options.warashi.darwin = {
