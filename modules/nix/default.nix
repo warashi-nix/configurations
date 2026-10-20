@@ -46,7 +46,10 @@ in
           "nix-command"
           "pipe-operators"
         ];
-        sandbox = if pkgs.stdenv.hostPlatform.isDarwin then "relaxed" else true;
+        # macOS の sandbox はプロファイルが 64KiB を超えると初期化に失敗し、
+        # home-manager の activation のように入力が多い derivation を作れない。
+        # Nix 2.34.9 の分割でも収まらない(NixOS/nix#4119)。
+        sandbox = pkgs.stdenv.hostPlatform.isLinux;
         # flake.nix の nixConfig と同じ内容。untrusted user (chelly コンテナなど) の
         # --accept-flake-config は無視されるため、daemon 側にも持たせる。
         # cache.nixos.org は NixOS / nix-darwin のモジュールが既定で入れるので書かない。
