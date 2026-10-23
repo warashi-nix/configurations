@@ -20,15 +20,15 @@
   };
   gnu-elpa = {
     pname = "gnu-elpa";
-    version = "3218a0ccadc402b98f229963251ec4ed1fb6ce37";
+    version = "2129d367ed03c8e5d6e3cedca1c4224b62d03eb6";
     src = fetchFromGitHub {
       owner = "elpa-mirrors";
       repo = "elpa";
-      rev = "3218a0ccadc402b98f229963251ec4ed1fb6ce37";
+      rev = "2129d367ed03c8e5d6e3cedca1c4224b62d03eb6";
       fetchSubmodules = false;
-      sha256 = "sha256-2tJiaME067UccN0pVkJLWNUCtz55eSc9tvLyczm8btk=";
+      sha256 = "sha256-6+FpcgrScg5uIM+PFfNOK7Da6UTg9GagU+q3JNbJbc8=";
     };
-    date = "2026-10-21";
+    date = "2026-09-22";
   };
   melpa = {
     pname = "melpa";
