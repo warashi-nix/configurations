@@ -32,7 +32,6 @@
     prometheus.scrape "hestia" {
       targets    = prometheus.exporter.unix.hestia.targets
       forward_to = [prometheus.remote_write.grafana_cloud.receiver]
-      job_name   = "hestia"
     }
 
     prometheus.remote_write "grafana_cloud" {
