@@ -47,7 +47,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # (https://github.com/cli/cli/releases/tag/vX.Y.Z) からバージョンを解決する。
 # 一時的に解決できない場合は --build-arg=GH_VERSION=X.Y.Z で固定できる。
 ARG GH_VERSION=""
-RUN mkdir -p /tmp && chmod 0777 /tmp
+# sticky bit が無い world-writable な /tmp だと Claude Code が socket directory を作れず、
+# Cross-session messaging が無効になる。
+RUN mkdir -p /tmp && chmod 1777 /tmp
 WORKDIR /tmp
 RUN set -eu; \
     if [ "${TARGETOS}" != "linux" ]; then \
@@ -347,11 +349,12 @@ RUN mkdir -p /home/warashi/.config/git && \
 
 # Claude CLI インストール
 RUN mkdir -p /home/warashi/.claude /home/warashi/.copilot
-ADD --chmod=0666 https://claude.ai/install.sh /tmp/claude-install.sh
+# sticky bit のある /tmp では root 所有のファイルを warashi が rm できないため、warashi 所有で置く。
+ADD --chown=${UID}:${GID} --chmod=0666 https://claude.ai/install.sh /tmp/claude-install.sh
 RUN bash /tmp/claude-install.sh && rm -f /tmp/claude-install.sh
 
 # Copilot CLI インストール
-ADD --chmod=0666 https://gh.io/copilot-install /tmp/copilot-install.sh
+ADD --chown=${UID}:${GID} --chmod=0666 https://gh.io/copilot-install /tmp/copilot-install.sh
 RUN bash /tmp/copilot-install.sh && rm -f /tmp/copilot-install.sh
 
 # Nix 設定（インストール自体は entrypoint が volume 側の /nix に対して行う）
