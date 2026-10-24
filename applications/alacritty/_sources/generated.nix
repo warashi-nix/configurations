@@ -8,14 +8,14 @@
 {
   alacritty-theme = {
     pname = "alacritty-theme";
-    version = "ab88d5a80d676b5dc6157e91aba8067f2078dc94";
+    version = "a7c1c8b318520e28a7cb3c2e8c5c348931919080";
     src = fetchFromGitHub {
       owner = "alacritty";
       repo = "alacritty-theme";
-      rev = "ab88d5a80d676b5dc6157e91aba8067f2078dc94";
+      rev = "a7c1c8b318520e28a7cb3c2e8c5c348931919080";
       fetchSubmodules = false;
-      sha256 = "sha256-pfpujHc6+shftp+idGOA70NXKR8ASIIbdNb4eMCXb7U=";
+      sha256 = "sha256-qByvzkrsT8qx95o1bvnHF1ssae9JcDj/0VDOcjk5e+w=";
     };
-    date = "2026-09-11";
+    date = "2026-10-24";
   };
 }
