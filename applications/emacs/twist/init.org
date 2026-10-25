@@ -1004,3 +1004,13 @@ git-wit の worktree はディレクトリ名が ID 由来で、並べてもど�
   (unless (server-running-p)
     (server-start)))
 #+end_src
+
+** attach 時の画面構成
+ファイルを渡さず emacsclient でつないだフレームには、前回の attach で最後に見ていた
+タブとウィンドウ分割を戻す。daemon が生きている間だけ覚えている。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-attach-layout)
+  (:after-init tab-bar-mode 1)
+  (:after-init warashi-attach-layout-mode 1))
+#+end_src

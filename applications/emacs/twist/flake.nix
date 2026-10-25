@@ -57,6 +57,7 @@
             "sekken"
             "spectreshell"
             "warashi-agentel"
+            "warashi-attach-layout"
             "warashi-chelly-handoff"
             "warashi-chelly-workspace"
             "warashi-fish-completion"
@@ -71,6 +72,9 @@
           inputOverrides = {
             warashi-agentel = _: _: {
               src = ./packages/warashi-agentel;
+            };
+            warashi-attach-layout = _: _: {
+              src = ./packages/warashi-attach-layout;
             };
             warashi-chelly-handoff = _: _: {
               src = ./packages/warashi-chelly-handoff;
