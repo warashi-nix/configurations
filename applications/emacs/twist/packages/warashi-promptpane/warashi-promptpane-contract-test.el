@@ -68,4 +68,30 @@
       (spectreshell-eshell-mode -1)
       (delete-directory dir t))))
 
+(ert-deftest warashi-promptpane-contract-test-spectreshell-leaves-c-c-letter ()
+  "前面でジョブが動いている間も、C-c に英字を続けたキーは eshell-mode-map に届く。"
+  (let* ((dir (file-name-as-directory (make-temp-file "warashi-promptpane-contract" t)))
+         (marker (expand-file-name "started" dir))
+         (target nil))
+    (unwind-protect
+        (progn
+          (spectreshell-eshell-mode 1)
+          (setq target (let ((default-directory dir)) (eshell t)))
+          (with-current-buffer target
+            (goto-char (point-max))
+            (insert (format "sh -c 'touch %s; exec cat > /dev/null'" (shell-quote-argument marker)))
+            (eshell-send-input)
+            (warashi-promptpane-contract-test--wait-for (lambda () (file-exists-p marker)))
+            (should (eshell-head-process))
+            (should (bound-and-true-p spectreshell-semi-char-mode))
+            (let ((eshell-mode-map (copy-keymap eshell-mode-map)))
+              (keymap-set eshell-mode-map "C-c q" #'ignore)
+              (use-local-map eshell-mode-map)
+              (should (eq #'ignore (key-binding (kbd "C-c q")))))))
+      (when target
+        (let ((kill-buffer-query-functions nil))
+          (kill-buffer target)))
+      (spectreshell-eshell-mode -1)
+      (delete-directory dir t))))
+
 ;;; warashi-promptpane-contract-test.el ends here
