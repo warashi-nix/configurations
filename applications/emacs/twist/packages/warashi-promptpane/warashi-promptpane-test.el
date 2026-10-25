@@ -8,6 +8,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'ert)
 (require 'eshell)
 (require 'warashi-promptpane)
@@ -125,11 +126,93 @@ BODY の中では `target' が送り先のバッファ、`received' が前面の
     (should (eq (current-buffer) target))
     (should-not (warashi-promptpane--buffer target))))
 
+(defun warashi-promptpane-test--send (text)
+  "TEXT を書いて送ったことにする。"
+  (insert text)
+  (cl-letf (((symbol-function 'warashi-promptpane--deliver) #'ignore))
+    (warashi-promptpane-send)))
+
+(ert-deftest warashi-promptpane-test-history-walks-back-and-forth ()
+  "M-p で前に送った内容を新しい順にたどり、M-n で書きかけまで戻る。"
+  (let ((warashi-promptpane-history nil))
+    (warashi-promptpane-test--with-eshell
+      (warashi-promptpane-test--send "一つ目")
+      (warashi-promptpane-test--send "二つ目")
+      (insert "書きかけ")
+      (warashi-promptpane-previous-history)
+      (should (equal (buffer-string) "二つ目"))
+      (warashi-promptpane-previous-history)
+      (should (equal (buffer-string) "一つ目"))
+      (should-error (warashi-promptpane-previous-history) :type 'user-error)
+      (warashi-promptpane-next-history)
+      (should (equal (buffer-string) "二つ目"))
+      (warashi-promptpane-next-history)
+      (should (equal (buffer-string) "書きかけ"))
+      (should-error (warashi-promptpane-next-history) :type 'user-error))))
+
+(ert-deftest warashi-promptpane-test-history-starts-over-after-send ()
+  "送った後に M-p を押すと、いま送った内容から呼び戻す。"
+  (let ((warashi-promptpane-history nil))
+    (warashi-promptpane-test--with-eshell
+      (warashi-promptpane-test--send "一つ目")
+      (warashi-promptpane-test--send "二つ目")
+      (warashi-promptpane-previous-history)
+      (warashi-promptpane-previous-history)
+      (warashi-promptpane-test--send "")
+      (warashi-promptpane-previous-history)
+      (should (equal (buffer-string) "一つ目"))
+      (warashi-promptpane-previous-history)
+      (should (equal (buffer-string) "二つ目")))))
+
+(ert-deftest warashi-promptpane-test-history-is-shared-within-project ()
+  "同じ project の中の eshell なら、別の入力欄でも履歴を共有する。"
+  (let ((warashi-promptpane-history nil)
+        (project (file-name-as-directory (make-temp-file "warashi-promptpane-project" t))))
+    (unwind-protect
+        (progn
+          (make-directory (expand-file-name ".git" project))
+          (make-directory (expand-file-name "sub" project))
+          (warashi-promptpane-test--with-eshell
+            (setq default-directory project)
+            (warashi-promptpane-test--send "project で送った"))
+          (warashi-promptpane-test--with-eshell
+            (setq default-directory (expand-file-name "sub/" project))
+            (warashi-promptpane-previous-history)
+            (should (equal (buffer-string) "project で送った")))
+          (warashi-promptpane-test--with-eshell
+            (should-error (warashi-promptpane-previous-history) :type 'user-error)))
+      (delete-directory project t))))
+
+(ert-deftest warashi-promptpane-test-history-is-bounded-and-unique ()
+  "同じ内容は最新の 1 件だけを残し、残す件数には上限がある。"
+  (let ((warashi-promptpane-history nil)
+        (warashi-promptpane-history-length 2))
+    (warashi-promptpane-test--with-eshell
+      (warashi-promptpane-test--send "一つ目")
+      (warashi-promptpane-test--send "二つ目")
+      (warashi-promptpane-test--send "一つ目")
+      (warashi-promptpane-test--send "三つ目")
+      (should (equal (mapcar #'cdr warashi-promptpane-history)
+                     '(("三つ目" "一つ目")))))))
+
+(ert-deftest warashi-promptpane-test-history-survives-restart ()
+  "履歴は savehist で書き出して読み戻せる形で持つ。"
+  (let ((warashi-promptpane-history nil))
+    (warashi-promptpane-test--with-eshell
+      (warashi-promptpane-test--send (propertize "色付き" 'face 'bold))
+      (should (equal (car (read-from-string (prin1-to-string warashi-promptpane-history)))
+                     warashi-promptpane-history))
+      (should-not (text-properties-at 0 (cadar warashi-promptpane-history))))))
+
 (ert-deftest warashi-promptpane-test-keys ()
-  "C-c C-c で送り、C-c C-k で中断する。"
+  "C-c C-c で送り、C-c C-k で中断し、M-p と M-n で履歴をたどる。"
   (should (eq #'warashi-promptpane-send
               (keymap-lookup warashi-promptpane-mode-map "C-c C-c")))
   (should (eq #'warashi-promptpane-abort
-              (keymap-lookup warashi-promptpane-mode-map "C-c C-k"))))
+              (keymap-lookup warashi-promptpane-mode-map "C-c C-k")))
+  (should (eq #'warashi-promptpane-previous-history
+              (keymap-lookup warashi-promptpane-mode-map "M-p")))
+  (should (eq #'warashi-promptpane-next-history
+              (keymap-lookup warashi-promptpane-mode-map "M-n"))))
 
 ;;; warashi-promptpane-test.el ends here

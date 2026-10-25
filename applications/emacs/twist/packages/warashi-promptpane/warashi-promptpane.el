@@ -18,6 +18,8 @@
 
 ;;; Code:
 
+(require 'project)
+
 (declare-function eshell-head-process "esh-cmd" ())
 (declare-function eshell-send-input "esh-mode"
                   (&optional use-region queue-p no-newline))
@@ -30,8 +32,66 @@
   "入力欄の window の高さ。"
   :type 'natnum)
 
+(defcustom warashi-promptpane-history-length 100
+  "project ごとに残す送信履歴の件数。"
+  :type 'natnum)
+
+(defvar warashi-promptpane-history nil
+  "project の root と、そこで送った内容の新しい順のリストの alist。
+再起動後も残すには `savehist-additional-variables' に加える。")
+
 (defvar-local warashi-promptpane--target nil
   "この入力欄の送り先の eshell バッファ。")
+
+(defvar-local warashi-promptpane--history-index nil
+  "いま入力欄に出している履歴の位置。履歴を出していなければ nil。")
+
+(defvar-local warashi-promptpane--draft nil
+  "履歴をたどり始める前に書いていた内容。")
+
+(defun warashi-promptpane--history-key ()
+  "この入力欄の履歴を分ける key。project の外では directory そのもの。"
+  (expand-file-name
+   (if-let* ((project (project-current nil default-directory)))
+       (project-root project)
+     default-directory)))
+
+(defun warashi-promptpane--history ()
+  "この入力欄の送信履歴。"
+  (alist-get (warashi-promptpane--history-key) warashi-promptpane-history
+             nil nil #'equal))
+
+(defun warashi-promptpane--add-history (text)
+  "TEXT をこの入力欄の送信履歴の先頭に加える。"
+  (setf (alist-get (warashi-promptpane--history-key) warashi-promptpane-history
+                   nil nil #'equal)
+        (take warashi-promptpane-history-length
+              (cons text (delete text (warashi-promptpane--history))))))
+
+(defun warashi-promptpane--show-history (index)
+  "送信履歴の INDEX 番目を入力欄に出す。-1 なら書きかけに戻す。"
+  (when (null warashi-promptpane--history-index)
+    (setq warashi-promptpane--draft (buffer-string)))
+  (erase-buffer)
+  (insert (if (< index 0)
+              warashi-promptpane--draft
+            (nth index (warashi-promptpane--history))))
+  (setq warashi-promptpane--history-index (and (>= index 0) index)))
+
+(defun warashi-promptpane-previous-history ()
+  "一つ前に送った内容を入力欄に出す。"
+  (interactive)
+  (let ((index (1+ (or warashi-promptpane--history-index -1))))
+    (unless (< index (length (warashi-promptpane--history)))
+      (user-error "これより前の履歴はない"))
+    (warashi-promptpane--show-history index)))
+
+(defun warashi-promptpane-next-history ()
+  "一つ後に送った内容を入力欄に出す。最後は書きかけに戻す。"
+  (interactive)
+  (unless warashi-promptpane--history-index
+    (user-error "これより後の履歴はない"))
+  (warashi-promptpane--show-history (1- warashi-promptpane--history-index)))
 
 (defun warashi-promptpane--buffer (target)
   "TARGET へ送る入力欄のバッファ。なければ nil。"
@@ -50,7 +110,9 @@
 
 (defvar-keymap warashi-promptpane-mode-map
   "C-c C-c" #'warashi-promptpane-send
-  "C-c C-k" #'warashi-promptpane-abort)
+  "C-c C-k" #'warashi-promptpane-abort
+  "M-p" #'warashi-promptpane-previous-history
+  "M-n" #'warashi-promptpane-next-history)
 
 (define-derived-mode warashi-promptpane-mode text-mode "Promptpane"
   "eshell で動くエージェントに送る文章を書くためのモード。"
@@ -81,12 +143,14 @@
   "書いた内容を送り先へ送り、入力欄を空にする。"
   (interactive)
   (let ((target warashi-promptpane--target)
-        (text (buffer-string)))
+        (text (buffer-substring-no-properties (point-min) (point-max))))
     (unless (buffer-live-p target)
       (user-error "送り先がもうない"))
     (unless (string-blank-p text)
       (warashi-promptpane--deliver target text)
-      (erase-buffer))))
+      (warashi-promptpane--add-history text)
+      (erase-buffer)
+      (setq warashi-promptpane--history-index nil))))
 
 (defun warashi-promptpane-abort ()
   "書いた内容を捨てて入力欄を閉じ、送り先に戻る。"
