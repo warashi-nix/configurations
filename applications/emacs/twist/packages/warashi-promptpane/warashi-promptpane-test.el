@@ -204,6 +204,63 @@ BODY の中では `target' が送り先のバッファ、`received' が前面の
                      warashi-promptpane-history))
       (should-not (text-properties-at 0 (cadar warashi-promptpane-history))))))
 
+(defun warashi-promptpane-test--write (file)
+  "空の FILE を、途中の directory ごと作る。"
+  (make-directory (file-name-directory file) t)
+  (write-region "" nil file))
+
+(defun warashi-promptpane-test--completions (text)
+  "入力欄に TEXT を書いた時点で補完できる候補。補完しなければ :none。"
+  (erase-buffer)
+  (insert text)
+  (if-let* ((capf (run-hook-wrapped 'completion-at-point-functions
+                                    (lambda (f) (funcall f)))))
+      (pcase-let ((`(,start ,end ,table . ,_) capf))
+        (all-completions (buffer-substring start end) table))
+    :none))
+
+(defmacro warashi-promptpane-test--with-claude (&rest body)
+  "利用者と project の両方に skill とコマンドを置いた状態で、入力欄で BODY を評価する。"
+  (declare (indent 0))
+  `(let* ((home (file-name-as-directory (make-temp-file "warashi-promptpane-claude" t)))
+          (warashi-promptpane-claude-directory home)
+          (warashi-promptpane-builtin-commands '("clear" "compact")))
+     (unwind-protect
+         (warashi-promptpane-test--with-eshell
+           (make-directory (expand-file-name ".git" default-directory))
+           (warashi-promptpane-test--write (expand-file-name "skills/pair/SKILL.md" home))
+           (warashi-promptpane-test--write (expand-file-name "commands/deploy.md" home))
+           (warashi-promptpane-test--write
+            (expand-file-name ".claude/skills/review/SKILL.md" default-directory))
+           (warashi-promptpane-test--write
+            (expand-file-name ".claude/commands/frontend/fix.md" default-directory))
+           (warashi-promptpane-test--write (expand-file-name "src/main.go" default-directory))
+           ,@body)
+       (delete-directory home t))))
+
+(ert-deftest warashi-promptpane-test-complete-slash-commands ()
+  "先頭の / からは、組み込みと、利用者と project の skill とコマンドを補完する。"
+  (warashi-promptpane-test--with-claude
+    (should (equal (sort (warashi-promptpane-test--completions "/") #'string<)
+                   '("/clear" "/compact" "/deploy" "/fix" "/pair" "/review")))
+    (should (equal (warashi-promptpane-test--completions "/c")
+                   '("/clear" "/compact")))))
+
+(ert-deftest warashi-promptpane-test-complete-paths ()
+  "/ を含む語や ~ や . で始まる語は、入力欄の directory からのパスとして補完する。"
+  (warashi-promptpane-test--with-claude
+    (should (equal (warashi-promptpane-test--completions "見て src/ma")
+                   '("main.go")))
+    (should (member "src/" (warashi-promptpane-test--completions "見て ./")))
+    (should (equal (warashi-promptpane-test--completions "/clear して src/m")
+                   '("main.go")))))
+
+(ert-deftest warashi-promptpane-test-no-completion-for-words ()
+  "パスにもコマンドにも見えない語は補完しない。"
+  (warashi-promptpane-test--with-claude
+    (should (eq :none (warashi-promptpane-test--completions "こんにちは")))
+    (should (eq :none (warashi-promptpane-test--completions "見て src")))))
+
 (ert-deftest warashi-promptpane-test-keys ()
   "C-c C-c で送り、C-c C-k で中断し、M-p と M-n で履歴をたどる。"
   (should (eq #'warashi-promptpane-send

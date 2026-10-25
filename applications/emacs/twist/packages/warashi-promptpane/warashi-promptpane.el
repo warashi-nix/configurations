@@ -108,6 +108,44 @@
     (insert text)
     (eshell-send-input)))
 
+(defcustom warashi-promptpane-claude-directory "~/.claude/"
+  "Claude Code の利用者の設定の directory。"
+  :type 'directory)
+
+(defcustom warashi-promptpane-builtin-commands
+  '("agents" "clear" "compact" "config" "context" "help" "model" "resume")
+  "補完する Claude Code の組み込みのスラッシュコマンド。"
+  :type '(repeat string))
+
+(defun warashi-promptpane--claude-commands (directory)
+  "Claude Code の設定の DIRECTORY にある skill とコマンドの名前。"
+  (append
+   (mapcar (lambda (file) (file-name-nondirectory (directory-file-name (file-name-directory file))))
+           (file-expand-wildcards (expand-file-name "skills/*/SKILL.md" directory)))
+   (let ((commands (expand-file-name "commands" directory)))
+     (when (file-directory-p commands)
+       (mapcar #'file-name-base (directory-files-recursively commands "\\.md\\'"))))))
+
+(defun warashi-promptpane--slash-commands ()
+  "この入力欄から補完するスラッシュコマンド。"
+  (mapcar (lambda (name) (concat "/" name))
+          (delete-dups
+           (append warashi-promptpane-builtin-commands
+                   (warashi-promptpane--claude-commands warashi-promptpane-claude-directory)
+                   (warashi-promptpane--claude-commands
+                    (expand-file-name ".claude" (warashi-promptpane--history-key)))))))
+
+(defun warashi-promptpane-completion-at-point ()
+  "先頭のスラッシュコマンドと、パスに見える語を補完する。"
+  (let ((end (point))
+        (start (save-excursion (skip-chars-backward "^ \t\n") (point))))
+    (let ((word (buffer-substring-no-properties start end)))
+      (cond
+       ((and (= start (point-min)) (string-match-p "\\`/[^/]*\\'" word))
+        (list start end (warashi-promptpane--slash-commands) :exclusive 'no))
+       ((string-match-p "\\`[~.]\\|/" word)
+        (list start end #'read-file-name-internal :exclusive 'no))))))
+
 (defvar-keymap warashi-promptpane-mode-map
   "C-c C-c" #'warashi-promptpane-send
   "C-c C-k" #'warashi-promptpane-abort
@@ -116,6 +154,8 @@
 
 (define-derived-mode warashi-promptpane-mode text-mode "Promptpane"
   "eshell で動くエージェントに送る文章を書くためのモード。"
+  ;; text-mode が入れる ispell の補完は、エージェントへの指示の語には当たらない。
+  (setq-local completion-at-point-functions (list #'warashi-promptpane-completion-at-point))
   (when default-input-method
     (activate-input-method default-input-method)))
 
