@@ -43,27 +43,27 @@
 (defvar-local warashi-promptpane--target nil
   "この入力欄の送り先の eshell バッファ。")
 
+(defun warashi-promptpane--project-root ()
+  "この入力欄の project の root。project の外では directory そのもの。"
+  (expand-file-name
+   (if-let* ((project (project-current nil default-directory)))
+       (project-root project)
+     default-directory)))
+
 (defvar-local warashi-promptpane--history-index nil
   "いま入力欄に出している履歴の位置。履歴を出していなければ nil。")
 
 (defvar-local warashi-promptpane--draft nil
   "履歴をたどり始める前に書いていた内容。")
 
-(defun warashi-promptpane--history-key ()
-  "この入力欄の履歴を分ける key。project の外では directory そのもの。"
-  (expand-file-name
-   (if-let* ((project (project-current nil default-directory)))
-       (project-root project)
-     default-directory)))
-
 (defun warashi-promptpane--history ()
   "この入力欄の送信履歴。"
-  (alist-get (warashi-promptpane--history-key) warashi-promptpane-history
+  (alist-get (warashi-promptpane--project-root) warashi-promptpane-history
              nil nil #'equal))
 
 (defun warashi-promptpane--add-history (text)
   "TEXT をこの入力欄の送信履歴の先頭に加える。"
-  (setf (alist-get (warashi-promptpane--history-key) warashi-promptpane-history
+  (setf (alist-get (warashi-promptpane--project-root) warashi-promptpane-history
                    nil nil #'equal)
         (take warashi-promptpane-history-length
               (cons text (delete text (warashi-promptpane--history))))))
@@ -133,7 +133,7 @@
            (append warashi-promptpane-builtin-commands
                    (warashi-promptpane--claude-commands warashi-promptpane-claude-directory)
                    (warashi-promptpane--claude-commands
-                    (expand-file-name ".claude" (warashi-promptpane--history-key)))))))
+                    (expand-file-name ".claude" (warashi-promptpane--project-root)))))))
 
 (defun warashi-promptpane-completion-at-point ()
   "先頭のスラッシュコマンドと、パスに見える語を補完する。"
