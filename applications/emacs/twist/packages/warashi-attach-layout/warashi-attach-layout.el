@@ -56,9 +56,16 @@
 保存の対象にするのは戻した後にする。戻す前の空の構成で上書きしないため。"
   (when (warashi-attach-layout--attach-frame-p frame)
     (when warashi-attach-layout--saved
-      (set-frame-parameter frame 'tabs (copy-tree (car warashi-attach-layout--saved)))
-      (window-state-put (copy-tree (cdr warashi-attach-layout--saved))
-                        (window-main-window frame) 'safe))
+      ;; 戻せない構成は daemon に残る限り毎回の attach を止めるので、捨てる。
+      (condition-case err
+          (progn
+            (set-frame-parameter frame 'tabs (copy-tree (car warashi-attach-layout--saved)))
+            (window-state-put (copy-tree (cdr warashi-attach-layout--saved))
+                              (window-main-window frame) 'safe))
+        (error
+         (set-frame-parameter frame 'tabs nil)
+         (setq warashi-attach-layout--saved nil)
+         (message "warashi-attach-layout: 画面構成を戻せなかったので捨てた: %S" err))))
     (set-frame-parameter frame 'warashi-attach-layout t)))
 
 (defun warashi-attach-layout--resume-selected ()

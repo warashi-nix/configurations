@@ -87,6 +87,14 @@ FILES が nil なら、ファイルを渡さない attach。BODY の後に、フ
             (should (equal expected (warashi-attach-layout-test--describe)))))
       (warashi-attach-layout-test--scramble))))
 
+(ert-deftest warashi-attach-layout-test-discards-layout-that-fails-to-restore ()
+  "戻せない構成は捨て、attach は止めずに以後の保存の対象にする。"
+  (warashi-attach-layout-test--with-client nil
+    (let ((warashi-attach-layout--saved (cons nil '(broken))))
+      (warashi-attach-layout--resume (selected-frame))
+      (should-not warashi-attach-layout--saved)
+      (should (frame-parameter (selected-frame) 'warashi-attach-layout)))))
+
 (ert-deftest warashi-attach-layout-test-keeps-non-current-tab ()
   "現在でないタブも、切り替えた時に保存した構成で開く。"
   (warashi-attach-layout-test--with-client nil
