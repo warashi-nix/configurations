@@ -835,11 +835,11 @@
     "textui": {
       "flake": false,
       "locked": {
-        "lastModified": 1789871393,
-        "narHash": "sha256-3WY/dPfcssviC73AP4hF4v1kyM1IlI3PgWW/ZHHH1pE=",
+        "lastModified": 1792948453,
+        "narHash": "sha256-wykekboJStk5Nv8tpYpgzgQTT+4W9hQlOndZbI6SLR0=",
         "owner": "yibie",
         "repo": "textui",
-        "rev": "8b3010d0f251b52dd1867c741d18bf66e405922d",
+        "rev": "f3bf19109a1e5304ffcadd61809e975b47350e7c",
         "type": "github"
       },
       "original": {
