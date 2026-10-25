@@ -41,6 +41,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     tzdata \
     ;
 
+# ncurses-term は ghostty の名前でしか定義を持たず、Ghostty が渡す TERM=xterm-ghostty を引けない。
+RUN infocmp -x ghostty >/tmp/xterm-ghostty.ti && \
+    sed -i 's/^ghostty|/xterm-ghostty|/' /tmp/xterm-ghostty.ti && \
+    tic -x /tmp/xterm-ghostty.ti && \
+    rm /tmp/xterm-ghostty.ti && \
+    infocmp xterm-ghostty >/dev/null
+
 # GitHub CLI インストール
 # api.github.com は未認証だと同一IPあたり60回/時のrate limitがあり、NAT配下だと
 # 他者と枠を共有して403になるため、rate limitのないリリースページのリダイレクト先
