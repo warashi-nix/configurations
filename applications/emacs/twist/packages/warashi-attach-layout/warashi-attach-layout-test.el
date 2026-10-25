@@ -53,8 +53,10 @@ FILES が nil なら、ファイルを渡さない attach。BODY の後に、フ
           (tab-bar--current-tab-index))))
 
 (defun warashi-attach-layout-test--scramble ()
-  "タブも分割も無い状態にする。"
+  "タブも分割も side window も無い状態にする。"
   (tab-bar-close-other-tabs)
+  (when (window-with-parameter 'window-side)
+    (window-toggle-side-windows))
   (delete-other-windows)
   (switch-to-buffer "*scratch*"))
 
@@ -68,6 +70,22 @@ FILES が nil なら、ファイルを渡さない attach。BODY の後に、フ
       (warashi-attach-layout-test--scramble)
       (warashi-attach-layout--resume (selected-frame))
       (should (equal expected (warashi-attach-layout-test--describe))))))
+
+(ert-deftest warashi-attach-layout-test-leaves-side-windows-out ()
+  "保存時に開いていた side window は戻さず、通常のウィンドウ分割だけを戻す。"
+  (warashi-attach-layout-test--with-client nil
+    (unwind-protect
+        (progn
+          (warashi-attach-layout--resume (selected-frame))
+          (warashi-attach-layout-test--arrange)
+          (let ((expected (warashi-attach-layout-test--describe)))
+            (display-buffer-in-side-window (get-buffer-create "*side*")
+                                           '((side . left)))
+            (warashi-attach-layout--save)
+            (warashi-attach-layout-test--scramble)
+            (warashi-attach-layout--resume (selected-frame))
+            (should (equal expected (warashi-attach-layout-test--describe)))))
+      (warashi-attach-layout-test--scramble))))
 
 (ert-deftest warashi-attach-layout-test-keeps-non-current-tab ()
   "現在でないタブも、切り替えた時に保存した構成で開く。"

@@ -20,6 +20,9 @@
 ;; `frameset-save' を使わないのは、フレームの大きさや位置、クライアントの環境変数まで
 ;; 保存してしまい、別の端末への復元でそれらを外すフィルタが必要になるため。
 ;; ファイルを渡すフレーム (quick-input など) は、復元も保存もしない。
+;;
+;; side window は which-key のポップアップのような一時的な表示で、別のフレームの
+;; ルートへ戻すと `window-state-put' が失敗するため、保存の対象から外す。
 
 ;;; Code:
 
@@ -46,7 +49,7 @@
                                              (seq-remove (lambda (entry) (eq (car entry) 'wc))
                                                          (cdr tab)))))
                           (funcall tab-bar-tabs-function frame))
-                  (window-state-get (frame-root-window frame) 'writable))))))
+                  (window-state-get (window-main-window frame) 'writable))))))
 
 (defun warashi-attach-layout--resume (frame)
   "FRAME が attach なら、保存した画面構成を戻し、以後の保存の対象にする。
@@ -55,7 +58,7 @@
     (when warashi-attach-layout--saved
       (set-frame-parameter frame 'tabs (copy-tree (car warashi-attach-layout--saved)))
       (window-state-put (copy-tree (cdr warashi-attach-layout--saved))
-                        (frame-root-window frame) 'safe))
+                        (window-main-window frame) 'safe))
     (set-frame-parameter frame 'warashi-attach-layout t)))
 
 (defun warashi-attach-layout--resume-selected ()
