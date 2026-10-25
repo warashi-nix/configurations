@@ -8,6 +8,16 @@
     environmentFile = config.sops.secrets.hestia-grafana-cloud-env.path;
   };
 
+  # chelly の Lean などがメモリを使い切ってホスト全体が詰まると、Alloy のページが追い出されて
+  # メトリクスが途切れる(2026-10-25 に 10 分)。cgroup v2 の保護は祖先にも同じ設定が要るので、
+  # system.slice にも置く。MemoryLow はベストエフォートで、詰まりそのものは防がない。
+  systemd.services.alloy.serviceConfig.MemoryLow = "300M";
+  systemd.slices.system = {
+    # system.slice は systemd が暗黙に作るので、unit を丸ごと置かずにドロップインで足す
+    overrideStrategy = "asDropin";
+    sliceConfig.MemoryLow = "300M";
+  };
+
   # hestia には収集と送信だけを置き、保存・画面・アラート判定は Grafana Cloud 側に任せる。
   # collector は温度・周波数・電力と、その裏付けになる負荷・IO に絞る。node_exporter の
   # 既定一式だと、Free の 10k 系列を無駄に使う。
