@@ -1249,8 +1249,8 @@
     {
       "id": 20,
       "type": "timeseries",
-      "title": "amdgpu 周波数",
-      "description": "",
+      "title": "amdgpu 使用率",
+      "description": "温度が上がった原因が GPU の負荷かを見る。hwmon の周波数(sclk)は Alloy の node_exporter が出さない",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1267,14 +1267,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "node_hwmon_freq_freq_mhz{instance=\"$instance\"} * 1e6",
-          "legendFormat": "{{sensor}}",
+          "expr": "node_drm_gpu_busy_percent{instance=\"$instance\"}",
+          "legendFormat": "{{card}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "hertz",
+          "unit": "percent",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
@@ -1297,7 +1297,9 @@
                 "value": null
               }
             ]
-          }
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
