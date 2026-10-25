@@ -1,0 +1,2 @@
+(warashi-promptpane :fetcher github
+                    :repo "Warashi/configurations")

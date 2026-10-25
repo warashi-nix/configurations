@@ -63,6 +63,7 @@
             "warashi-git-wit"
             "warashi-pkm-capture"
             "warashi-project-workspace"
+            "warashi-promptpane"
             "warashi-quick-input"
             "warashi-init"
             "warashi-early-init"
@@ -172,6 +173,9 @@
             };
             warashi-project-workspace = _: _: {
               src = ./packages/warashi-project-workspace;
+            };
+            warashi-promptpane = _: _: {
+              src = ./packages/warashi-promptpane;
             };
             warashi-quick-input = _: _: {
               src = ./packages/warashi-quick-input;

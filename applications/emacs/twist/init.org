@@ -734,6 +734,23 @@ agent を専用 =chelly-agent= で動かす。専用領域に見えて実体が�
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
 確認と取り込みは Magit の通常操作に任せる。手順は configurations の =applications/chelly/README.md= にある。
 
+** promptpane
+agent team のように agentel から扱えない機能は、Claude Code を TUI のまま
+[[*eshell][eshell]] で動かして使う。TUI には sekken で書けないので、eshell で =C-c q= を
+押して下に入力欄を開き、そこで書いて =C-c C-c= で前面のコマンドへ送る。
+=C-c C-k= で書いた内容を捨てて閉じ、=M-p= / =M-n= で project ごとの送信履歴を
+たどる。履歴は savehist で再起動後も残す。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-promptpane)
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables 'warashi-promptpane-history)))
+
+(setup esh-mode
+  (:with-map eshell-mode-map
+    (:keymap "C-c q" #'warashi-promptpane-open)))
+#+end_src
+
 * 開発ツール
 ** magit
 #+begin_src emacs-lisp
