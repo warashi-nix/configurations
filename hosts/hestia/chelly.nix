@@ -13,6 +13,15 @@
       config.sops.secrets.chelly-agent-dotenv.path
     ];
   };
+  # 複数の agent が同時に動くと、コンテナごとの CPU 上限の合計がコア数を超える。
+  # slice 名に uid が要るので、既に割り当てられている値で固定する。workbench の uid は
+  # 異なりうるため、モジュールには置かない。
+  users.users.chelly-agent.uid = 999;
+  systemd.slices."user-999" = {
+    # user-999.slice は logind が user-.slice から作るので、ドロップインで足す
+    overrideStrategy = "asDropin";
+    sliceConfig.CPUWeight = 20;
+  };
   sops.secrets = lib.mkIf config.warashi.chelly-agent.enable {
     chelly-agent-dotenv = {
       owner = "chelly-agent";
