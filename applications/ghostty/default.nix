@@ -21,8 +21,6 @@
       macos-option-as-alt = true;
       macos-titlebar-style = "tabs";
       keybind = [
-        "shift+enter=text:\\n"
-
         "ctrl+tab=csi:9;5u"
         "shift+ctrl+tab=csi:9;6u"
 
