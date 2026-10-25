@@ -178,6 +178,13 @@ workbench の通常の `chelly` の起動設定や共通 Dockerfile にはこの
 (athena は `chelly` 自体が専用構成なので付く)。
 ツールの権限確認を無効化するフラグも追加しない。
 
+`IS_DEMO=1` では workspace trust のダイアログも出ず、trust が無いと
+statusLine や hooks が動かない。信頼する clone で Claude の起動前に
+`chelly-trust` を実行し、ダイアログと同じ `hasTrustDialogAccepted` を
+`.claude.json` に記録する。起動中の Claude は `.claude.json` を書き戻すため、
+実行後に Claude を起動し直す。trust は clone ごとに本人が判断し、
+`/srv/chelly-workspaces` 全体や起動時の自動記録にはしない。
+
 ホスト側の configurations で次を実行する。envfile の追加・更新だけなら
 image の再ビルドや再ログインは不要。更新は次に起動するコンテナから反映される。
 

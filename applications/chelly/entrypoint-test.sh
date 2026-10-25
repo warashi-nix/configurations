@@ -295,3 +295,23 @@ test ! -e "${work}/config-untouched/home/.copilot/copilot-instructions.md"
 expect_output "${work}/config-untouched/home/.claude/skills/pair-old-file" "old"
 jq -e '. == {runtime: "kept", env: {A: "runtime", C: "runtime"}, permissions: {allow: ["a"]}}' \
   "${work}/config-untouched/home/.claude/settings.json" >/dev/null
+
+# chelly-trust は今いる clone のルートだけを trust し、Claude Code の他の状態は残す。
+extract_file /home/warashi/.local/bin/chelly-trust "${work}/chelly-trust"
+chmod +x "${work}/chelly-trust"
+trust_dir="${work}/trust"
+mkdir -p "${trust_dir}/config" "${trust_dir}/home" "${trust_dir}/clone/sub"
+git -C "${trust_dir}/clone" init -q
+clone_root="$(git -C "${trust_dir}/clone" rev-parse --show-toplevel)"
+printf '{"numStartups":3,"projects":{"/other":{"hasTrustDialogAccepted":false},"%s":{"allowedTools":["x"]}}}\n' \
+  "${clone_root}" >"${trust_dir}/config/.claude.json"
+(cd "${trust_dir}/clone/sub" && CLAUDE_CONFIG_DIR="${trust_dir}/config" HOME="${trust_dir}/home" "${work}/chelly-trust")
+jq -e --arg root "${clone_root}" '. == {numStartups: 3, projects: {
+  "/other": {hasTrustDialogAccepted: false},
+  ($root): {allowedTools: ["x"], hasTrustDialogAccepted: true}}}' \
+  "${trust_dir}/config/.claude.json" >/dev/null
+test -z "$(find "${trust_dir}/config" -name '.claude.json.*')"
+# CLAUDE_CONFIG_DIR が無ければ Claude Code と同じく ~/.claude.json を使い、無ければ作る。
+(cd "${trust_dir}/clone" && env -u CLAUDE_CONFIG_DIR HOME="${trust_dir}/home" "${work}/chelly-trust")
+jq -e --arg root "${clone_root}" '. == {projects: {($root): {hasTrustDialogAccepted: true}}}' \
+  "${trust_dir}/home/.claude.json" >/dev/null

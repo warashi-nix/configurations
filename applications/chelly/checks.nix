@@ -4,6 +4,7 @@
   bash,
   coreutils,
   gawk,
+  git,
   jq,
   nix,
   athena,
@@ -261,6 +262,7 @@ runCommand "chelly-config-check"
       bash
       coreutils
       gawk
+      git
       jq
       nix
     ];

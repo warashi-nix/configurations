@@ -442,6 +442,27 @@ if [ -f "${bundle}/copilot/settings.json" ]; then
 fi
 EOF
 
+# 専用入口は IS_DEMO で初回セットアップを省くため、Claude Code が trust ダイアログを出さない。
+# 本人が承認した clone だけを、ダイアログと同じ記録で trust する。
+COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-trust
+#!/bin/sh
+set -eu
+
+root="$(git rev-parse --show-toplevel)"
+if [ -n "${CLAUDE_CONFIG_DIR-}" ]; then
+  state="${CLAUDE_CONFIG_DIR}/.claude.json"
+else
+  state="${HOME}/.claude.json"
+fi
+mkdir -p "$(dirname "${state}")"
+if [ ! -s "${state}" ]; then
+  printf '{}\n' >"${state}"
+fi
+tmp="$(mktemp "${state}.XXXXXX")"
+jq --arg root "${root}" '.projects[$root].hasTrustDialogAccepted = true' "${state}" >"${tmp}"
+mv "${tmp}" "${state}"
+EOF
+
 COPY --chown=warashi --chmod=0755 <<'EOF' /home/warashi/.local/bin/chelly-entrypoint
 #!/bin/sh
 
