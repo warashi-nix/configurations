@@ -129,6 +129,7 @@ in
           run = [
             # keep-sorted start
             "--cap-add=SYS_ADMIN,SETUID,SETGID"
+            "--cpus=4"
             "--detach-keys=ctrl-^,ctrl-^"
             "--device=/dev/fuse"
             "--device=/dev/net/tun"
