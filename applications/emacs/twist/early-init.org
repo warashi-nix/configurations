@@ -32,6 +32,10 @@
 * Toolbar/Menubar
 #+begin_src emacs-lisp
 (menu-bar-mode -1)
+;; daemon の ns は最初の GUI フレームを作る時に初期化され、そこで menu-bar-mode が
+;; 有効に戻る。以後の TTY フレーム (quick-input) にもメニューバーが出るため、
+;; フレームを作るたびに掛け直す。
+(add-hook 'after-make-frame-functions (lambda (_frame) (menu-bar-mode -1)))
 (when (fboundp #'tool-bar-mode)
   (tool-bar-mode -1))
 (when (fboundp #'scroll-bar-mode)
