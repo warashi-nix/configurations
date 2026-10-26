@@ -1,0 +1,166 @@
+rule_files:
+  - rules.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - name: CPU 温度は 75°C を 10 分超えると warning、90°C を 3 分超えると critical
+    input_series:
+      - series: node_hwmon_chip_names{chip="pci0000:00_0000:00:18_3", chip_name="k10temp"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="pci0000:00_0000:00:18_3", sensor="temp1"}
+        values: 76x10 91x10
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: "[warning] CPU 温度の高止まり"
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: "[warning] CPU 温度の高止まり"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-cpu-temp-warning
+              chip: pci0000:00_0000:00:18_3
+              chip_name: k10temp
+              sensor: temp1
+      - eval_time: 13m
+        alertname: "[critical] CPU 温度が危険域"
+        exp_alerts: []
+      - eval_time: 14m
+        alertname: "[critical] CPU 温度が危険域"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-cpu-temp-critical
+              chip: pci0000:00_0000:00:18_3
+              chip_name: k10temp
+              sensor: temp1
+
+  - name: CPU 温度は 75°C 以下なら鳴らない
+    input_series:
+      - series: node_hwmon_chip_names{chip="pci0000:00_0000:00:18_3", chip_name="k10temp"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="pci0000:00_0000:00:18_3", sensor="temp1"}
+        values: 75x20
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: "[warning] CPU 温度の高止まり"
+        exp_alerts: []
+
+  - name: NVMe の高温は Composite(temp1)だけを見る
+    input_series:
+      - series: node_hwmon_chip_names{chip="nvme_nvme0", chip_name="nvme"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="nvme_nvme0", sensor="temp1"}
+        values: 81x20
+      - series: node_hwmon_temp_celsius{chip="nvme_nvme0", sensor="temp2"}
+        values: 81x20
+      - series: node_hwmon_chip_names{chip="pci0000:00_0000:00:18_3", chip_name="k10temp"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="pci0000:00_0000:00:18_3", sensor="temp1"}
+        values: 70x20
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: "[warning] NVMe の高温"
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: "[warning] NVMe の高温"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-nvme-temp-warning
+              chip: nvme_nvme0
+              chip_name: nvme
+              sensor: temp1
+
+  - name: SMART の値が健全なら鳴らない
+    input_series:
+      - series: smartctl_device_available_spare{instance="hestia", device="nvme0"}
+        values: 100x20
+      - series: smartctl_device_media_errors{instance="hestia", device="nvme0"}
+        values: 0x20
+      - series: smartctl_device_critical_warning{instance="hestia", device="nvme0"}
+        values: 0x20
+      - series: smartctl_device_percentage_used{instance="hestia", device="nvme0"}
+        values: 79x20
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: "[warning] NVMe の予備領域の減少"
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: "[critical] NVMe のメディアエラー"
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: "[critical] NVMe の重大な警告"
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: "[warning] NVMe の摩耗"
+        exp_alerts: []
+
+  - name: SMART の劣化を知らせる
+    input_series:
+      - series: smartctl_device_available_spare{instance="hestia", device="nvme0"}
+        values: 99x20
+      - series: smartctl_device_media_errors{instance="hestia", device="nvme0"}
+        values: 1x20
+      - series: smartctl_device_critical_warning{instance="hestia", device="nvme0"}
+        values: 1x20
+      - series: smartctl_device_percentage_used{instance="hestia", device="nvme0"}
+        values: 80x20
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: "[warning] NVMe の予備領域の減少"
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: "[warning] NVMe の予備領域の減少"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-nvme-available-spare
+              instance: hestia
+              device: nvme0
+      - eval_time: 0m
+        alertname: "[critical] NVMe のメディアエラー"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-nvme-media-errors
+              instance: hestia
+              device: nvme0
+      - eval_time: 0m
+        alertname: "[critical] NVMe の重大な警告"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-nvme-critical-warning
+              instance: hestia
+              device: nvme0
+      - eval_time: 0m
+        alertname: "[warning] NVMe の摩耗"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-nvme-percentage-used
+              instance: hestia
+              device: nvme0
+
+  - name: hestia のメトリクスが届かないと、途絶と SMART の停止を知らせる
+    input_series: []
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: "[critical] メトリクスの途絶"
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: "[critical] メトリクスの途絶"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-metrics-absent
+              instance: hestia
+      - eval_time: 10m
+        alertname: "[warning] NVMe の予備領域の減少"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-nvme-available-spare
+              instance: hestia
+
+  - name: hestia のメトリクスが届いていれば途絶を知らせない
+    input_series:
+      - series: node_load1{instance="hestia"}
+        values: 1x20
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: "[critical] メトリクスの途絶"
+        exp_alerts: []

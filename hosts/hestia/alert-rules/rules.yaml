@@ -1,0 +1,63 @@
+groups:
+  - name: hestia
+    interval: 1m
+    rules:
+      - alert: "[warning] CPU 温度の高止まり"
+        expr: |
+          node_hwmon_temp_celsius
+            * on(chip) group_left(chip_name)
+              node_hwmon_chip_names{chip_name="k10temp"}
+          > 75
+        for: 10m
+        labels:
+          __grafana_alert_rule_uid__: hestia-cpu-temp-warning
+
+      - alert: "[critical] CPU 温度が危険域"
+        expr: |
+          node_hwmon_temp_celsius
+            * on(chip) group_left(chip_name)
+              node_hwmon_chip_names{chip_name="k10temp"}
+          > 90
+        for: 3m
+        labels:
+          __grafana_alert_rule_uid__: hestia-cpu-temp-critical
+
+      - alert: "[warning] NVMe の高温"
+        expr: |
+          node_hwmon_temp_celsius{sensor="temp1"}
+            * on(chip) group_left(chip_name)
+              node_hwmon_chip_names{chip_name="nvme"}
+          > 80
+        for: 10m
+        labels:
+          __grafana_alert_rule_uid__: hestia-nvme-temp-warning
+
+      # Import したルールは No data で Normal になるので、exporter や scrape の停止は absent で拾う
+      - alert: "[warning] NVMe の予備領域の減少"
+        expr: |
+          smartctl_device_available_spare{instance="hestia"} < 100
+          or absent(smartctl_device_available_spare{instance="hestia"})
+        for: 10m
+        labels:
+          __grafana_alert_rule_uid__: hestia-nvme-available-spare
+
+      - alert: "[critical] NVMe のメディアエラー"
+        expr: smartctl_device_media_errors{instance="hestia"} > 0
+        labels:
+          __grafana_alert_rule_uid__: hestia-nvme-media-errors
+
+      - alert: "[critical] NVMe の重大な警告"
+        expr: smartctl_device_critical_warning{instance="hestia"} > 0
+        labels:
+          __grafana_alert_rule_uid__: hestia-nvme-critical-warning
+
+      - alert: "[warning] NVMe の摩耗"
+        expr: smartctl_device_percentage_used{instance="hestia"} >= 80
+        labels:
+          __grafana_alert_rule_uid__: hestia-nvme-percentage-used
+
+      - alert: "[critical] メトリクスの途絶"
+        expr: absent(node_load1{instance="hestia"})
+        for: 5m
+        labels:
+          __grafana_alert_rule_uid__: hestia-metrics-absent
