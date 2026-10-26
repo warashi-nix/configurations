@@ -42,7 +42,7 @@
       "id": 2,
       "type": "stat",
       "title": "CPU 温度(Tctl)",
-      "description": "アラートは 90°C(10 分)と 95°C(3 分)",
+      "description": "アラートは 75°C(10 分)と 90°C(3 分)",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -76,15 +76,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "orange",
-                "value": 90
+                "value": 75
               },
               {
                 "color": "red",
-                "value": 95
+                "value": 90
               }
             ]
           },
@@ -453,7 +449,7 @@
       "id": 9,
       "type": "timeseries",
       "title": "温度",
-      "description": "線は CPU のアラート(90°C と 95°C)",
+      "description": "線は CPU のアラート(75°C と 90°C)",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -531,11 +527,11 @@
               },
               {
                 "color": "orange",
-                "value": 90
+                "value": 75
               },
               {
                 "color": "red",
-                "value": 95
+                "value": 90
               }
             ]
           }
@@ -1394,7 +1390,7 @@
       "id": 22,
       "type": "timeseries",
       "title": "メモリ・Wi-Fi の温度",
-      "description": "メモリ(spd5118)は high 55°C、crit 85°C",
+      "description": "メモリ(spd5118)は high 55°C(線、アラートの上限)、crit 85°C",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1428,6 +1424,9 @@
             "stacking": {
               "mode": "none",
               "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
             }
           },
           "color": {
@@ -1439,6 +1438,10 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 55
               }
             ]
           }
