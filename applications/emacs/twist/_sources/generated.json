@@ -55,12 +55,12 @@
             "name": null,
             "owner": "melpa",
             "repo": "melpa",
-            "rev": "2d30d129793ad09a4e60e45a6aa03b95b7876786",
-            "sha256": "sha256-K0Ky7ssp5JuAgcSWDOFzoqjNo7z2qceUc5WRuUJhhcs=",
+            "rev": "2b6fb65a44d00a454c9c3416f0aa21d12f379990",
+            "sha256": "sha256-pUcYlY+oYcmSH2gd6VhT1iH1vW3D22/nclQLLpBiiIc=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "2d30d129793ad09a4e60e45a6aa03b95b7876786"
+        "version": "2b6fb65a44d00a454c9c3416f0aa21d12f379990"
     },
     "nongnu-elpa": {
         "cargoLock": null,
