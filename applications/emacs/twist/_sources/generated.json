@@ -1,7 +1,7 @@
 {
     "epkgs": {
         "cargoLock": null,
-        "date": "2026-10-24",
+        "date": "2026-10-25",
         "extract": null,
         "name": "epkgs",
         "passthru": null,
@@ -13,12 +13,12 @@
             "name": null,
             "owner": "emacsmirror",
             "repo": "epkgs",
-            "rev": "cc5aafac4d609dffbb5d29220a8b19aa6f4b40f2",
-            "sha256": "sha256-1smKI2HSY9tfz2yJXkGXt8Ozrbut6OBQ8BSFiDueCDc=",
+            "rev": "12d0209975cd68f96df255099f8c959040b063aa",
+            "sha256": "sha256-LpbvFY4sKLhZHj6CvmvYxDVXUWsX/3xeQblsfwPD/i8=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "cc5aafac4d609dffbb5d29220a8b19aa6f4b40f2"
+        "version": "12d0209975cd68f96df255099f8c959040b063aa"
     },
     "gnu-elpa": {
         "cargoLock": null,
