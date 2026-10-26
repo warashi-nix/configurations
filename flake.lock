@@ -889,11 +889,11 @@
     "llm": {
       "flake": false,
       "locked": {
-        "lastModified": 1792069812,
-        "narHash": "sha256-B5AIrJYQtTuAHdefoM0l6+GHn6SK03iGqJKlihmHxY0=",
+        "lastModified": 1792963989,
+        "narHash": "sha256-usqGNd5O/NA4S+Vi8kZkVU3vPpoP3gzaXk3lRZtl3oQ=",
         "owner": "ahyatt",
         "repo": "llm",
-        "rev": "d3606d9bf1803600b86f52abaf17552da7c731c5",
+        "rev": "ce9a7c4a434c27301cffbb8d2cf221b9500936d8",
         "type": "github"
       },
       "original": {
