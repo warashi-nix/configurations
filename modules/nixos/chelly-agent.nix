@@ -76,6 +76,9 @@ let
             "--env=CHELLY_AGENT_CONFIG=${agentConfig}"
             "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
             "--env=IS_DEMO=1"
+            # 既定の journald ドライバは agent の出力を丸ごとホストの journal に書き、NVMe の書き込みを増やす。
+            # 会話は claude-state に残るので journal の写しは使わない。attach は log driver に依らず通る。
+            "--log-driver=none"
             # 作業 clone は親の setgid で chelly-workspaces を持つ。コンテナ内で対応させて
             # 所属させないと、nixfmt などが書き戻しでグループを付け直せない。
             # --gidmap は --userns と併用できないので、keep-id 相当も + 記法の対応表で書く。
