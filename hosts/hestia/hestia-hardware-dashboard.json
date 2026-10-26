@@ -1708,6 +1708,414 @@
           "sort": "desc"
         }
       }
+    },
+    {
+      "id": 27,
+      "type": "row",
+      "title": "NVMe の寿命(SMART)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 68
+      },
+      "panels": []
+    },
+    {
+      "id": 28,
+      "type": "stat",
+      "title": "摩耗(percentage_used)",
+      "description": "アラートは 80% 以上",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 69
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "smartctl_device_percentage_used{instance=\"$instance\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 29,
+      "type": "stat",
+      "title": "予備領域(available_spare)",
+      "description": "アラートは 100% を下回ったとき",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 69
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "smartctl_device_available_spare{instance=\"$instance\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 100
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 30,
+      "type": "stat",
+      "title": "通電時間",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 69
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "smartctl_device_power_on_seconds{instance=\"$instance\"} / 3600",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "書き込み量(直近 24 時間)",
+      "description": "SMART の bytes_written の増分。効果測定は 24 時間あけた 2 回の値で比べる",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 69
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "increase(smartctl_device_bytes_written{instance=\"$instance\"}[24h])",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "書き込み量(1 時間あたり)",
+      "description": "SMART はコントローラの記録(書き込み増幅を含む)、node_disk は OS が出した量",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 73
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "increase(smartctl_device_bytes_written{instance=\"$instance\"}[1h])",
+          "legendFormat": "SMART",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(increase(node_disk_written_bytes_total{instance=\"$instance\",device=~\"nvme.*\"}[1h]))",
+          "legendFormat": "OS(node_disk)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "NVMe 温度(SMART)",
+      "description": "current と、NVMe 自身の動作上限(op_limit_max)・危険上限(critical_limit_max)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 73
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "smartctl_device_temperature{instance=\"$instance\"}",
+          "legendFormat": "{{temperature_type}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     }
   ],
   "refresh": "1m",
