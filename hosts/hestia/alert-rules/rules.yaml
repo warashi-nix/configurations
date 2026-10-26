@@ -32,6 +32,18 @@ groups:
         labels:
           __grafana_alert_rule_uid__: hestia-nvme-temp-warning
 
+      # 上限はチップ自身の値(spd5118 は 55°C)を使い、固定値を持たない。
+      # NVMe の temp2/temp3 の上限は不正値なので、対象を spd5118 に絞る
+      - alert: "[warning] メモリの高温"
+        expr: |
+          node_hwmon_temp_celsius
+            * on(chip) group_left(chip_name)
+              node_hwmon_chip_names{chip_name="spd5118"}
+          > on(chip, sensor) group_left() node_hwmon_temp_max_celsius
+        for: 10m
+        labels:
+          __grafana_alert_rule_uid__: hestia-dram-temp-warning
+
       # Import したルールは No data で Normal になるので、exporter や scrape の停止は absent で拾う
       - alert: "[warning] NVMe の予備領域の減少"
         expr: |

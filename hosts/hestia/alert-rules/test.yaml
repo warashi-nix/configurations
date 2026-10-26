@@ -70,6 +70,39 @@ tests:
               chip_name: nvme
               sensor: temp1
 
+  - name: メモリの温度がチップの上限を 10 分超えると warning、NVMe の不正な上限では鳴らない
+    input_series:
+      - series: node_hwmon_chip_names{chip="i2c_14_14_0050", chip_name="spd5118"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="i2c_14_14_0050", sensor="temp1"}
+        values: 56x20
+      - series: node_hwmon_temp_max_celsius{chip="i2c_14_14_0050", sensor="temp1"}
+        values: 55x20
+      - series: node_hwmon_chip_names{chip="i2c_14_14_0051", chip_name="spd5118"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="i2c_14_14_0051", sensor="temp1"}
+        values: 55x20
+      - series: node_hwmon_temp_max_celsius{chip="i2c_14_14_0051", sensor="temp1"}
+        values: 55x20
+      - series: node_hwmon_chip_names{chip="nvme_nvme0", chip_name="nvme"}
+        values: 1x20
+      - series: node_hwmon_temp_celsius{chip="nvme_nvme0", sensor="temp2"}
+        values: 70000x20
+      - series: node_hwmon_temp_max_celsius{chip="nvme_nvme0", sensor="temp2"}
+        values: 65261x20
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: "[warning] メモリの高温"
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: "[warning] メモリの高温"
+        exp_alerts:
+          - exp_labels:
+              __grafana_alert_rule_uid__: hestia-dram-temp-warning
+              chip: i2c_14_14_0050
+              chip_name: spd5118
+              sensor: temp1
+
   - name: SMART の値が健全なら鳴らない
     input_series:
       - series: smartctl_device_available_spare{instance="hestia", device="nvme0"}
