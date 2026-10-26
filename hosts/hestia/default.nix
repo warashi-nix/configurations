@@ -1,9 +1,16 @@
 let
   entries = builtins.readDir ./.;
-  # .nix 以外のファイル(ダッシュボードの JSON など)は import しない
+  # .nix 以外のファイル(ダッシュボードの JSON など)と、default.nix を持たないディレクトリ
+  # (アラートルールなど)は import しない
   isModule =
     name:
-    name != "default.nix" && (entries.${name} == "directory" || builtins.match ".*\\.nix" name != null);
+    name != "default.nix"
+    && (
+      if entries.${name} == "directory" then
+        builtins.pathExists (./. + "/${name}/default.nix")
+      else
+        builtins.match ".*\\.nix" name != null
+    );
 in
 {
   imports = builtins.map (module: ./. + "/${module}") (
