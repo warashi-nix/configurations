@@ -185,6 +185,13 @@
                   ];
                 };
                 git-check-new-ignored = pkgs.callPackage ./applications/git/handoff/package.nix { };
+                brainium-handoff-pending = pkgs.callPackage ./applications/brainium-handoff/package.nix { };
+                brainium-handoff-config = pkgs.callPackage ./applications/brainium-handoff/checks.nix {
+                  athenaPkgs = self.darwinConfigurations.athena.pkgs;
+                  workbenchPkgs = self.nixosConfigurations.workbench.pkgs;
+                  homeManagerLib = inputs.home-manager.lib;
+                  inherit inputs;
+                };
                 require-signed-push = pkgs.callPackage ./applications/git/signed-push/package.nix { };
                 slack-notify = pkgs.callPackage ./applications/slack-notify/package.nix { };
                 duna-run-or-raise = pkgs.callPackage ./hosts/duna/homes/app-hotkeys/test.nix { };
