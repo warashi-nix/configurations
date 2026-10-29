@@ -902,6 +902,26 @@
         "type": "github"
       }
     },
+    "locdog": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793273472,
+        "narHash": "sha256-ed83v2pGfdWPMDXvuBofu8IJFKCROxUiYrqIAc5oR70=",
+        "owner": "Warashi",
+        "repo": "locdog",
+        "rev": "5a213289bfaf84e52647fd8f9dff3353d2152df8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Warashi",
+        "repo": "locdog",
+        "type": "github"
+      }
+    },
     "magit": {
       "flake": false,
       "locked": {
@@ -1322,6 +1342,7 @@
         "git-hooks": "git-hooks",
         "git-wit": "git-wit",
         "home-manager": "home-manager",
+        "locdog": "locdog",
         "my-emacs": "my-emacs",
         "my-emacs-pkgs": "my-emacs-pkgs",
         "nix-mac-app-identity": "nix-mac-app-identity",

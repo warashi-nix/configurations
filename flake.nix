@@ -66,6 +66,10 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    locdog = {
+      url = "github:Warashi/locdog";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     my-emacs = {
       url = "path:./applications/emacs/twist";
       inputs = {
@@ -191,6 +195,12 @@
                   workbenchPkgs = self.nixosConfigurations.workbench.pkgs;
                   homeManagerLib = inputs.home-manager.lib;
                   chellyModuleInputs = inputs;
+                };
+                locdog-config = pkgs.callPackage ./applications/locdog/checks.nix {
+                  athenaPkgs = self.darwinConfigurations.athena.pkgs;
+                  workbenchPkgs = self.nixosConfigurations.workbench.pkgs;
+                  homeManagerLib = inputs.home-manager.lib;
+                  inherit inputs;
                 };
                 chelly-config = pkgs.callPackage ./applications/chelly/checks.nix {
                   athena = self.darwinConfigurations.athena.config;
