@@ -76,6 +76,8 @@ in
         Service = {
           ExecStart = program;
           Restart = "always";
+          # 既定の 100ms だと設定の誤りで即死を繰り返して start limit に当たり、止まったままになる。
+          RestartSec = "10s";
         };
         Install.WantedBy = [ "default.target" ];
       };

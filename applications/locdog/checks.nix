@@ -110,6 +110,10 @@ let
         launchd = false;
       };
     };
+    test-keeps-retrying-instead-of-hitting-start-limit = {
+      expr = service.Service.RestartSec or null;
+      expected = "10s";
+    };
     test-stays-off-without-targets = {
       expr = {
         mac = macWithout.launchd.agents ? locdog;
