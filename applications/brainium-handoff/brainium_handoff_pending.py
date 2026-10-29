@@ -65,7 +65,8 @@ def titles(text):
 
 def owner_git(repo, *args):
     result = subprocess.run(
-        ["git", "-C", repo, *args], capture_output=True, text=True, check=False
+        ["git", "-C", repo, *args],
+        capture_output=True, encoding="utf-8", errors="replace", check=False,
     )
     if result.returncode != 0:
         raise Unverifiable(f"git {' '.join(args)}: {result.stderr.strip()}")
@@ -146,6 +147,8 @@ def main(argv):
         print(__doc__.strip().splitlines()[2], file=sys.stderr)
         return 2
     _, repo, name = argv
+    # launchd と systemd の user service は LANG を渡さないので、locale に依らず UTF-8 で書く。
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     try:
         found = pending(repo, name)
     except (Unverifiable, OSError, ValueError) as error:

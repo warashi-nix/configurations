@@ -72,10 +72,10 @@ class PendingTest(unittest.TestCase):
         self.write(self.clone, "tasks.org", text)
         self.commit(self.clone, "agent work")
 
-    def pending(self, name="brainium"):
+    def pending(self, name="brainium", env=None):
         return subprocess.run(
             [sys.executable, SCRIPT, self.owner, name],
-            capture_output=True, text=True, env=self.env, timeout=60,
+            capture_output=True, text=True, encoding="utf-8", env=env or self.env, timeout=60,
         )
 
     def assertPending(self, *lines):
@@ -134,6 +134,15 @@ class PendingTest(unittest.TestCase):
         self.agent_writes(TASKS + "** TODO 鍵を替える :handoff:\n")
         self.write(self.owner, "tasks.org", PROCESSED + "** DONE 鍵を新しくする\n")
         self.assertPending("- 取り込み前: 鍵を替える")
+
+    def test_reads_and_reports_utf8_without_a_utf8_locale(self):
+        # launchd と systemd の user service は LANG を渡さない。
+        self.agent_writes(TASKS + "** TODO 鍵を替える :handoff:\n")
+        env = {**self.env, "LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}
+        env.pop("LANG", None)
+        result = self.pending(env=env)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.stdout.splitlines()[1:], ["- 取り込み前: 鍵を替える"])
 
     def test_agent_branch_head_is_read(self):
         self.git("-C", self.clone, "switch", "-q", "-c", "feat")
