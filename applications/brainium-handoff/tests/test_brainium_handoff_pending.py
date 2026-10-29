@@ -109,21 +109,20 @@ class PendingTest(unittest.TestCase):
         self.agent_writes(TASKS + "** DONE 鍵を替える :handoff:\n")
         self.assertNothingPending()
 
-    def test_imported_request_stays_pending_until_processed(self):
+    def test_imported_request_is_not_pending_before_update(self):
         self.agent_writes(TASKS + "** TODO 鍵を替える :handoff:\n")
-        self.write(self.owner, "tasks.org", PROCESSED + "** TODO 鍵を替える :handoff:\n")
-        self.assertPending("- 未処理: 鍵を替える")
-
-    def test_request_in_progress_is_still_pending(self):
-        self.write(self.owner, "tasks.org", PROCESSED + "** WIP [#A] 鍵を替える :handoff:\n")
-        self.assertPending("- 未処理: 鍵を替える")
-
-    def test_processing_imported_request_stops_before_update(self):
-        self.agent_writes(TASKS + "** TODO 鍵を替える :handoff:\n")
-        for done in ("** DONE 鍵を替える :handoff:\n", "** TODO 鍵を替える\n"):
-            with self.subTest(done=done):
-                self.write(self.owner, "tasks.org", PROCESSED + done)
+        for imported in (
+            "** TODO 鍵を替える :handoff:\n",
+            "** WIP [#A] 鍵を替える :handoff:\n",
+            "** DONE 鍵を替える :handoff:\n",
+        ):
+            with self.subTest(imported=imported):
+                self.write(self.owner, "tasks.org", PROCESSED + imported)
                 self.assertNothingPending()
+
+    def test_open_request_only_in_owner_tasks_is_not_pending(self):
+        self.write(self.owner, "tasks.org", TASKS + "** TODO 鍵を替える :handoff:\n")
+        self.assertNothingPending()
 
     def test_archived_request_is_not_pending_before_update(self):
         self.agent_writes(TASKS + "** TODO 鍵を替える :handoff:\n")

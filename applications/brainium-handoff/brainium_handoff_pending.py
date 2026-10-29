@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""brainium の :handoff: 付き TODO のうち、本人がまだ処理していないものを列挙する。
+"""brainium の :handoff: 付き TODO のうち、本人がまだ取り込んでいないものを列挙する。
 
 usage: brainium-handoff-pending REPO NAME
 
-REPO は本人の brainium の clone、NAME は chelly-handoff の handoff 名。次のどちらかに当たる
-見出しを stdout に並べて exit 1 で終わる。無ければ何も出さずに exit 0、確かめられなければ
-理由を stdout に出して exit 2 で終わる。
-
-- 取り込み前: 専用 clone の HEAD の tasks.org にあり、見出しの文言が chelly-base の
-  tasks.org にも、本人の tasks.org / tasks.org_archive にも無い
-- 未処理: 本人の作業ツリーの tasks.org にある
+REPO は本人の brainium の clone、NAME は chelly-handoff の handoff 名。専用 clone の HEAD の
+tasks.org にあり、見出しの文言が chelly-base の tasks.org にも、本人の tasks.org /
+tasks.org_archive にも無い見出しを stdout に並べて exit 1 で終わる。無ければ何も出さずに
+exit 0、確かめられなければ理由を stdout に出して exit 2 で終わる。
 """
 
 import os
@@ -126,12 +123,11 @@ def pending(repo, name):
         base_tasks = owner_git(repo, "cat-file", "blob", f"{base}:tasks.org")
     except Unverifiable:
         base_tasks = ""
-    owner_tasks = read_optional(Path(repo) / "tasks.org")
-    known = titles(base_tasks) | titles(owner_tasks)
-    known |= titles(read_optional(Path(repo) / "tasks.org_archive"))
+    known = titles(base_tasks)
+    for owned in ("tasks.org", "tasks.org_archive"):
+        known |= titles(read_optional(Path(repo) / owned))
 
     found = [("取り込み前", t) for t in requests(agent_tasks(workspace)) if t not in known]
-    found += [("未処理", t) for t in requests(owner_tasks)]
     return list(dict.fromkeys(found))
 
 

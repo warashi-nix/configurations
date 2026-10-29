@@ -1,5 +1,5 @@
 # warashi.brainium-handoff の実装。agent が brainium に書いた :handoff: 付きの依頼を
-# 本人が処理するまで、locdog から Slack に通知し続ける。
+# 本人が取り込むまで、locdog から Slack に通知し続ける。
 #
 # 本人の brainium で chelly-handoff create 済みのホストで有効にする。clone の場所と基点は
 # 本人の repo の remote 設定から読む。
@@ -39,7 +39,7 @@ in
         cfg.name
       ];
       alert_cmd = notify;
-      recovery_cmd = notify ++ [ "${cfg.name} の handoff の依頼は片付いた" ];
+      recovery_cmd = notify ++ [ "${cfg.name} の handoff の依頼はすべて取り込んだ" ];
       interval = "1m";
       # alert の stdin は直近で終わった失敗の stdout なので、threshold を interval より長くして、
       # 最初の alert までに失敗した check が 1 回は終わっているようにする。

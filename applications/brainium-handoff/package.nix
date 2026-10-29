@@ -39,7 +39,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "List brainium handoff requests that the owner has not processed yet";
+    description = "List brainium handoff requests that the owner has not taken in yet";
     license = lib.licenses.cc0;
     mainProgram = "brainium-handoff-pending";
     platforms = lib.platforms.all;
