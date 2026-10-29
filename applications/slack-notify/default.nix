@@ -1,4 +1,4 @@
-# warashi.slackNotify の実装。本文を Slack の Incoming Webhook に POST するコマンドを、
+# warashi.slack-notify の実装。本文を Slack の Incoming Webhook に POST するコマンドを、
 # 使う側の module に command として渡す。
 #
 # URL は sops の secret slack-webhook-url から読む。別の webhook に送るホストでは、
@@ -11,11 +11,11 @@
 }:
 with lib;
 let
-  cfg = config.warashi.slackNotify;
+  cfg = config.warashi.slack-notify;
   package = pkgs.callPackage ./package.nix { };
 in
 {
-  options.warashi.slackNotify = {
+  options.warashi.slack-notify = {
     enable = mkEnableOption "Slack の Incoming Webhook への通知コマンド";
     command = mkOption {
       type = types.listOf types.str;

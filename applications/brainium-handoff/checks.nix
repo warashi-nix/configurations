@@ -46,7 +46,7 @@ let
       ++ extraModules;
     }).config;
   enabled = {
-    warashi.brainiumHandoff.enable = true;
+    warashi.brainium-handoff.enable = true;
   };
   mac = home athenaPkgs [ enabled ];
   linux = home workbenchPkgs [ enabled ];
@@ -79,13 +79,13 @@ let
         secret = linux.sops.secrets ? slack-webhook-url;
       };
       expected = {
-        alert = linux.warashi.slackNotify.command;
-        recovery = linux.warashi.slackNotify.command;
+        alert = linux.warashi.slack-notify.command;
+        recovery = linux.warashi.slack-notify.command;
         secret = true;
       };
     };
     test-command-reads-webhook-url-from-sops = {
-      expr = lib.last linux.warashi.slackNotify.command;
+      expr = lib.last linux.warashi.slack-notify.command;
       expected = "/run/secrets/slack-webhook-url";
     };
     test-alert-waits-for-a-failed-check-to-finish = {

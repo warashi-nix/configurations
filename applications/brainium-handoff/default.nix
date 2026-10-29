@@ -1,4 +1,4 @@
-# warashi.brainiumHandoff の実装。agent が brainium に書いた :handoff: 付きの依頼を
+# warashi.brainium-handoff の実装。agent が brainium に書いた :handoff: 付きの依頼を
 # 本人が処理するまで、locdog から Slack に通知し続ける。
 #
 # 本人の brainium で chelly-handoff create 済みのホストで有効にする。clone の場所と基点は
@@ -11,12 +11,12 @@
 }:
 with lib;
 let
-  cfg = config.warashi.brainiumHandoff;
+  cfg = config.warashi.brainium-handoff;
   package = pkgs.callPackage ./package.nix { };
-  notify = config.warashi.slackNotify.command;
+  notify = config.warashi.slack-notify.command;
 in
 {
-  options.warashi.brainiumHandoff = {
+  options.warashi.brainium-handoff = {
     enable = mkEnableOption "brainium の handoff の依頼の通知";
     repository = mkOption {
       type = types.str;
@@ -31,7 +31,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    warashi.slackNotify.enable = true;
+    warashi.slack-notify.enable = true;
     warashi.locdog.targets.brainium-handoff = {
       watch_cmd = [
         (getExe package)

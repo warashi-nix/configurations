@@ -1,3 +1,3 @@
 {
-  warashi.brainiumHandoff.enable = true;
+  warashi.brainium-handoff.enable = true;
 }
