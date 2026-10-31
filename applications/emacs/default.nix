@@ -27,10 +27,6 @@ in
 {
   xdg = {
     configFile = {
-      emacs-ddskk-init-el = {
-        target = "emacs/ddskk/init.el";
-        source = ./ddskk/init.el;
-      };
       emacs-sekken-bin = {
         target = "emacs/sekken/sekken";
         source = sekkenServer;

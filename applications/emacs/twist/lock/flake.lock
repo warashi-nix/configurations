@@ -48,38 +48,6 @@
         "type": "github"
       }
     },
-    "ccc": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774790227,
-        "narHash": "sha256-4X7pAXJZoaF8hUfefyXo8r3ggDvsaHy1pockndTUsds=",
-        "owner": "skk-dev",
-        "repo": "ddskk",
-        "rev": "e8bf68b27021c29781dbfa6a8ef7b770565bdb5b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "skk-dev",
-        "repo": "ddskk",
-        "type": "github"
-      }
-    },
-    "cdb": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774790227,
-        "narHash": "sha256-4X7pAXJZoaF8hUfefyXo8r3ggDvsaHy1pockndTUsds=",
-        "owner": "skk-dev",
-        "repo": "ddskk",
-        "rev": "e8bf68b27021c29781dbfa6a8ef7b770565bdb5b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "skk-dev",
-        "repo": "ddskk",
-        "type": "github"
-      }
-    },
     "compat": {
       "flake": false,
       "locked": {
@@ -189,22 +157,6 @@
       "original": {
         "owner": "magnars",
         "repo": "dash.el",
-        "type": "github"
-      }
-    },
-    "ddskk": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774790227,
-        "narHash": "sha256-4X7pAXJZoaF8hUfefyXo8r3ggDvsaHy1pockndTUsds=",
-        "owner": "skk-dev",
-        "repo": "ddskk",
-        "rev": "e8bf68b27021c29781dbfa6a8ef7b770565bdb5b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "skk-dev",
-        "repo": "ddskk",
         "type": "github"
       }
     },
@@ -630,8 +582,6 @@
         "acp": "acp",
         "age": "age",
         "agentel": "agentel",
-        "ccc": "ccc",
-        "cdb": "cdb",
         "compat": "compat",
         "cond-let": "cond-let",
         "consult": "consult",
@@ -639,7 +589,6 @@
         "copilot": "copilot",
         "corfu": "corfu",
         "dash": "dash",
-        "ddskk": "ddskk",
         "el-job": "el-job",
         "envrc": "envrc",
         "eshell-syntax-highlighting": "eshell-syntax-highlighting",

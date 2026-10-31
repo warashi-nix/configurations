@@ -19,18 +19,6 @@
       repo = "emacs-agentel";
       type = "github";
     };
-    ccc = {
-      flake = false;
-      owner = "skk-dev";
-      repo = "ddskk";
-      type = "github";
-    };
-    cdb = {
-      flake = false;
-      owner = "skk-dev";
-      repo = "ddskk";
-      type = "github";
-    };
     compat = {
       flake = false;
       owner = "emacs-compat";
@@ -71,12 +59,6 @@
       flake = false;
       owner = "magnars";
       repo = "dash.el";
-      type = "github";
-    };
-    ddskk = {
-      flake = false;
-      owner = "skk-dev";
-      repo = "ddskk";
       type = "github";
     };
     el-job = {

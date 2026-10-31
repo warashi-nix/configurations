@@ -211,7 +211,6 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 ** sekken
 SKK 風の境界を残しながら文を一括変換する。Rust の変換エンジンと辞書・
 モデルは Nix で固定し、条件付き文字言語モデルによる候補の並べ替えも使う。
-ddskk は =C-u C-\= から選べる退路として残す。
 
 #+begin_src emacs-lisp
 (setup (:package sekken)
@@ -224,14 +223,6 @@ ddskk は =C-u C-\= から選べる退路として残す。
         sekken-server-model (locate-user-emacs-file "sekken/model.zst")
         sekken-server-jisyo (locate-user-emacs-file "sekken/SKK-JISYO.L")
         sekken-server-lm (locate-user-emacs-file "sekken/lm.zst")))
-#+end_src
-
-** ddskk
-sekken が壊れたときの退路として残してある。C-u C-\ で入る。
-
-#+begin_src emacs-lisp
-(setup (:package ddskk)
-  (setopt skk-user-directory (locate-user-emacs-file "ddskk")))
 #+end_src
 
 ** quick-input
