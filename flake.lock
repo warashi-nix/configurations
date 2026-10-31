@@ -79,11 +79,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790085199,
-        "narHash": "sha256-3L/cHb3CK/Zb3YsMotHEh9WLX7q0/4jlRqGUK4X+XoE=",
+        "lastModified": 1793431620,
+        "narHash": "sha256-Q6t8uGxCsXWoZaDYktKL3FUWzj+jC9LGyUbtAygf4FA=",
         "owner": "Warashi",
         "repo": "chelly",
-        "rev": "4003b4cf80dcd22cde40f15a4d115d11ce98e76d",
+        "rev": "8e1944930e5b58d7df2992d26ef25b6754359ab9",
         "type": "github"
       },
       "original": {
