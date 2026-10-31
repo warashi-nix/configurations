@@ -235,6 +235,25 @@ let
         && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.script.text;
       expected = true;
     };
+    # セッションの登録は pid がキーなので、NixOS と同じく anchor の pid namespace に揃える。
+    test-mac-dedicated-agents-share-pid-namespace = {
+      expr =
+        let
+          wrapper = lib.findFirst (
+            package: (package.name or "") == "chelly-wrapper"
+          ) null darwinChellyHome.home.packages;
+        in
+        {
+          init = macHome.warashi.chelly.settings.init or null;
+          pid = lib.filter (lib.hasPrefix "--pid=") macRunArgs;
+          anchor = lib.hasInfix "/bin/chelly-pid-anchor" wrapper.script.text;
+        };
+      expected = {
+        init = false;
+        pid = [ "--pid=container:chelly-pid" ];
+        anchor = true;
+      };
+    };
     test-mac-dedicated-wrapper-ships-completions = {
       expr =
         let

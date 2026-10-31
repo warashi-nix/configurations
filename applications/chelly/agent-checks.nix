@@ -214,6 +214,8 @@ runCommand "chelly-agent-config-check"
     grep -Fxq "chelly-agent: run through the chelly launcher" stderr
     # podman は bind mount の元を作らないので、brainium の mount 元は runner が毎回用意する。
     grep -Fq 'mkdir -m 2750 /srv/chelly-workspaces/brainium' ${runnerCommand}
+    # anchor は chelly と同じ podman の storage に作るので、同じ環境変数で呼ぶ。
+    grep -Eq '^env -i "\$\{agent_env\[@\]\}" /nix/store/[^ ]*/bin/chelly-pid-anchor$' ${runnerCommand}
 
     python3 - \
       ${workbench.environment.etc."chelly-agent/chelly/config.toml".source} \
@@ -249,6 +251,9 @@ runCommand "chelly-agent-config-check"
     assert "--group-add=988" in run, run
     assert "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude" in run, run
     assert "--env=IS_DEMO=1" in run, run
+    # セッションの登録は pid がキーなので、全コンテナを anchor の pid namespace に入れる。
+    assert config["init"] is False, config
+    assert "--pid=container:chelly-pid" in run, run
     # 配布 bundle は /nix の read-only mount 越しに store path で渡す。
     config_env = [arg for arg in run if arg.startswith("--env=CHELLY_AGENT_CONFIG=")]
     assert len(config_env) == 1, run

@@ -192,6 +192,7 @@
                 slack-notify = pkgs.callPackage ./applications/slack-notify/package.nix { };
                 duna-run-or-raise = pkgs.callPackage ./hosts/duna/homes/app-hotkeys/test.nix { };
                 hestia-alert-rules = pkgs.callPackage ./hosts/hestia/alert-rules/check.nix { };
+                chelly-shared-pid = pkgs.callPackage ./applications/chelly/shared-pid-test.nix { };
                 chelly-go-proxy = pkgs.callPackage ./applications/chelly/go-proxy/package.nix { };
                 chelly-go-proxy-config = pkgs.callPackage ./applications/chelly/go-proxy/checks.nix {
                   athenaPkgs = self.darwinConfigurations.athena.pkgs;

@@ -22,6 +22,7 @@ let
   containerGid = 100;
   chelly = inputs.chelly.packages.${pkgs.stdenv.hostPlatform.system}.chelly;
   proxy = config.warashi.chelly-nix-proxy;
+  sharedPid = pkgs.callPackage ../../applications/chelly/shared-pid.nix { };
   # 本人の home-manager が host の ~/.claude と ~/.copilot に書くものと同じ生成物。
   # /nix は read-only で mount 済みなので store path をそのまま渡し、image の
   # entrypoint が volume へ写す。本人の実 home や認証状態は含まれない。
@@ -56,6 +57,7 @@ let
       "go-mod:/home/warashi/go/pkg/mod"
       "nix-cache:/home/warashi/.cache/nix"
     ];
+    inherit (sharedPid.settings) init;
     env_files = cfg.envfiles;
     inherit_env = [
       "COLORTERM"
@@ -78,6 +80,7 @@ let
         args =
           import ../../applications/chelly/podman-run-args.nix
           ++ cfg.runArgs
+          ++ sharedPid.runArgs
           ++ [
             # コンテナには ~/.nix-profile が無く、ホストの nix は /run/current-system 経由でしか
             # 見えないため、daemon と同じ版の nix を store path で直接渡して entrypoint が PATH に足す。
@@ -127,15 +130,15 @@ let
         echo "chelly-agent: user runtime directory is missing; check the lingering user manager" >&2
         exit 1
       fi
-      exec env -i \
-        HOME=${lib.escapeShellArg home} \
-        USER=${lib.escapeShellArg username} \
-        LOGNAME=${lib.escapeShellArg username} \
-        XDG_CONFIG_HOME=/etc/chelly-agent \
-        XDG_DATA_HOME=${lib.escapeShellArg "${home}/.local/share"} \
-        XDG_CACHE_HOME=${lib.escapeShellArg "${home}/.cache"} \
-        XDG_RUNTIME_DIR="$runtime_dir" \
-        DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus" \
+      agent_env=(
+        HOME=${lib.escapeShellArg home}
+        USER=${lib.escapeShellArg username}
+        LOGNAME=${lib.escapeShellArg username}
+        XDG_CONFIG_HOME=/etc/chelly-agent
+        XDG_DATA_HOME=${lib.escapeShellArg "${home}/.local/share"}
+        XDG_CACHE_HOME=${lib.escapeShellArg "${home}/.cache"}
+        XDG_RUNTIME_DIR="$runtime_dir"
+        DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus"
         PATH=${lib.escapeShellArg "${config.security.wrapperDir}:${
           lib.makeBinPath [
             pkgs.podman
@@ -143,13 +146,16 @@ let
             pkgs.coreutils
             pkgs.util-linux
           ]
-        }"} \
-        LANG=C.UTF-8 \
-        TERM="''${TERM:-dumb}" \
-        COLORTERM="''${COLORTERM:-}" \
-        TERM_PROGRAM="''${TERM_PROGRAM:-}" \
-        TERM_PROGRAM_VERSION="''${TERM_PROGRAM_VERSION:-}" \
-        ${lib.getExe' chelly "chelly"} "$@"
+        }"}
+        LANG=C.UTF-8
+        TERM="''${TERM:-dumb}"
+        COLORTERM="''${COLORTERM:-}"
+        TERM_PROGRAM="''${TERM_PROGRAM:-}"
+        TERM_PROGRAM_VERSION="''${TERM_PROGRAM_VERSION:-}"
+      )
+      # anchor は chelly が使うのと同じ podman の storage に作る。
+      env -i "''${agent_env[@]}" ${lib.getExe sharedPid.anchor}
+      exec env -i "''${agent_env[@]}" ${lib.getExe' chelly "chelly"} "$@"
     '';
   };
   launcherScript = pkgs.writeShellScriptBin "chelly" ''
