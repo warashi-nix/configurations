@@ -15,7 +15,6 @@
   systemd.slices.system = {
     # system.slice は systemd が暗黙に作るので、unit を丸ごと置かずにドロップインで足す
     overrideStrategy = "asDropin";
-    # 実測で system.slice は 1.1G(nix-daemon 444M、alloy 160M、datadog 94M、n8n 91M、journald 84M)。
     # 子が MemoryLow を持たない分は奪い合いになるので、全体が収まる大きさにする。
     sliceConfig.MemoryLow = "1536M";
   };
