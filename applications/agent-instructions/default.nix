@@ -56,7 +56,10 @@ in
   config.warashi.agent-instructions = {
     text =
       cfg.common
-      + optionalString cfg.brainium.enable "- タスク・ナレッジ管理には ~/ghq/github.com/Warashi/brainium を使う\n";
+      + optionalString cfg.brainium.enable ''
+        - タスク・ナレッジ管理には ~/ghq/github.com/Warashi/brainium を使う
+        - brainium の task に着手したら、brainium の CLAUDE.md の規約に従って task の状態を更新する
+      '';
 
     # 指示ファイルが subagent にも渡るかは Copilot CLI の docs に明記がないため、
     # 渡っても委譲先が質問で止まらないよう最上位エージェント限定と明示する
