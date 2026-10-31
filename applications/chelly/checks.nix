@@ -56,10 +56,6 @@ let
       expr = lib.elem "podman" (map (brew: brew.name) athena.homebrew.brews);
       expected = false;
     };
-    test-mac-keeps-container = {
-      expr = lib.elem "container" (map (brew: brew.name) athena.homebrew.brews);
-      expected = true;
-    };
     test-mac-shares-all-caches = {
       expr = lib.all (mount: lib.elem mount macHome.warashi.chelly.settings.additional_mounts) [
         "chelly-nix:/nix"

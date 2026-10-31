@@ -302,7 +302,7 @@ athena は `podman machine` の共有 Linux VM でコンテナを動かす。
 `hosts/athena/homes/chelly.nix` で Podman を明示選択し、
 CLI は共通の chelly モジュールで `isDarwin` の場合に `pkgs.podman` を導入する。
 macOS 用パッケージには VM 起動用の vfkit とネットワーク用の gvproxy も組み込まれている。
-apple/container は比較・切り戻し用に残す。コンテナ間は VM ではなく Linux の namespace で分離される。
+コンテナ間は VM ではなく Linux の namespace で分離される。
 
 ### 境界: VM に共有する範囲
 
@@ -398,7 +398,6 @@ VM は自動起動・自動停止しない (`autoStart = false`)。停止は実�
 
 `chelly-nix`、`nix-cache`、`go-cache`、`go-mod`、`claude-state`、`copilot-state` は
 VM 内の Podman named volume として共有され、コンテナ終了や VM 停止後も残る。
-Apple 側の同名 volume とは別物で、Apple 側のデータは削除しない。
 セットアップ後に `podman machine rm` や volume の削除を行うとキャッシュ・Nix store・
 agent の会話を失う。
 
@@ -446,10 +445,6 @@ home-manager モジュールと対応する `hosts/*/homes/chelly.nix` だけを
 無関係なパッケージまで評価されて Darwin 向け IFD ビルドを要求してしまい、
 aarch64-linux では `nix flake check` が失敗するため。この最小構成での
 評価は、Darwin ホスト全体のビルドを Linux 上で検証したことを意味しない。
-
-切り戻し時は `CHELLY_CONTAINER_CMD=container chelly run` で既存の Apple 側
-イメージ・volume を使える。ただし、元の named volume の同時利用制約も戻り、
-apple/container は home 全体を共有するので上の境界にはならない。
 
 ## macOS: private Go module の取得
 
