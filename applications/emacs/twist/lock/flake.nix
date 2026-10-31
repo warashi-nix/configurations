@@ -157,12 +157,6 @@
       repo = "md-mode";
       type = "github";
     };
-    msgpack = {
-      flake = false;
-      owner = "xuchunyang";
-      repo = "msgpack.el";
-      type = "github";
-    };
     nix-ts-mode = {
       flake = false;
       owner = "nix-community";
@@ -242,12 +236,6 @@
       shallow = true;
       type = "git";
       url = "https://git.savannah.gnu.org/git/tramp.git";
-    };
-    tramp-rpc = {
-      flake = false;
-      owner = "ArthurHeymans";
-      repo = "emacs-tramp-rpc";
-      type = "github";
     };
     transient = {
       flake = false;

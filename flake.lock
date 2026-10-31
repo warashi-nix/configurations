@@ -874,22 +874,6 @@
         "type": "github"
       }
     },
-    "msgpack": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1783353305,
-        "narHash": "sha256-XMNaHjNx3E/HbqNyqSfotIq5YpUMydUX6d9et2VE+SI=",
-        "owner": "xuchunyang",
-        "repo": "msgpack.el",
-        "rev": "5353a7b2da854c843cbec4536996242001f63471",
-        "type": "github"
-      },
-      "original": {
-        "owner": "xuchunyang",
-        "repo": "msgpack.el",
-        "type": "github"
-      }
-    },
     "my-emacs": {
       "inputs": {
         "emacs-spectreshell": [
@@ -946,7 +930,6 @@
         "magit-section": "magit-section",
         "marginalia": "marginalia",
         "md-mode": "md-mode",
-        "msgpack": "msgpack",
         "nix-ts-mode": "nix-ts-mode",
         "orderless": "orderless",
         "org": "org",
@@ -960,7 +943,6 @@
         "terraform-mode": "terraform-mode",
         "textui": "textui",
         "tramp": "tramp",
-        "tramp-rpc": "tramp-rpc",
         "transient": "transient",
         "truename-cache": "truename-cache",
         "twist": "twist",
@@ -1383,22 +1365,6 @@
         "shallow": true,
         "type": "git",
         "url": "https://git.savannah.gnu.org/git/tramp.git"
-      }
-    },
-    "tramp-rpc": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1793289176,
-        "narHash": "sha256-kmb0tolO3E/cXqvdzTUQFKPGgDXSO0uN+98RXvmMvBk=",
-        "owner": "ArthurHeymans",
-        "repo": "emacs-tramp-rpc",
-        "rev": "543b3bf30b8a80b8cd0200c98d00f22a4e0220ac",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ArthurHeymans",
-        "repo": "emacs-tramp-rpc",
-        "type": "github"
       }
     },
     "transient": {

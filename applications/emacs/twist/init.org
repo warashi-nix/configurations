@@ -160,7 +160,7 @@ macOS の GUI から起動した Emacs は launchd 直下で動くため、nix-d
 (setup (:package envrc)
   (:opt envrc-async t
         envrc-remote t
-        envrc-supported-tramp-methods '("ssh" "sshx" "rpc"))
+        envrc-supported-tramp-methods '("ssh" "sshx"))
   (:after-init envrc-global-mode))
 #+end_src
 
@@ -746,8 +746,7 @@ C-g でも抜けられない。
 
 ** tramp
 #+begin_src emacs-lisp
-(setup (:package tramp
-                 tramp-rpc)
+(setup (:package tramp)
   (:when-loaded
     (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))
 #+end_src
