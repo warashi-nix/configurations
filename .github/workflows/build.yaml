@@ -35,6 +35,9 @@ jobs:
             sandbox = ${{ startsWith(matrix.os, 'macos-') && 'false' || 'true' }}
             keep-env-derivations = true
             keep-outputs = true
+            # 失敗時に出る derivation のログは既定で末尾 25 行に切られ、テストの失敗箇所が残らない。
+            # 切り詰めるのはビルドする daemon なので、daemon が読むここで広げる。
+            log-lines = 100000
       - name: Setup cachix
         uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
