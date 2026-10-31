@@ -77,7 +77,8 @@ in
   };
 
   config = mkIf cfg.enable {
-    sops.secrets.chelly-dotenv = { };
+    # 専用構成は chelly-agent-dotenv だけを使うので、本人用の token は復号しない。
+    sops.secrets.chelly-dotenv = mkIf (!cfg.dedicated) { };
     # 専用構成では dedicated.nix の wrapper が bin/chelly を持つ。
     home.packages = optional (!cfg.dedicated) cfg.package ++ [ pkgs.podman ];
 

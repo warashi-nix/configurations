@@ -155,8 +155,14 @@ let
       ];
     };
     test-mac-dedicated-uses-only-agent-token = {
-      expr = macHome.warashi.chelly.settings.env_files;
-      expected = [ macHome.sops.secrets.chelly-agent-dotenv.path ];
+      expr = {
+        envFiles = macHome.warashi.chelly.settings.env_files;
+        ownerSecret = macHome.sops.secrets ? chelly-dotenv;
+      };
+      expected = {
+        envFiles = [ macHome.sops.secrets.chelly-agent-dotenv.path ];
+        ownerSecret = false;
+      };
     };
     test-mac-dedicated-materializes-bundle-and-workspaces = {
       expr = {
