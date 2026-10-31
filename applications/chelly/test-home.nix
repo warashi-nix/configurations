@@ -1,4 +1,4 @@
-# chelly の home-manager モジュールと host の homes/chelly.nix だけを取り込んだ最小構成を
+# chelly の home-manager モジュールと host の homes/chelly.nix (Linux では空) だけを取り込んだ最小構成を
 # 評価する。完全な host config は ../../applications 配下の無関係なパッケージ (twist 経由の
 # emacs など) まで含み、それらを辿ると Darwin 向け IFD ビルドが要求されて aarch64-linux では
 # 失敗する。
@@ -50,16 +50,6 @@ in
   inherit pkgs;
   extraSpecialArgs = {
     inputs = chellyModuleInputs;
-    # nixStore = "host" (workbench) は host-store.nix が osConfig.warashi.chelly-nix-proxy
-    # を要求する。実ホストでは hosts/workbench/chelly.nix が有効にしているものを、
-    # NixOS 側を丸ごと評価せずに満たすための最小限のスタブ。
-    osConfig = {
-      warashi.chelly-nix-proxy = {
-        enable = true;
-        socketDir = "/run/chelly-nix";
-      };
-      nix.package = pkgs.nix;
-    };
   };
   modules = [
     sopsSecretsStub

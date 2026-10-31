@@ -4,8 +4,7 @@
   ...
 }:
 {
-  # chelly コンテナにホストの nix store を共有するための転送ソケット。
-  # homes/chelly.nix 側の nixStore = "host" と対になる。
+  # chelly-agent のコンテナにホストの nix store を共有するための転送ソケット。
   warashi.chelly-nix-proxy.enable = true;
   warashi.chelly-agent = {
     enable = true;

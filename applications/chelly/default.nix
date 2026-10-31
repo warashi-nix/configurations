@@ -9,11 +9,7 @@ with lib;
 let
   cfg = config.warashi.chelly;
   tomlFormat = pkgs.formats.toml { };
-  gitIgnorePath =
-    if pkgs.stdenv.hostPlatform.isDarwin then
-      "${config.xdg.dataHome}/chelly/git-ignore"
-    else
-      "${config.xdg.configHome}/git/ignore";
+  gitIgnorePath = "${config.xdg.dataHome}/chelly/git-ignore";
   # 既定値をまとめて mkDefault すると定義全体が捨てられて一部だけの上書きができなくなるため、葉ごとに mkDefault する
   # リストは同一優先度の定義同士が結合されるようにするため mkDefault を付けない
   mkDefaultLeaves = mapAttrsRecursive (_path: value: if isList value then value else mkDefault value);
@@ -28,14 +24,13 @@ in
   imports = [
     ./dedicated.nix
     ./go-proxy
-    ./host-store.nix
   ];
 
   options.warashi.chelly = {
     enable = mkOption {
       type = types.bool;
-      description = "Enable Chelly options.";
-      default = true;
+      description = "Enable Chelly options. NixOS hosts use warashi.chelly-agent instead.";
+      default = pkgs.stdenv.hostPlatform.isDarwin;
     };
     package = mkOption {
       type = types.package;
@@ -60,19 +55,6 @@ in
       type = types.int;
       description = "gid for container user.";
     };
-    nixStore = mkOption {
-      type = types.enum [
-        "volume"
-        "host"
-      ];
-      default = "volume";
-      description = ''
-        コンテナの /nix をどこから持ってくるか。
-        volume: named volume に single-user の nix を入れる。ホストに nix が無くても動く。
-        host: ホストの /nix を read-only で見せ、ビルドはホストの daemon に任せる。
-              host-store.nix が実装し、NixOS 側で warashi.chelly-nix-proxy が要る。
-      '';
-    };
     runtime_options = mkOption {
       type = types.attrsOf (types.attrsOf (types.listOf types.str));
       default = { };
@@ -96,16 +78,17 @@ in
 
   config = mkIf cfg.enable {
     sops.secrets.chelly-dotenv = { };
-    home.packages = [ cfg.package ] ++ optional pkgs.stdenv.hostPlatform.isDarwin pkgs.podman;
+    home.packages = [
+      cfg.package
+      pkgs.podman
+    ];
 
     # VM に共有するホームから Mac の /nix/store へのリンクは解決できないため、実体を渡す。
-    home.activation.chelly-git-ignore = mkIf pkgs.stdenv.hostPlatform.isDarwin (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.coreutils}/bin/install -D -m 0444 \
-          ${escapeShellArg (toString config.xdg.configFile."git/ignore".source)} \
-          ${escapeShellArg gitIgnorePath}
-      ''
-    );
+    home.activation.chelly-git-ignore = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${pkgs.coreutils}/bin/install -D -m 0444 \
+        ${escapeShellArg (toString config.xdg.configFile."git/ignore".source)} \
+        ${escapeShellArg gitIgnorePath}
+    '';
 
     warashi.chelly = {
       runtime_options = {
@@ -113,9 +96,9 @@ in
           build = [
             "--build-arg=UID=${toString cfg.uid}"
             "--build-arg=GID=${toString cfg.gid}"
-          ]
-          # remote build の context はリンクのまま送られるため、Mac 側の実体を別途渡す。
-          ++ optional pkgs.stdenv.hostPlatform.isDarwin "--file=${cfg.dockerfile}";
+            # remote build の context はリンクのまま送られるため、Mac 側の実体を別途渡す。
+            "--file=${cfg.dockerfile}"
+          ];
           run = import ./podman-run-args.nix ++ [ "--userns=keep-id" ];
         };
       };
@@ -125,6 +108,7 @@ in
           additional_mounts = [
             # keep-sorted start
             "${gitIgnorePath}:/home/warashi/.config/git/ignore"
+            "chelly-nix:/nix"
             "go-cache:/home/warashi/.cache/go-build"
             "go-mod:/home/warashi/go/pkg/mod"
             "nix-cache:/home/warashi/.cache/nix"
@@ -137,8 +121,7 @@ in
             "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
             "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             # keep-sorted end
-          ]
-          ++ optional (cfg.nixStore == "volume") "chelly-nix:/nix";
+          ];
           inherit_env = [
             "COLORTERM"
             "TERM"

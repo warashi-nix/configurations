@@ -36,7 +36,7 @@ let
   };
   linuxChellyHome = chellyHomeConfig {
     pkgs = workbenchPkgs;
-    hostHomeModule = ../../hosts/workbench/homes/chelly.nix;
+    hostHomeModule = { };
   };
 
   tests = lib.runTests {
@@ -48,9 +48,20 @@ let
       expr = installsPodman darwinChellyHome;
       expected = true;
     };
-    test-linux-does-not-install-podman-in-home = {
-      expr = installsPodman linuxChellyHome;
-      expected = false;
+    # NixOS では chelly-agent が唯一の入口なので、本人の home には chelly を置かない。
+    test-linux-home-has-no-chelly = {
+      expr = {
+        package = installsPackage "chelly" linuxChellyHome;
+        podman = installsPodman linuxChellyHome;
+        config = linuxChellyHome.xdg.configFile ? "chelly/config.toml";
+        workbench = linuxHome.xdg.configFile ? "chelly/config.toml";
+      };
+      expected = {
+        package = false;
+        podman = false;
+        config = false;
+        workbench = false;
+      };
     };
     test-mac-does-not-install-podman-with-homebrew = {
       expr = lib.elem "podman" (map (brew: brew.name) athena.homebrew.brews);
@@ -83,39 +94,6 @@ let
       expr = lib.elem "--file=${macHome.warashi.chelly.dockerfile}" macHome.warashi.chelly.runtime_options.podman.build;
       expected = true;
     };
-    test-linux-keeps-git-ignore-mount = {
-      expr = lib.filter (
-        mount: lib.hasSuffix ":/home/warashi/.config/git/ignore" mount
-      ) linuxHome.warashi.chelly.settings.additional_mounts;
-      expected = [ "${linuxHome.xdg.configHome}/git/ignore:/home/warashi/.config/git/ignore" ];
-    };
-    test-linux-does-not-copy-git-ignore = {
-      expr = linuxHome.home.activation ? chelly-git-ignore;
-      expected = false;
-    };
-    test-linux-keeps-host-store = {
-      expr = linuxHome.warashi.chelly.nixStore;
-      expected = "host";
-    };
-    # Linux の通常入口は本人の実 ~/.claude を mount するので、初回セットアップの
-    # スキップも配布 bundle の適用もしない。
-    test-linux-entry-keeps-owner-state = {
-      expr = {
-        skipsOnboarding = lib.elem "--env=IS_DEMO=1" linuxHome.warashi.chelly.runtime_options.podman.run;
-        appliesBundle = lib.any (lib.hasPrefix "--env=CHELLY_AGENT_CONFIG=") linuxHome.warashi.chelly.runtime_options.podman.run;
-        mountsOwnerClaude = lib.elem "${linuxHome.home.homeDirectory}/.claude:/home/warashi/.claude" linuxHome.warashi.chelly.settings.additional_mounts;
-        dedicated = linuxHome.warashi.chelly.dedicated;
-        workspaces = linuxHome.warashi.chelly.workspaces;
-      };
-      expected = {
-        skipsOnboarding = false;
-        appliesBundle = false;
-        mountsOwnerClaude = true;
-        dedicated = false;
-        workspaces = "/srv/chelly-workspaces";
-      };
-    };
-
     # macOS は VM の共有範囲を境界にするので、chelly 自体が専用構成になる。
     # 本人の home の状態は mount せず、専用領域と ~/.local/share/chelly の実体だけを使う。
     test-mac-dedicated-does-not-mount-owner-state = {
@@ -193,12 +171,10 @@ let
     test-mac-dedicated-installs-chelly-agent-wrapper = {
       expr = {
         mac = installsPackage "chelly-agent" darwinChellyHome;
-        linux = installsPackage "chelly-agent" linuxChellyHome;
         workspaces = darwinChellyHome.warashi.chelly.workspaces;
       };
       expected = {
         mac = true;
-        linux = false;
         workspaces = "/Users/warashi/chelly-workspaces";
       };
     };
@@ -218,7 +194,6 @@ let
             volumes
             ;
         }) macHome.services.podman.machines;
-        linuxEnabled = linuxHome.services.podman.enable;
       };
       expected = {
         enabled = true;
@@ -234,7 +209,6 @@ let
             "${macHome.xdg.dataHome}/chelly:${macHome.xdg.dataHome}/chelly"
           ];
         };
-        linuxEnabled = false;
       };
     };
     # chelly-handoff remove brainium は mount 元の親ごと rmdir するので、NixOS の runner と

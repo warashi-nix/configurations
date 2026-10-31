@@ -25,13 +25,11 @@ let
     pkgs = athenaPkgs;
     hostHomeModule = ../../../hosts/athena/homes/chelly.nix;
   };
-  linux =
-    extraModules:
-    chellyHomeConfig {
-      pkgs = workbenchPkgs;
-      hostHomeModule = ../../../hosts/workbench/homes/chelly.nix;
-      inherit extraModules;
-    };
+  linux = chellyHomeConfig {
+    pkgs = workbenchPkgs;
+    hostHomeModule = { };
+    extraModules = [ withAllow ];
+  };
 
   agent = mac.launchd.agents.chelly-go-proxy;
   args = agent.config.ProgramArguments;
@@ -117,14 +115,15 @@ let
         env = [ ];
       };
     };
-    test-linux-is-rejected = {
+    # NixOS の home には chelly が無いので、許可リストがあっても proxy は動かさない。
+    test-linux-runs-no-proxy = {
       expr = {
-        withAllow = evaluates (linux [ withAllow ]);
-        withoutAllow = evaluates (linux [ ]);
+        evaluates = evaluates linux;
+        agent = linux.launchd.agents ? chelly-go-proxy;
       };
       expected = {
-        withAllow = false;
-        withoutAllow = true;
+        evaluates = true;
+        agent = false;
       };
     };
   };

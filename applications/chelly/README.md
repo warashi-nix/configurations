@@ -32,14 +32,13 @@ instruction directory を残したまま `/etc/chelly` を加える。
 
 ## workbench: ホストの Nix store の共用
 
-workbench は native rootless Podman と `nixStore = "host"` を使い、
+workbench と hestia は native rootless Podman で、
 ホストの `/nix` を読み取り専用でコンテナに渡す。取得・ビルドはホストの
 Nix daemon が行い、コンテナ用に store を複製しない。
 
-`host-store.nix` と `modules/nixos/chelly-nix-proxy.nix` が対になる。
+`modules/nixos/chelly-agent.nix` と `modules/nixos/chelly-nix-proxy.nix` が対になる。
 本物の daemon socket はコンテナ側で覆い隠し、wheel に属さない専用ユーザー
-`chelly-nix-proxy` の接続だけを見せる。`--userns=keep-id` の本人の UID で
-ホストの trusted user へ直接接続する構成にはしない。
+`chelly-nix-proxy` の接続だけを見せる。ホストの trusted user へ直接接続する構成にはしない。
 コンテナ内の Nix も `CHELLY_NIX_BIN` でホストと同じ版を使う。
 
 これは VM による隔離ではなく、ホストとカーネルを共有する構成。
@@ -58,9 +57,8 @@ native Podman を VM と同等とは扱わない。
 
 ### 専用ユーザーの入口
 
-`modules/nixos/chelly-agent.nix` を workbench で有効にし、`chelly-agent` を追加する。
-通常の `chelly` は変更せず、Emacs は `/srv/chelly-workspaces` 内の起動だけを専用入口に向ける。以下は設定適用後の手順であり、
-実機での起動確認が済むまでは、自律作業環境全体の移行完了とは扱わない。
+`modules/nixos/chelly-agent.nix` を workbench と hestia で有効にする。
+NixOS ホストの本人の home には chelly を置かず、この専用入口だけを使う。
 
 | 対象 | 専用環境での扱い |
 | --- | --- |
@@ -437,9 +435,9 @@ package build は handoff の動作を検査しない。
 専用 token・volume・brainium の見せ方、workbench の既存設定の維持を検査するもので、
 Mac 実機の動作確認の代わりではない。
 
-Podman インストールの有無 (Darwin では入る/Linux では入らない) だけは、
+chelly と Podman のインストールの有無 (Darwin では入る/Linux では入らない) だけは、
 host の完全な設定 (athena/workbench の `config`) を辿らず、chelly の
-home-manager モジュールと対応する `hosts/*/homes/chelly.nix` だけを
+home-manager モジュールと `hosts/athena/homes/chelly.nix` だけを
 取り込んだ最小構成で評価する。host 全体をたどると emacs-twist 等の
 無関係なパッケージまで評価されて Darwin 向け IFD ビルドを要求してしまい、
 aarch64-linux では `nix flake check` が失敗するため。この最小構成での
