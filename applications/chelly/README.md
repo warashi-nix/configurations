@@ -423,9 +423,8 @@ agent の会話を失う。
 - 同じ VM のまま、別ターミナルから二つの `chelly run` を同時に動かし、
   `podman inspect` で同じ named volume を使い、一方が動いたまま他方も `nix develop` とビルドを実行できる。
 - コンテナから専用 clone に書いたファイルを Mac の Emacs で読み書きでき、所有者が変わらない。
-  handoff の agent 側 script は `GIT_CONFIG_GLOBAL=/dev/null` で Dockerfile の
-  `safe.directory` を無効にしているので、virtiofs の所有者が揺れると `create` の clone や
-  `status` が dubious ownership で落ちる。起きたら直すのは handoff script 側で、Dockerfile ではない。
+  virtiofs の所有者が揺れると、git の所有者チェックで `create` の clone や `status` が
+  dubious ownership で落ちる。
 - Emacs の専用入口で host のファイル要求が `*Messages*` に拒否として出る。
 - chelly 内で `podman run --rm docker.io/library/alpine:latest true` が成功する。
 - VM を停止・再起動した後も named volume の内容を使える。

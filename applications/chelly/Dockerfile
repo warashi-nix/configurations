@@ -212,10 +212,7 @@ RUN mkdir -p /nix && chmod 0755 /nix && chown "${UID}:${GID}" /nix
 # ~/.claude と ~/.copilot はホストと共有されるため、コンテナ固有の前提はイメージ側に置く。
 # Claude の policy memory と Copilot の追加 instruction directory から同じ内容を読む。
 # mount 先は下流の flake で追加・変更されうるため、具体的なパスは列挙せず確認方法だけを書く。
-# ディレクトリを先に作るのは、BuildKit (apple/container) が COPY で自動作成する親ディレクトリ
-# にも --chmod を適用して 0644 のディレクトリを作る一方、buildah (podman) は記号モードの
-# --chmod を解釈できないため。既存ディレクトリならどちらもモードを触らない。
-RUN mkdir -p /etc/chelly /etc/claude-code
+RUN mkdir -p /etc/claude-code
 COPY --chmod=0644 <<'EOF' /etc/chelly/AGENTS.md
 - この環境はコンテナであり、コンテナのファイルシステム自体は終了時に破棄される
 - ただし mount されたディレクトリはホスト側の実体または volume であり、コンテナ終了後も残る
@@ -341,16 +338,9 @@ RUN mkdir -p \
 # Git・Claude・Copilot・Nixの設定
 # --------------------------------------------------------
 # Git初期設定
-# apple/container は VM 起動から数秒間、virtiofs のマウント点だけを root 所有に見せる
-# (中のファイルはユーザー所有)。その間は git も nix の libgit2 も所有者チェックで
-# リポジトリを開けず、entrypoint の devShell 判定が黙って素のシェルに落ちる。
-# コンテナは単一ユーザーで、マウントされるのは自分のディレクトリだけなので、
-# 所有者チェックが守るものはない。環境変数 GIT_CONFIG_* は libgit2 が読まないので
-# gitconfig に書く。
 RUN mkdir -p /home/warashi/.config/git && \
     git config --global core.untrackedcache false && \
     git config --global gc.worktreePruneExpire never && \
-    git config --global safe.directory '*' && \
     git config --global user.name 'Shinnosuke Sawada-Dazai' && \
     git config --global user.email '3600530+Warashi@users.noreply.github.com'
 
@@ -481,31 +471,6 @@ fi
 if [ -n "${CHELLY_AGENT_CONFIG:-}" ]; then
   "$(dirname "$0")/chelly-apply-agent-config" "${CHELLY_AGENT_CONFIG}" || exit 1
 fi
-
-# named volume の所有者をコンテナのユーザーに合わせる。podman はイメージ側のマウント先の
-# 所有者を新規 volume に引き継ぐが、apple/container は ext4 を作ったままの root 所有で
-# マウントする (apple/container#729, #745)。root 所有のままだと nix インストーラも
-# cache も書けない。再帰しないのは、volume の中身は既に自分の所有で作られているため。
-# ホストの store を read-only で共有しているときは /nix は root 所有のままでよく、
-# chown も通らないので対象から外す。
-chelly_volume_dirs="${HOME}/.cache/go-build ${HOME}/.cache/nix ${HOME}/go/pkg/mod"
-if [ -z "${CHELLY_NIX_BIN:-}" ]; then
-  chelly_volume_dirs="/nix ${chelly_volume_dirs}"
-fi
-for chelly_dir in ${chelly_volume_dirs}; do
-  if [ -d "${chelly_dir}" ] && [ "$(stat -c %u "${chelly_dir}")" != "$(id -u)" ]; then
-    sudo chown "$(id -u):$(id -g)" "${chelly_dir}"
-  fi
-done
-
-# 入れ子の rootless podman が使う tun (pasta) と fuse (fuse-overlayfs) を一般ユーザーに開ける。
-# podman の --device はホスト側の 0666 をそのまま渡すが、apple/container はノードを
-# 0600 root で置くだけなので、ここで直す。
-for chelly_dev in /dev/net/tun /dev/fuse; do
-  if [ -c "${chelly_dev}" ] && [ ! -w "${chelly_dev}" ]; then
-    sudo chmod 0666 "${chelly_dev}"
-  fi
-done
 
 # volume モードでは nix の profile 実体は home 側にあってコンテナごとに消えるため、
 # インストーラは実質毎回走る。store は /nix の named volume に残っているので、追加されるのは差分だけ。
