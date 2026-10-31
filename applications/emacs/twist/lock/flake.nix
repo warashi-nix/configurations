@@ -97,12 +97,6 @@
       repo = "emacs-fish";
       type = "github";
     };
-    ghostel = {
-      flake = false;
-      owner = "dakra";
-      repo = "ghostel";
-      type = "github";
-    };
     hcl-mode = {
       flake = false;
       owner = "hcl-emacs";

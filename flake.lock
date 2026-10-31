@@ -585,22 +585,6 @@
         "type": "github"
       }
     },
-    "ghostel": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1793090009,
-        "narHash": "sha256-Nq8cu+81tM+KI1HY9QKiyegRo+pe1SkBmYPg2NSA5Vw=",
-        "owner": "dakra",
-        "repo": "ghostel",
-        "rev": "97ec8f16eb90cd0de87dbf5643d7371cf9895686",
-        "type": "github"
-      },
-      "original": {
-        "owner": "dakra",
-        "repo": "ghostel",
-        "type": "github"
-      }
-    },
     "git-hooks": {
       "inputs": {
         "flake-compat": [],
@@ -952,7 +936,6 @@
         "f": "f",
         "fish-completion": "fish-completion",
         "fish-mode": "fish-mode",
-        "ghostel": "ghostel",
         "hcl-mode": "hcl-mode",
         "inheritenv": "inheritenv",
         "just-ts-mode": "just-ts-mode",

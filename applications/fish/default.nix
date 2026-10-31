@@ -1,12 +1,10 @@
 {
   pkgs,
   lib,
-  inputs,
   ...
 }:
 let
   sources = pkgs.callPackage ./_sources/generated.nix { };
-  ghostel = inputs.my-emacs-pkgs.inputs.ghostel;
 in
 {
   programs.fish = {
@@ -49,11 +47,6 @@ in
         else if which code > /dev/null 2>&1
           . (code --locate-shell-integration-path fish)
         end
-      end
-
-      # ghostel
-      if string match -qr '^ghostel(,|$)' -- "$INSIDE_EMACS"
-        source "${ghostel}/etc/shell/ghostel.fish"
       end
 
       ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
