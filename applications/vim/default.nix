@@ -11,25 +11,11 @@ let
     inherit (sources.vim) src;
     version = "dev-${sources.vim.date}-${lib.substring 0 8 sources.vim.version}";
   };
-  vim-with-deps = pkgs.writeShellApplication {
-    name = "vim";
-    runtimeInputs = with pkgs; [
-      vim'
-
-      # keep-sorted start
-      gopls
-      nodejs_latest
-      # keep-sorted end
-    ];
-    text = ''
-      exec vim "$@"
-    '';
-  };
 in
 {
   config = {
     home.packages = [
-      vim-with-deps
+      vim'
     ];
     xdg = {
       configFile = {

@@ -741,16 +741,3 @@ execute $"highlight Underlined gui=underline guifg={syntax['fg-link']}"
 execute $"highlight Ignore guifg={syntax['bg-main']}"
 execute $"highlight Error guifg={syntax['fg-main']} guibg={syntax['bg-red-intense']}"
 execute $"highlight Todo guifg={syntax['fg-main']} guibg={syntax['bg-yellow-intense']}"
-
-# ==============================================================================
-# プラグインサポート: vim-lsp
-# ==============================================================================
-execute $"highlight LspErrorText guifg={syntax['red']} gui=bold"
-execute $"highlight LspWarningText guifg={syntax['warning']} gui=bold"
-execute $"highlight LspInformationText guifg={syntax['info']}"
-execute $"highlight LspHintText guifg={syntax['cyan']}"
-
-execute $"highlight LspErrorHighlight gui=undercurl guisp={syntax['underline-err']}"
-execute $"highlight LspWarningHighlight gui=undercurl guisp={syntax['underline-warning']}"
-execute $"highlight LspInformationHighlight gui=undercurl guisp={syntax['underline-note']}"
-execute $"highlight LspHintHighlight gui=undercurl guisp={syntax['underline-note']}"

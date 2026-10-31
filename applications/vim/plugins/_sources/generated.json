@@ -41,48 +41,6 @@
         },
         "version": "138ea6e876993ebf95094a6c379114f40cfae2f8"
     },
-    "vim-lsp": {
-        "cargoLock": null,
-        "date": "2026-10-15",
-        "extract": null,
-        "name": "vim-lsp",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "deepClone": false,
-            "fetchSubmodules": false,
-            "leaveDotGit": false,
-            "name": null,
-            "owner": "prabirshrestha",
-            "repo": "vim-lsp",
-            "rev": "977e704cdbbbbc89a54f8f226d3468b0aa0405c9",
-            "sha256": "sha256-cOsDjV3g8Qa3wrPS61hyVbNYk8I+GMZX5u64mFMzBBY=",
-            "sparseCheckout": [],
-            "type": "github"
-        },
-        "version": "977e704cdbbbbc89a54f8f226d3468b0aa0405c9"
-    },
-    "vim-lsp-settings": {
-        "cargoLock": null,
-        "date": "2026-10-16",
-        "extract": null,
-        "name": "vim-lsp-settings",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "deepClone": false,
-            "fetchSubmodules": false,
-            "leaveDotGit": false,
-            "name": null,
-            "owner": "mattn",
-            "repo": "vim-lsp-settings",
-            "rev": "83f6480823d7c2fdd0e2b38cbd50fe8d39f4741f",
-            "sha256": "sha256-qyrpMJo7bqrtUcfm9W5yYD93vCrvF1Z5/SO0WiirhfY=",
-            "sparseCheckout": [],
-            "type": "github"
-        },
-        "version": "83f6480823d7c2fdd0e2b38cbd50fe8d39f4741f"
-    },
     "vim-nix": {
         "cargoLock": null,
         "date": "2025-02-01",
