@@ -15,7 +15,7 @@
 ;;   起動しても表示も focus もしない。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても session には飛ばず、同じ project のメニューを開き直す。
-;; - `warashi-chelly-workspace-root' 以下では agent を chelly-agent の専用
+;; - `warashi-chelly-workspace-root' 以下では agent を chelly の専用
 ;;   runner で動かす。
 ;;
 ;; 利用側で `agentel-command-prefix' に `warashi-agentel-command-prefix' を
@@ -39,7 +39,7 @@
   :type '(repeat string)
   :group 'tools)
 
-(defconst warashi-agentel-dedicated-command-prefix '("chelly-agent" "run" "--")
+(defconst warashi-agentel-dedicated-command-prefix '("chelly" "run" "--")
   "専用作業領域の中で agent の前に置くコマンド列。")
 
 (defun warashi-agentel--dedicated-directory (directory)
@@ -58,7 +58,7 @@
         canonical)
        ;; 外として扱うと、専用領域のつもりの作業が本人の credential で動く。
        ((string-prefix-p lexical-root lexical)
-        (user-error "chelly-agent path escapes dedicated workspace: %s"
+        (user-error "chelly path escapes dedicated workspace: %s"
                     lexical))))))
 
 (defun warashi-agentel-command-prefix (cwd)

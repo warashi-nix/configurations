@@ -12,7 +12,19 @@ let
   runnerRules = lib.filter (rule: rule.runAs == "chelly-agent") workbench.security.sudo.extraRules;
   runnerCommand = (lib.head (lib.head runnerRules).commands).command;
   ownerHome = workbench.home-manager.users.warashi;
+  launcherNames = map (package: package.name or "") workbench.environment.systemPackages;
   tests = lib.runTests {
+    # 本人の home には chelly が無いので、専用入口をそのまま chelly として呼ぶ。
+    test-launcher-is-named-chelly = {
+      expr = {
+        chelly = lib.elem "chelly" launcherNames;
+        chellyAgent = lib.elem "chelly-agent" launcherNames;
+      };
+      expected = {
+        chelly = true;
+        chellyAgent = false;
+      };
+    };
     test-disabled-agent-keeps-existing-proxy-access = {
       expr =
         let
@@ -191,7 +203,7 @@ runCommand "chelly-agent-config-check"
       exit 1
     fi
     test ! -s stdout
-    grep -Fxq "chelly-agent: run through the chelly-agent launcher" stderr
+    grep -Fxq "chelly-agent: run through the chelly launcher" stderr
     # podman は bind mount の元を作らないので、brainium の mount 元は runner が毎回用意する。
     grep -Fq 'mkdir -m 2750 /srv/chelly-workspaces/brainium' ${runnerCommand}
 

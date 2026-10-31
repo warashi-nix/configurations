@@ -578,7 +578,7 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 =project-switch-commands= への登録は [[*project.el][project.el]] にある。
 
 workbench の =/srv/chelly-workspaces= 内では、上の起動コマンドも =/resume= も
-agent を専用 =chelly-agent= で動かす。専用領域に見えて実体が外にある path では
+agent を専用の =chelly= で動かす。専用領域に見えて実体が外にある path では
 起動しない。
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の

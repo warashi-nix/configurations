@@ -168,13 +168,18 @@ let
         workspaces = true;
       };
     };
-    test-mac-dedicated-installs-chelly-agent-wrapper = {
+    # 本体の chelly を入れると wrapper と bin/chelly がぶつかるので、wrapper だけを入れる。
+    test-mac-dedicated-installs-chelly-wrapper = {
       expr = {
-        mac = installsPackage "chelly-agent" darwinChellyHome;
+        wrapper = installsPackage "chelly-wrapper" darwinChellyHome;
+        upstream = lib.any (package: (package.pname or "") == "chelly") darwinChellyHome.home.packages;
+        chellyAgent = installsPackage "chelly-agent" darwinChellyHome;
         workspaces = darwinChellyHome.warashi.chelly.workspaces;
       };
       expected = {
-        mac = true;
+        wrapper = true;
+        upstream = false;
+        chellyAgent = false;
         workspaces = "/Users/warashi/chelly-workspaces";
       };
     };
@@ -217,10 +222,11 @@ let
       expr =
         let
           wrapper = lib.findFirst (
-            package: (package.name or "") == "chelly-agent"
+            package: (package.name or "") == "chelly-wrapper"
           ) null darwinChellyHome.home.packages;
         in
-        wrapper != null && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.text;
+        wrapper != null
+        && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.script.text;
       expected = true;
     };
   };

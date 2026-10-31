@@ -78,10 +78,8 @@ in
 
   config = mkIf cfg.enable {
     sops.secrets.chelly-dotenv = { };
-    home.packages = [
-      cfg.package
-      pkgs.podman
-    ];
+    # 専用構成では dedicated.nix の wrapper が bin/chelly を持つ。
+    home.packages = optional (!cfg.dedicated) cfg.package ++ [ pkgs.podman ];
 
     # VM に共有するホームから Mac の /nix/store へのリンクは解決できないため、実体を渡す。
     home.activation.chelly-git-ignore = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

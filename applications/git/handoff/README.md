@@ -80,7 +80,7 @@ chelly-handoff update [fix-issue-123]
 chelly-handoff remove [fix-issue-123] [--force]
 ```
 
-`create` bundles the current `HEAD` and lets `chelly-agent` clone it into
+`create` bundles the current `HEAD` and lets `chelly` clone it into
 `/srv/chelly-workspaces/PROJECT/ID` on a branch with the owner's current
 branch name, without `origin`, hooks, or the owner's Git configuration.
 `PROJECT` is the name of the owner's repository, taken from its shared Git
@@ -164,10 +164,10 @@ the bundle. Without `--force` it refuses when the workspace has uncommitted
 changes or a `HEAD` that this repository has not fetched yet.
 
 The owner's SSH agent and Git identity variables are not passed to the
-transport, and nothing is ever pushed. `chelly-agent` must be on the host
+transport, and nothing is ever pushed. `chelly` must be on the host
 `PATH`; it is started from the workspace root so candidate development shells
 are never evaluated for transport. The root is `/srv/chelly-workspaces` by
 default, and `CHELLY_HANDOFF_WORKSPACES` overrides it. The Nix package sets it
 from `warashi.chelly.workspaces`, so on macOS the root is the directory shared
-with the Podman machine (`~/chelly-workspaces`) and `chelly-agent` is a thin
-wrapper over `chelly`, which is itself the dedicated configuration there.
+with the Podman machine (`~/chelly-workspaces`) and `chelly` is itself the
+dedicated configuration there.

@@ -10,7 +10,7 @@ from pathlib import Path
 HANDOFF = Path(__file__).parents[1] / "chelly-handoff.sh"
 CHECKER = Path(__file__).parents[1] / "git_check_new_ignored.py"
 
-# 実機の chelly-agent は sudo と podman を経て同じ引数列を実行する。テストでは
+# 実機の chelly は sudo と podman を経て同じ引数列を実行する。テストでは
 # 引数の script をそのまま bash に渡し、専用領域だけをテスト用ディレクトリへ向ける。
 # 端末を stdin のまま渡すと実機の podman が終了しなくなるため、その形も拒否する。
 FAKE_AGENT = """#!/bin/sh
@@ -40,7 +40,7 @@ class HandoffTest(unittest.TestCase):
         self.bin = self.root / "bin"
         for path in (self.home, self.agent_root, self.bin):
             path.mkdir()
-        fake = self.bin / "chelly-agent"
+        fake = self.bin / "chelly"
         fake.write_text(FAKE_AGENT)
         fake.chmod(0o755)
         checker = self.bin / "git-check-new-ignored"

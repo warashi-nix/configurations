@@ -95,10 +95,10 @@ just switch-for workbench
 
 # 新しいログインセッションから。本人の普段の clone 内では起動しない
 cd /srv/chelly-workspaces
-chelly-agent config list
-chelly-agent build &&
-  chelly-agent run -- id &&
-  chelly-agent run -- nix store info --json
+chelly config list
+chelly build &&
+  chelly run -- id &&
+  chelly run -- nix store info --json
 ```
 
 ベースイメージは `docker.io/library/debian:stable` と完全修飾し、個人の
@@ -190,7 +190,7 @@ image の再ビルドや再ログインは不要。更新は次に起動する�
 just switch-for workbench &&
   sudo stat -Lc '%a %U:%G %n' /run/secrets/chelly-agent-dotenv &&
   cd /srv/chelly-workspaces &&
-  chelly-agent run -- sh -c '
+  chelly run -- sh -c '
     : "${CLAUDE_CODE_OAUTH_TOKEN:?missing Claude token}"
     : "${COPILOT_GITHUB_TOKEN:?missing Copilot token}"
     echo model-tokens-present
@@ -205,17 +205,17 @@ just switch-for workbench &&
 応答を確認したら CLI を終了し、ホストに戻る。
 
 ```sh
-chelly-agent run -- claude
-chelly-agent run -- copilot
+chelly run -- claude
+chelly run -- copilot
 ```
 
 次もホストの同じディレクトリから一つずつ起動する。既存コンテナ内で CLI を
-起動し直すのではなく、`chelly-agent run` で新しいコンテナを作る。
+起動し直すのではなく、`chelly run` で新しいコンテナを作る。
 確認中は同じ CLI で別の会話を始めない。
 
 ```sh
-chelly-agent run -- claude --continue
-chelly-agent run -- copilot --continue
+chelly run -- claude --continue
+chelly run -- copilot --continue
 ```
 
 それぞれ「ツールは使わず、前に伝えた会話の目印は何？」と尋ね、
@@ -229,7 +229,7 @@ Emacs の起動は変更しない。
 
 ホストの Emacs では、日常の起動コマンド (`warashi-agentel-claude-*` /
 `warashi-agentel-copilot-*`) が agentel を使い、専用領域では
-`chelly-agent run -- claude-agent-acp` / `chelly-agent run -- copilot --acp` で
+`chelly run -- claude-agent-acp` / `chelly run -- copilot --acp` で
 agent を動かす。`/resume` で開き直した会話も同じ振り分けを通る。領域外へ向く
 symlink と TRAMP は起動前に拒否する。専用領域外の起動は `("chelly" "run")` のまま
 変更しない。agentel はファイル・端末の能力を通知せず、MCP server も渡さないので、
@@ -272,8 +272,7 @@ Emacs では本人の repo の Magit で `@` を押すと各操作の transient 
 新規追跡ファイルを検査する。検査に引っかかっても ref は残るので Magit で確認できるが、
 取り込む前に agent に直させる。修正後は `fetch` を繰り返す。
 
-専用領域内では同じ model・effort のまま `chelly-agent` を使い、領域外の通常起動は
-変えない。
+専用領域内では同じ model・effort のまま `chelly` を使う。
 署名鍵・socket・本人の Git 設定は専用環境へ渡さず、agent の Git 設定・hooks も
 本人側に持ち込まない。TRAMP、push・PR 作成は対象外。macOS は下の athena 節。
 
@@ -307,8 +306,8 @@ macOS 用パッケージには VM 起動用の vfkit とネットワーク用の
 macOS には別の OS ユーザーも sudo の入口も無いので、workbench の専用ユーザーの代わりに
 **Podman machine に共有するディレクトリ**を境界にする。`warashi.chelly.dedicated = true`
 (`dedicated.nix`) で `chelly` 自体が専用構成になり、別入口は作らない。
-`chelly-agent` は `chelly` へ exec するだけの wrapper で、`chelly-handoff` と Emacs の
-専用入口から同じ名前で呼べるようにするためにある。
+home には本体の代わりに、brainium の mount 元を用意してから本体へ exec する `chelly` の
+wrapper を入れる。
 
 | 対象 | 専用構成での扱い |
 | --- | --- |
@@ -317,7 +316,7 @@ macOS には別の OS ユーザーも sudo の入口も無いので、workbench 
 | Claude・Copilot の状態 | `claude-state`・`copilot-state` の named volume。本人の `~/.claude`・`~/.copilot` は mount しない |
 | 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、同じ path に read-only で bind mount して `CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない。mount が無いと entrypoint は黙って何も写さない |
 | モデル認証 | Home Manager の sops secret `chelly-agent-dotenv` だけ。本人の `chelly-dotenv` は使わない。`--env-file` は Mac 側の podman client が読むので VM に共有しなくてよい |
-| brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う。mount 元は `chelly-agent` が起動ごとに作る。`remove brainium` は親ごと消すので、その直後は素の `chelly run` ではなく `chelly-agent run` を使う |
+| brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う。mount 元は wrapper が起動ごとに作る。`remove brainium` は親ごと消すので、その直後も wrapper の `chelly run` なら起動できる |
 | Git ignore | 従来どおり `~/.local/share/chelly/git-ignore` の実体を read-only で渡す |
 | userns | athena の既存 `--userns=keep-id` のまま (イメージ内ユーザーは UID 501 / GID 1000) |
 
@@ -495,7 +494,7 @@ private module。
 launchctl print gui/$(id -u)/org.nix-community.home.chelly-go-proxy | grep state
 curl -s http://127.0.0.1:3140/<mod>/@v/list        # version が並ぶ
 curl -s http://127.0.0.1:3140/<other>/@v/list      # not in the allowed module list
-chelly-agent run -- curl -s http://host.containers.internal:3140/<mod>/@v/list
+chelly run -- curl -s http://host.containers.internal:3140/<mod>/@v/list
 ```
 
 - コンテナから `host.containers.internal:3140` に届く。届かなければ Podman machine の

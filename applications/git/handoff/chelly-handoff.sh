@@ -41,7 +41,7 @@ agent() {
     cd "$workspaces" &&
       env -u SSH_AUTH_SOCK -u SSH_AGENT_PID \
         -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL \
-        chelly-agent run -- bash -euc "$script" bash "$@"
+        chelly run -- bash -euc "$script" bash "$@"
   )
 }
 

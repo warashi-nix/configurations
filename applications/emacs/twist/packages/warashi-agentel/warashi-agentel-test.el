@@ -232,7 +232,7 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
   "専用領域の中だけ専用 runner を使い、外では通常の prefix を使う。"
   (warashi-agentel-test--with-workspace (root outside)
     (let ((warashi-agentel-ordinary-command-prefix '("ordinary" "run")))
-      (should (equal '("chelly-agent" "run" "--")
+      (should (equal '("chelly" "run" "--")
                      (warashi-agentel-command-prefix root)))
       (should (equal '("ordinary" "run")
                      (warashi-agentel-command-prefix outside))))))

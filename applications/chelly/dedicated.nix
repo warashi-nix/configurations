@@ -2,7 +2,7 @@
 # 分離した専用構成にする。
 #
 # NixOS (workbench) は別の OS ユーザーを境界にし、modules/nixos/chelly-agent.nix が
-# 専用入口 chelly-agent を足す。macOS には別ユーザーも sudo の入口も無いので、
+# 専用入口 chelly を足す。macOS には別ユーザーも sudo の入口も無いので、
 # Podman machine に共有するディレクトリを境界にする。VM に見せるのは専用領域と
 # ~/.local/share/chelly の実体だけで、home 全体・本人の ~/.claude・~/.copilot・
 # 本人の clone は共有しない。コンテナを抜けて VM に入られても、届くのはその範囲に限る。
@@ -33,14 +33,17 @@ let
     }
   ];
   brainiumWorkspace = "${cfg.workspaces}/brainium";
-  # chelly-handoff と Emacs の専用入口は chelly-agent を呼ぶ。macOS では chelly 自体が
-  # 専用構成なので、そのまま chelly に渡すだけでよい。
-  # brainium の mount 元だけは NixOS の runner と同じく起動のたびに用意する。podman は
+  # brainium の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
   # bind mount の元を作らず、chelly-handoff remove brainium が親ごと rmdir するため。
-  chellyAgent = pkgs.writeShellScriptBin "chelly-agent" ''
+  script = pkgs.writeShellScriptBin "chelly" ''
     ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg brainiumWorkspace}
     exec ${getExe cfg.package} "$@"
   '';
+  wrapper = pkgs.symlinkJoin {
+    name = "chelly-wrapper";
+    paths = [ script ];
+    passthru = { inherit script; };
+  };
 in
 {
   options.warashi.chelly = {
@@ -87,7 +90,7 @@ in
       ];
     };
 
-    home.packages = [ chellyAgent ];
+    home.packages = [ wrapper ];
 
     # machine は home-manager の activation が、無いときだけ宣言どおりに init する。
     # 既存 machine の volumes は変えられないので、共有範囲を変えるときは本人が

@@ -104,7 +104,7 @@ let
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       if [[ "$(id -un)" != ${lib.escapeShellArg username} ]]; then
-        echo "chelly-agent: run through the chelly-agent launcher" >&2
+        echo "chelly-agent: run through the chelly launcher" >&2
         exit 1
       fi
       if [[ -r ${lib.escapeShellArg ownerHome} || -x ${lib.escapeShellArg ownerHome} ]]; then
@@ -152,7 +152,7 @@ let
         ${lib.getExe' chelly "chelly"} "$@"
     '';
   };
-  launcher = pkgs.writeShellScriptBin "chelly-agent" ''
+  launcher = pkgs.writeShellScriptBin "chelly" ''
     exec ${config.security.wrapperDir}/sudo -n -H -u ${username} -- ${lib.getExe runner} "$@"
   '';
 in
