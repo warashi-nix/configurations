@@ -105,10 +105,6 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zon2nix = {
-      url = "github:jcollie/zon2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # keep-sorted end
   };
 
@@ -313,15 +309,7 @@
                     nvfetcher
                     sops
                     ssh-to-age
-                    zig_0_16
                     # keep-sorted end
-                  ]
-                  ++ [
-                    # ghostel のネイティブモジュールの zig 依存を
-                    # 再生成する just emacs-ghostel-zon2nix 用。
-                    # zon2nix は zig 0.16 の build.zig.zon を読むのに
-                    # --16 が要るので nixpkgs 版ではなく upstream を使う。
-                    inputs'.zon2nix.packages.zon2nix
                   ]
                   ++ config.pre-commit.settings.enabledPackages;
                 startup = {
