@@ -561,30 +561,6 @@ clone を作ったかどうかを覚えていなくても、同じ操作で辿�
 #+end_src
 
 * AI
-** copilot
-#+begin_src emacs-lisp
-(setup (:package copilot)
-  (:nixpkgs copilot-language-server)
-  (:with-hook prog-mode-hook
-    (:hook copilot-mode))
-  (:with-hook git-commit-mode-hook
-    (:hook copilot-mode))
-  (:with-map copilot-completion-map
-    (:keymap
-     "<right>" #'copilot-accept-completion
-     "C-f" #'copilot-accept-completion))
-  (add-to-list 'warning-suppress-types '(copilot))
-  (:when-loaded
-    (keymap-unset copilot-completion-map "TAB")
-    (keymap-unset copilot-completion-map "C-TAB")
-    (keymap-unset copilot-completion-map "<tab>")
-    (keymap-unset copilot-completion-map "C-<tab>")
-    (keymap-unset copilot-completion-map "M-n")
-    (keymap-unset copilot-completion-map "M-p")
-
-    (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode . 2))))
-#+end_src
-
 ** agentel
 Claude Code と Copilot CLI は agentel で使う。
 

@@ -43,12 +43,6 @@
       repo = "consult-ghq";
       type = "github";
     };
-    copilot = {
-      flake = false;
-      owner = "copilot-emacs";
-      repo = "copilot.el";
-      type = "github";
-    };
     corfu = {
       flake = false;
       owner = "minad";
