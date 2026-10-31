@@ -1,5 +1,4 @@
-# warashi.chelly.dedicated の実装。macOS で chelly 自体を、本人の環境・権限から
-# 分離した専用構成にする。
+# macOS の chelly を、本人の環境・権限から分離した専用構成にする。
 #
 # NixOS (workbench) は別の OS ユーザーを境界にし、modules/nixos/chelly-agent.nix が
 # 専用入口 chelly を足す。macOS には別ユーザーも sudo の入口も無いので、
@@ -7,8 +6,6 @@
 # ~/.local/share/chelly の実体だけで、home 全体・本人の ~/.claude・~/.copilot・
 # 本人の clone は共有しない。コンテナを抜けて VM に入られても、届くのはその範囲に限る。
 #
-# 通常入口を別に残さないのは、本人の clone を直接 mount する経路を残すと home 側の
-# repository を VM に共有することになり、この境界を自分で破るため。
 {
   config,
   lib,
@@ -51,7 +48,6 @@ let
 in
 {
   options.warashi.chelly = {
-    dedicated = mkEnableOption "running chelly itself as the dedicated agent environment (macOS)";
     workspaces = mkOption {
       type = types.str;
       default =
@@ -64,19 +60,17 @@ in
     };
   };
 
-  config = mkIf (cfg.enable && cfg.dedicated) {
+  config = mkIf cfg.enable {
     assertions = [
       {
         assertion = isDarwin;
-        message = "warashi.chelly.dedicated は macOS 用。NixOS では warashi.chelly-agent を使う";
+        message = "warashi.chelly は macOS 用。NixOS では warashi.chelly-agent を使う";
       }
     ];
 
     sops.secrets.chelly-agent-dotenv = { };
 
     warashi.chelly = {
-      # 本人の chelly-dotenv や認証状態にはフォールバックしない。
-      envfiles = [ config.sops.secrets.chelly-agent-dotenv.path ];
       settings.additional_mounts = [
         # keep-sorted start
         # bundle は CHELLY_AGENT_CONFIG と同じ path で見せる。NixOS 版は /nix の mount 越しに

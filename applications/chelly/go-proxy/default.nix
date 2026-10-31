@@ -32,8 +32,8 @@ in
   config = mkIf (chellyCfg.enable && cfg.allow != [ ]) {
     assertions = [
       {
-        assertion = pkgs.stdenv.hostPlatform.isDarwin && chellyCfg.dedicated;
-        message = "warashi.chelly.goProxy は macOS の専用構成 (warashi.chelly.dedicated) 用";
+        assertion = pkgs.stdenv.hostPlatform.isDarwin;
+        message = "warashi.chelly.goProxy は macOS の chelly 用";
       }
     ];
 

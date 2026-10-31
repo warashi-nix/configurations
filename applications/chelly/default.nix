@@ -45,7 +45,7 @@ in
     envfiles = mkOption {
       type = types.listOf types.path;
       description = "Envfile for Chelly.";
-      default = [ config.sops.secrets.chelly-dotenv.path ];
+      default = [ config.sops.secrets.chelly-agent-dotenv.path ];
     };
     uid = mkOption {
       type = types.int;
@@ -77,10 +77,8 @@ in
   };
 
   config = mkIf cfg.enable {
-    # 専用構成は chelly-agent-dotenv だけを使うので、本人用の token は復号しない。
-    sops.secrets.chelly-dotenv = mkIf (!cfg.dedicated) { };
-    # 専用構成では dedicated.nix の wrapper が bin/chelly を持つ。
-    home.packages = optional (!cfg.dedicated) cfg.package ++ [ pkgs.podman ];
+    # bin/chelly は dedicated.nix の wrapper が持つ。
+    home.packages = [ pkgs.podman ];
 
     # VM に共有するホームから Mac の /nix/store へのリンクは解決できないため、実体を渡す。
     home.activation.chelly-git-ignore = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -111,14 +109,6 @@ in
             "go-cache:/home/warashi/.cache/go-build"
             "go-mod:/home/warashi/go/pkg/mod"
             "nix-cache:/home/warashi/.cache/nix"
-            # keep-sorted end
-          ]
-          # 本人の状態は通常入口だけが使う。専用構成 (dedicated.nix) は volume と handoff clone に置き換える。
-          ++ optionals (!cfg.dedicated) [
-            # keep-sorted start
-            "${config.home.homeDirectory}/.claude:/home/warashi/.claude"
-            "${config.home.homeDirectory}/.copilot:/home/warashi/.copilot"
-            "${config.home.homeDirectory}/ghq/github.com/Warashi/brainium:${config.home.homeDirectory}/ghq/github.com/Warashi/brainium"
             # keep-sorted end
           ];
           inherit_env = [

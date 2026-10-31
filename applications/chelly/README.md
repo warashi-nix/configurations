@@ -304,8 +304,8 @@ macOS 用パッケージには VM 起動用の vfkit とネットワーク用の
 ### 境界: VM に共有する範囲
 
 macOS には別の OS ユーザーも sudo の入口も無いので、workbench の専用ユーザーの代わりに
-**Podman machine に共有するディレクトリ**を境界にする。`warashi.chelly.dedicated = true`
-(`dedicated.nix`) で `chelly` 自体が専用構成になり、別入口は作らない。
+**Podman machine に共有するディレクトリ**を境界にする。macOS の `chelly` は常にこの
+専用構成 (`dedicated.nix`) で、本人の状態を mount する通常入口は無い。
 home には本体の代わりに、brainium の mount 元を用意してから本体へ exec する `chelly` の
 wrapper を入れる。
 
@@ -444,7 +444,7 @@ aarch64-linux では `nix flake check` が失敗するため。この最小構�
 
 ## macOS: private Go module の取得
 
-仕事の Mac の専用構成 (`warashi.chelly.dedicated`) で、agent が private Go module を
+仕事の Mac の chelly で、agent が private Go module を
 本人の認証なしで取得・更新できるようにする。実装は `go-proxy/`。
 
 | 項目 | 内容 |
