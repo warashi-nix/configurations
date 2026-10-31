@@ -58,11 +58,11 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
 
 (ert-deftest warashi-agentel-test-start-options ()
   "agent と model と effort を渡し、表示せずに default-directory で起動する。"
-  (warashi-agentel-test--with-workspace (_root outside)
-    (let* ((default-directory outside)
+  (warashi-agentel-test--with-workspace (root _outside)
+    (let* ((default-directory root)
            (captured (warashi-agentel-test--capture-start
                        (warashi-agentel--start 'claude "opus" "low"))))
-      (should (equal outside (plist-get captured :cwd)))
+      (should (equal root (plist-get captured :cwd)))
       (should (eq 'claude (plist-get captured :agent)))
       (should (equal "opus" (plist-get captured :model)))
       (should (equal "low" (plist-get captured :effort)))
@@ -98,6 +98,17 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
                         :type 'user-error))
         ;; 起動後に拒否すると、中身の無い session buffer が残る。
         (should-not started)))))
+
+(ert-deftest warashi-agentel-test-start-refuses-outside-workspace ()
+  "専用領域の外では起動しない。agent は専用 runner の中でしか動かさない。"
+  (warashi-agentel-test--with-workspace (_root outside)
+    (let ((default-directory outside)
+          (started nil))
+      (cl-letf (((symbol-function 'agentel-start)
+                 (lambda (&rest _) (setq started t))))
+        (should-error (warashi-agentel--start 'claude "opus" "low")
+                      :type 'user-error))
+      (should-not started))))
 
 (ert-deftest warashi-agentel-test-start-refuses-remote ()
   "TRAMP 先では起動しない。"
@@ -229,13 +240,12 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
 ;;;; 専用 runner への振り分け
 
 (ert-deftest warashi-agentel-test-command-prefix-routes-by-directory ()
-  "専用領域の中だけ専用 runner を使い、外では通常の prefix を使う。"
+  "専用領域の中では専用 runner を使い、外では /resume などでも動かさない。"
   (warashi-agentel-test--with-workspace (root outside)
-    (let ((warashi-agentel-ordinary-command-prefix '("ordinary" "run")))
-      (should (equal '("chelly" "run" "--")
-                     (warashi-agentel-command-prefix root)))
-      (should (equal '("ordinary" "run")
-                     (warashi-agentel-command-prefix outside))))))
+    (should (equal '("chelly" "run" "--")
+                   (warashi-agentel-command-prefix root)))
+    (should-error (warashi-agentel-command-prefix outside)
+                  :type 'user-error)))
 
 (ert-deftest warashi-agentel-test-command-prefix-refuses-symlink-escape ()
   "/resume など起動コマンドを通らない経路でも、逸脱した path では動かさない。"

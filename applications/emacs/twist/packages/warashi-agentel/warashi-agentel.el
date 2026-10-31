@@ -15,12 +15,11 @@
 ;;   起動しても表示も focus もしない。
 ;; - `project-switch-project' のディスパッチから variant を選んで起動する。
 ;;   起動しても session には飛ばず、同じ project のメニューを開き直す。
-;; - `warashi-chelly-workspace-root' 以下では agent を chelly の専用
+;; - agent は `warashi-chelly-workspace-root' 以下でだけ、chelly の専用
 ;;   runner で動かす。
 ;;
 ;; 利用側で `agentel-command-prefix' に `warashi-agentel-command-prefix' を
-;; 設定し、専用領域の外で使う prefix を
-;; `warashi-agentel-ordinary-command-prefix' に置く。起動コマンドは
+;; 設定する。起動コマンドは
 ;; `warashi-agentel-define-claude-variants' と
 ;; `warashi-agentel-define-copilot-variants' で作る。
 
@@ -34,39 +33,37 @@
 
 ;;;; 専用 runner への振り分け
 
-(defcustom warashi-agentel-ordinary-command-prefix nil
-  "専用作業領域の外で agent の前に置くコマンド列。"
-  :type '(repeat string)
-  :group 'tools)
-
 (defconst warashi-agentel-dedicated-command-prefix '("chelly" "run" "--")
   "専用作業領域の中で agent の前に置くコマンド列。")
 
 (defun warashi-agentel--dedicated-directory (directory)
   "DIRECTORY が専用作業領域の中なら、symlink を解決した絶対パスを返す。
-専用領域に見えて実体が外にあるときは `user-error' を投げる。"
-  (unless (file-remote-p directory)
-    (let* ((lexical (file-name-as-directory (expand-file-name directory)))
-           (lexical-root (file-name-as-directory
-                          (expand-file-name warashi-chelly-workspace-root)))
-           (canonical (file-name-as-directory (file-truename lexical)))
-           (canonical-root (file-name-as-directory
-                            (file-truename lexical-root))))
-      (cond
-       ((or (equal canonical canonical-root)
-            (file-in-directory-p canonical canonical-root))
-        canonical)
-       ;; 外として扱うと、専用領域のつもりの作業が本人の credential で動く。
-       ((string-prefix-p lexical-root lexical)
-        (user-error "chelly path escapes dedicated workspace: %s"
-                    lexical))))))
+専用領域の外のときは `user-error' を投げる。"
+  (when (file-remote-p directory)
+    (user-error "agents run only inside %s: %s"
+                warashi-chelly-workspace-root directory))
+  (let* ((lexical (file-name-as-directory (expand-file-name directory)))
+         (lexical-root (file-name-as-directory
+                        (expand-file-name warashi-chelly-workspace-root)))
+         (canonical (file-name-as-directory (file-truename lexical)))
+         (canonical-root (file-name-as-directory
+                          (file-truename lexical-root))))
+    (cond
+     ((or (equal canonical canonical-root)
+          (file-in-directory-p canonical canonical-root))
+      canonical)
+     ((string-prefix-p lexical-root lexical)
+      (user-error "chelly path escapes dedicated workspace: %s"
+                  lexical))
+     (t
+      (user-error "agents run only inside %s: %s"
+                  warashi-chelly-workspace-root lexical)))))
 
 (defun warashi-agentel-command-prefix (cwd)
   "CWD で agent を動かすコマンド列を返す。`agentel-command-prefix' 用。"
-  ;; 起動コマンドを通らない /resume でも振り分けるため、ここでも判定する。
-  (if (warashi-agentel--dedicated-directory cwd)
-      warashi-agentel-dedicated-command-prefix
-    warashi-agentel-ordinary-command-prefix))
+  ;; 起動コマンドを通らない /resume でも拒否するため、ここでも判定する。
+  (warashi-agentel--dedicated-directory cwd)
+  warashi-agentel-dedicated-command-prefix)
 
 ;;;; 起動コマンド
 
@@ -94,8 +91,7 @@ AGENT は `agentel-agents' の名前。"
   ;; 専用領域の判定を起動前に済ませるのは、`agentel-command-prefix' で拒否
   ;; すると作りかけの session buffer が残るため。実体のパスを渡すのは、専用
   ;; runner が作業領域を実体のパスで mount するため。
-  (agentel-start :cwd (or (warashi-agentel--dedicated-directory default-directory)
-                          default-directory)
+  (agentel-start :cwd (warashi-agentel--dedicated-directory default-directory)
                  :agent agent
                  :display nil
                  :model model

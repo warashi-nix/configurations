@@ -554,8 +554,7 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 ;; マクロ展開は byte-compile 時に走るので、compile 時にも読ませる。
 (eval-when-compile (require 'warashi-agentel))
 (setup (:package warashi-agentel)
-  (:require warashi-agentel)
-  (:opt warashi-agentel-ordinary-command-prefix '("chelly" "run")))
+  (:require warashi-agentel))
 
 ;; MODEL と EFFORT は claude-agent-acp の config option の値。
 (warashi-agentel-define-claude-variants
@@ -577,9 +576,9 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 定義した variant は =warashi-agentel-project-switch= から名前で選べる。
 =project-switch-commands= への登録は [[*project.el][project.el]] にある。
 
-workbench の =/srv/chelly-workspaces= 内では、上の起動コマンドも =/resume= も
-agent を専用の =chelly= で動かす。専用領域に見えて実体が外にある path では
-起動しない。
+上の起動コマンドも =/resume= も、agent は専用領域 (=warashi-chelly-workspace-root=)
+の中でだけ専用の =chelly= で動かす。領域の外や、専用領域に見えて実体が外にある
+path では起動しない。
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
