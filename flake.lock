@@ -387,22 +387,6 @@
         "type": "github"
       }
     },
-    "ellama": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791360312,
-        "narHash": "sha256-wcjmJTW/YNOMHhWq1YeRBu0aTFp9snlKFNbILDeZdTg=",
-        "owner": "s-kostyaev",
-        "repo": "ellama",
-        "rev": "b6e71f41583e85d2e1fe93ccaa34593f7b4015b8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "s-kostyaev",
-        "repo": "ellama",
-        "type": "github"
-      }
-    },
     "emacs-spectreshell": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -886,22 +870,6 @@
         "type": "github"
       }
     },
-    "llm": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792963989,
-        "narHash": "sha256-usqGNd5O/NA4S+Vi8kZkVU3vPpoP3gzaXk3lRZtl3oQ=",
-        "owner": "ahyatt",
-        "repo": "llm",
-        "rev": "ce9a7c4a434c27301cffbb8d2cf221b9500936d8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ahyatt",
-        "repo": "llm",
-        "type": "github"
-      }
-    },
     "locdog": {
       "inputs": {
         "nixpkgs": [
@@ -1046,7 +1014,6 @@
         "dash": "dash",
         "ddskk": "ddskk",
         "el-job": "el-job",
-        "ellama": "ellama",
         "envrc": "envrc",
         "eshell-syntax-highlighting": "eshell-syntax-highlighting",
         "exec-path-from-shell": "exec-path-from-shell",
@@ -1060,7 +1027,6 @@
         "justl": "justl",
         "kkp": "kkp",
         "llama": "llama",
-        "llm": "llm",
         "magit": "magit",
         "magit-section": "magit-section",
         "marginalia": "marginalia",
@@ -1071,9 +1037,6 @@
         "org": "org",
         "org-mem": "org-mem",
         "org-node": "org-node",
-        "plz": "plz",
-        "plz-event-source": "plz-event-source",
-        "plz-media-type": "plz-media-type",
         "ppp": "ppp",
         "puni": "puni",
         "s": "s",
@@ -1087,8 +1050,7 @@
         "truename-cache": "truename-cache",
         "twist": "twist",
         "vertico": "vertico",
-        "with-editor": "with-editor",
-        "yaml": "yaml"
+        "with-editor": "with-editor"
       },
       "locked": {
         "path": "./applications/emacs/twist/lock",
@@ -1244,55 +1206,6 @@
       "original": {
         "owner": "meedstrom",
         "repo": "org-node",
-        "type": "github"
-      }
-    },
-    "plz": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1723842760,
-        "narHash": "sha256-GRdYTm+7lslbfiMzT3xFKWiekQrYXWW8RXkuThDPL/Y=",
-        "owner": "alphapapa",
-        "repo": "plz.el",
-        "rev": "c579f039ffdb52ff61775ff25510a9c26e25d0c5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "alphapapa",
-        "ref": "stable",
-        "repo": "plz.el",
-        "type": "github"
-      }
-    },
-    "plz-event-source": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1744536667,
-        "narHash": "sha256-tK0/eXnOQe+IO853Q0Hf1Usu1OOPn2BoNWH7pee+A7o=",
-        "owner": "r0man",
-        "repo": "plz-event-source",
-        "rev": "de89214ce14e2b82cbfdc30e1adcf3e77b1f250a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "r0man",
-        "repo": "plz-event-source",
-        "type": "github"
-      }
-    },
-    "plz-media-type": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1744452044,
-        "narHash": "sha256-Ehcz6umf9pMNuUR9w/FE2Nodr0bPdule62rZWMEXLEw=",
-        "owner": "r0man",
-        "repo": "plz-media-type",
-        "rev": "b1127982d53affff082447030cda6e8ead3899cb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "r0man",
-        "repo": "plz-media-type",
         "type": "github"
       }
     },
@@ -1671,22 +1584,6 @@
       "original": {
         "owner": "magit",
         "repo": "with-editor",
-        "type": "github"
-      }
-    },
-    "yaml": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1780648466,
-        "narHash": "sha256-pUmUPrMC+LOzo66ET+mu+cZQ4qBV5bebPxkg+xCFRxs=",
-        "owner": "zkry",
-        "repo": "yaml.el",
-        "rev": "5546f36bde24a9a8c1934e0f6ce205cd41d72537",
-        "type": "github"
-      },
-      "original": {
-        "owner": "zkry",
-        "repo": "yaml.el",
         "type": "github"
       }
     },

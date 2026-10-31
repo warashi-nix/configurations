@@ -85,12 +85,6 @@
       repo = "el-job";
       type = "github";
     };
-    ellama = {
-      flake = false;
-      owner = "s-kostyaev";
-      repo = "ellama";
-      type = "github";
-    };
     envrc = {
       flake = false;
       owner = "purcell";
@@ -169,12 +163,6 @@
       repo = "llama";
       type = "github";
     };
-    llm = {
-      flake = false;
-      owner = "ahyatt";
-      repo = "llm";
-      type = "github";
-    };
     magit = {
       flake = false;
       owner = "magit";
@@ -234,25 +222,6 @@
       flake = false;
       owner = "meedstrom";
       repo = "org-node";
-      type = "github";
-    };
-    plz = {
-      flake = false;
-      owner = "alphapapa";
-      ref = "stable";
-      repo = "plz.el";
-      type = "github";
-    };
-    plz-event-source = {
-      flake = false;
-      owner = "r0man";
-      repo = "plz-event-source";
-      type = "github";
-    };
-    plz-media-type = {
-      flake = false;
-      owner = "r0man";
-      repo = "plz-media-type";
       type = "github";
     };
     ppp = {
@@ -338,12 +307,6 @@
       flake = false;
       owner = "magit";
       repo = "with-editor";
-      type = "github";
-    };
-    yaml = {
-      flake = false;
-      owner = "zkry";
-      repo = "yaml.el";
       type = "github";
     };
   };
