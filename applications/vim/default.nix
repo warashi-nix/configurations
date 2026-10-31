@@ -17,7 +17,6 @@ let
       vim'
 
       # keep-sorted start
-      copilot-language-server
       gopls
       nodejs_latest
       # keep-sorted end
