@@ -2,7 +2,6 @@
   callPackage,
   replaceVarsWith,
   symlinkJoin,
-  deno,
   lib,
   ...
 }:
@@ -10,7 +9,6 @@ let
   plugins = callPackage ./plugins { };
 
   replaced-vars = {
-    deno = lib.getExe' deno "deno";
     merged_plugins = plugins;
   };
 

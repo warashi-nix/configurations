@@ -3,12 +3,6 @@ vim9script
 language message C
 set nocompatible
 
-augroup MyAutoCmd
-  autocmd!
-augroup END
-
-g:denops#deno = '@deno@'
-
 set runtimepath^=@merged_plugins@
 
 set clipboard=unnamed,unnamedplus
@@ -74,28 +68,8 @@ syntax enable
 &t_EI = "\e[2 q"  # ブロック (Normal)
 
 # --------------------------------------------------
-#  Skkeleton Configuration
-# --------------------------------------------------
-
-def SkkeletonInitialize()
-  skkeleton#config({
-    sources: ['skk_server']
-  })
-enddef
-
-inoremap <C-j> <Plug>(skkeleton-enable)
-
-augroup MyAutoCmd
-  autocmd User skkeleton-initialize-pre SkkeletonInitialize()
-augroup END
-
-# --------------------------------------------------
 #  Auto Complete
 # --------------------------------------------------
 
 set autocomplete
-set complete=.,w,b,u,t,i,o,F,Fskkeleton#completefunc
-augroup my-skkeleton-completedone
-  autocmd!
-  autocmd CompleteDone * call skkeleton#complete_done()
-augroup END
+set complete=.,w,b,u,t,i,o,F

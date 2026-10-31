@@ -6,30 +6,6 @@
   dockerTools,
 }:
 {
-  denops-vim = {
-    pname = "denops-vim";
-    version = "1839a5a4dff3bda48e2b90279d83a6286a7579c9";
-    src = fetchFromGitHub {
-      owner = "vim-denops";
-      repo = "denops.vim";
-      rev = "1839a5a4dff3bda48e2b90279d83a6286a7579c9";
-      fetchSubmodules = false;
-      sha256 = "sha256-AAWfagBJ42shbdZIya8HmXCDMQ2RCN7CFxN8yw8LIm0=";
-    };
-    date = "2026-10-30";
-  };
-  skkeleton = {
-    pname = "skkeleton";
-    version = "138ea6e876993ebf95094a6c379114f40cfae2f8";
-    src = fetchFromGitHub {
-      owner = "vim-skk";
-      repo = "skkeleton";
-      rev = "138ea6e876993ebf95094a6c379114f40cfae2f8";
-      fetchSubmodules = false;
-      sha256 = "sha256-sHDl3mCkmq097X7yR6ZZfDjCJW5DlDwpIO8bteE5No0=";
-    };
-    date = "2026-10-30";
-  };
   vim-nix = {
     pname = "vim-nix";
     version = "7235c7ce2cea530cb6b59bc3e46d4bfe917d15c8";
