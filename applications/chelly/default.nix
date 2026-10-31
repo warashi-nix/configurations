@@ -133,29 +133,6 @@ in
             # keep-sorted end
           ];
         };
-        container = {
-          build = [
-            "--build-arg=UID=${toString cfg.uid}"
-            "--build-arg=GID=${toString cfg.gid}"
-            "--dns=1.1.1.1"
-          ];
-          run = [
-            "--cpus=4"
-            "--memory=8G"
-            "--dns=1.1.1.1"
-            # VM 内でも入れ子の rootless podman には要る。newuidmap は setuid で euid 0 になるが、
-            # uid_map を書くにはカーネルが対象 namespace への CAP_SYS_ADMIN を求め
-            # (kernel/user_namespace.c map_write)、bounding set に無いと EPERM になる。
-            "--cap-add=SYS_ADMIN"
-            # 入れ子の podman が /proc を mount し直すとき、外側の /proc に masked path の
-            # 上乗せ mount があると locked mount として拒まれる。podman 側の unmask=/proc/* と同じ理由。
-            "--masked-path=NONE"
-            # crun は入れ子コンテナの sysctl を外側の /proc/sys 経由で書くため、
-            # 既定の read-only だと ping_group_range の設定で落ちる。
-            # podman の unmask は read-only path も外すので、これも同じ理由。
-            "--read-only-path=NONE"
-          ];
-        };
       };
 
       settings =
