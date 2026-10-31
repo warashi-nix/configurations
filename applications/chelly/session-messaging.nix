@@ -1,3 +1,5 @@
+# 別のコンテナの Claude Code 同士でセッション間メッセージを届ける。
+#
 # agent のコンテナを 1 つの pid namespace に入れる。Claude Code はセッションを
 # ~/.claude/sessions/<pid>.json に pid だけをキーに登録するので、コンテナごとの
 # namespace では pid が重なり、claude-state を共有する別のセッションの登録を上書きする。

@@ -30,10 +30,12 @@ instruction directory を残したまま `/etc/chelly` を加える。
 `podman` で用意できることも伝える。
 この説明は agent の判断を助けるもので、隔離や操作禁止を強制する境界ではない。
 
-### pid namespace の共有
+### セッション間メッセージ
 
-NixOS・macOS とも、全コンテナを常駐の anchor コンテナ `chelly-pid` の
-pid namespace に入れる(`shared-pid.nix`)。`claude-state` を共有する
+別のコンテナの Claude Code 同士で `SendMessage` を届けるための共有を
+`session-messaging.nix` にまとめ、NixOS・macOS の両方に足す。
+
+全コンテナを常駐の anchor コンテナ `chelly-pid` の pid namespace に入れる。`claude-state` を共有する
 Claude Code のセッション登録が pid をキーにしており、コンテナごとの namespace
 では pid が重なって上書きし合うため。入口が起動のたびに無ければ作り、
 止まっていれば podman が参加時に起こし直す。chelly の `--init` は外し、

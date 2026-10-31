@@ -30,7 +30,7 @@ let
     }
   ];
   brainiumWorkspace = "${cfg.workspaces}/brainium";
-  sharedPid = pkgs.callPackage ./shared-pid.nix { };
+  sessionMessaging = pkgs.callPackage ./session-messaging.nix { };
   # brainium の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
   # bind mount の元を作らず、chelly-handoff remove brainium が親ごと rmdir するため。
   script = pkgs.writeShellScriptBin "chelly" ''
@@ -38,7 +38,7 @@ let
     # 補完のたびに Podman machine へ問い合わせない。
     case "''${1:-}" in
       __complete | __completeNoDesc) ;;
-      *) ${getExe sharedPid.anchor} ;;
+      *) ${getExe sessionMessaging.anchor} ;;
     esac
     exec ${getExe cfg.package} "$@"
   '';
@@ -92,8 +92,8 @@ in
         "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
         "--env=IS_DEMO=1"
       ]
-      ++ sharedPid.runArgs;
-      settings.init = sharedPid.settings.init;
+      ++ sessionMessaging.runArgs;
+      settings.init = sessionMessaging.settings.init;
     };
 
     home.packages = [ wrapper ];

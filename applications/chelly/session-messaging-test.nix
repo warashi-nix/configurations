@@ -5,7 +5,7 @@
   writeShellScriptBin,
 }:
 let
-  sharedPid = callPackage ./shared-pid.nix { };
+  sessionMessaging = callPackage ./session-messaging.nix { };
   # podman の代わりに、呼ばれた引数を記録し、状態ファイルに従って答える。
   fakePodman = writeShellScriptBin "podman" ''
     echo "$*" >>"$STATE/calls"
@@ -19,13 +19,13 @@ let
         ;;
     esac
   '';
-  anchor = (callPackage ./shared-pid.nix { podman = fakePodman; }).anchor;
+  anchor = (callPackage ./session-messaging.nix { podman = fakePodman; }).anchor;
   tests = lib.runTests {
     # chelly は pid namespace が private でないと podman に拒まれる --init を外し、
     # 外した分の孤児の回収は anchor の --init に任せる。
     test-agents-join-anchor-without-own-init = {
       expr = {
-        inherit (sharedPid) runArgs settings;
+        inherit (sessionMessaging) runArgs settings;
       };
       expected = {
         runArgs = [ "--pid=container:chelly-pid" ];
@@ -35,7 +35,7 @@ let
   };
 in
 assert lib.assertMsg (tests == [ ]) (builtins.toJSON tests);
-runCommand "chelly-shared-pid-check" { } ''
+runCommand "chelly-session-messaging-check" { } ''
   anchor=${lib.getExe anchor}
 
   setup() { STATE=$(mktemp -d); export STATE; touch "$STATE/calls"; for flag in "$@"; do touch "$STATE/$flag"; done; }

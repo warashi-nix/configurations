@@ -22,7 +22,7 @@ let
   containerGid = 100;
   chelly = inputs.chelly.packages.${pkgs.stdenv.hostPlatform.system}.chelly;
   proxy = config.warashi.chelly-nix-proxy;
-  sharedPid = pkgs.callPackage ../../applications/chelly/shared-pid.nix { };
+  sessionMessaging = pkgs.callPackage ../../applications/chelly/session-messaging.nix { };
   # 本人の home-manager が host の ~/.claude と ~/.copilot に書くものと同じ生成物。
   # /nix は read-only で mount 済みなので store path をそのまま渡し、image の
   # entrypoint が volume へ写す。本人の実 home や認証状態は含まれない。
@@ -57,7 +57,7 @@ let
       "go-mod:/home/warashi/go/pkg/mod"
       "nix-cache:/home/warashi/.cache/nix"
     ];
-    inherit (sharedPid.settings) init;
+    inherit (sessionMessaging.settings) init;
     env_files = cfg.envfiles;
     inherit_env = [
       "COLORTERM"
@@ -80,7 +80,7 @@ let
         args =
           import ../../applications/chelly/podman-run-args.nix
           ++ cfg.runArgs
-          ++ sharedPid.runArgs
+          ++ sessionMessaging.runArgs
           ++ [
             # コンテナには ~/.nix-profile が無く、ホストの nix は /run/current-system 経由でしか
             # 見えないため、daemon と同じ版の nix を store path で直接渡して entrypoint が PATH に足す。
@@ -154,7 +154,7 @@ let
         TERM_PROGRAM_VERSION="''${TERM_PROGRAM_VERSION:-}"
       )
       # anchor は chelly が使うのと同じ podman の storage に作る。
-      env -i "''${agent_env[@]}" ${lib.getExe sharedPid.anchor}
+      env -i "''${agent_env[@]}" ${lib.getExe sessionMessaging.anchor}
       exec env -i "''${agent_env[@]}" ${lib.getExe' chelly "chelly"} "$@"
     '';
   };
