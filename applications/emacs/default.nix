@@ -7,7 +7,7 @@
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  skkSources = pkgs.callPackage ../yaskkserv2/_sources/generated.nix { };
+  skkSources = pkgs.callPackage ./_sources/generated.nix { };
   sekkenPackage = inputs.sekken.packages.${system}.sekken;
   sekkenRelease = "v${sekkenPackage.version}";
   sekkenIpadic = pkgs.fetchzip {

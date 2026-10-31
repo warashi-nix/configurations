@@ -1,0 +1,3 @@
+[skkdict]
+src.git = "https://github.com/skk-dev/dict.git"
+fetch.github = "skk-dev/dict"
