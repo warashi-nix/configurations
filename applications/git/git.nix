@@ -57,8 +57,5 @@
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
     };
-    maintenance = {
-      enable = true;
-    };
   };
 }
