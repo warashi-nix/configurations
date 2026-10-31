@@ -251,9 +251,10 @@ runCommand "chelly-agent-config-check"
     assert "--group-add=988" in run, run
     assert "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude" in run, run
     assert "--env=IS_DEMO=1" in run, run
-    # セッションの登録は pid がキーなので、全コンテナを anchor の pid namespace に入れる。
+    # セッション間メッセージのため、全コンテナで anchor の pid namespace と socket の置き場を共有する。
     assert config["init"] is False, config
     assert "--pid=container:chelly-pid" in run, run
+    assert "--volume=chelly-messaging:/run/chelly/cc-socks:U" in run, run
     # 配布 bundle は /nix の read-only mount 越しに store path で渡す。
     config_env = [arg for arg in run if arg.startswith("--env=CHELLY_AGENT_CONFIG=")]
     assert len(config_env) == 1, run

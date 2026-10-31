@@ -41,6 +41,11 @@ Claude Code のセッション登録が pid をキーにしており、コンテ
 止まっていれば podman が参加時に起こし直す。chelly の `--init` は外し、
 孤児は anchor の `--init` が回収する。
 
+Claude Code は socket を `$XDG_RUNTIME_DIR/cc-socks` に置く。
+`XDG_RUNTIME_DIR` はコンテナごとの tmpfs `/run/chelly` にし、
+`cc-socks` だけを named volume `chelly-messaging` で共有する。入れ子の
+podman も `XDG_RUNTIME_DIR` に状態を置くので、runtime dir 全体は共有しない。
+
 ## workbench: ホストの Nix store の共用
 
 workbench と hestia は native rootless Podman で、

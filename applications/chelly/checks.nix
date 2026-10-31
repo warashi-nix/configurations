@@ -235,8 +235,8 @@ let
         && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.script.text;
       expected = true;
     };
-    # セッションの登録は pid がキーなので、NixOS と同じく anchor の pid namespace に揃える。
-    test-mac-dedicated-agents-share-pid-namespace = {
+    # セッション間メッセージのため、NixOS と同じく anchor の pid namespace と socket の置き場を共有する。
+    test-mac-dedicated-agents-share-session-messaging = {
       expr =
         let
           wrapper = lib.findFirst (
@@ -246,11 +246,13 @@ let
         {
           init = macHome.warashi.chelly.settings.init or null;
           pid = lib.filter (lib.hasPrefix "--pid=") macRunArgs;
+          sockets = lib.filter (lib.hasSuffix ":/run/chelly/cc-socks:U") macRunArgs;
           anchor = lib.hasInfix "/bin/chelly-pid-anchor" wrapper.script.text;
         };
       expected = {
         init = false;
         pid = [ "--pid=container:chelly-pid" ];
+        sockets = [ "--volume=chelly-messaging:/run/chelly/cc-socks:U" ];
         anchor = true;
       };
     };

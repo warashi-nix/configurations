@@ -25,12 +25,23 @@ let
     # 外した分の孤児の回収は anchor の --init に任せる。
     test-agents-join-anchor-without-own-init = {
       expr = {
-        inherit (sessionMessaging) runArgs settings;
+        pid = lib.filter (lib.hasPrefix "--pid=") sessionMessaging.runArgs;
+        inherit (sessionMessaging) settings;
       };
       expected = {
-        runArgs = [ "--pid=container:chelly-pid" ];
+        pid = [ "--pid=container:chelly-pid" ];
         settings.init = false;
       };
+    };
+    # Claude Code は socket を $XDG_RUNTIME_DIR/cc-socks に置く。入れ子の podman も
+    # $XDG_RUNTIME_DIR に状態を置くので、runtime dir はコンテナごとに分け、cc-socks だけを共有する。
+    test-agents-share-only-socket-directory = {
+      expr = lib.filter (arg: !(lib.hasPrefix "--pid=" arg)) sessionMessaging.runArgs;
+      expected = [
+        "--env=XDG_RUNTIME_DIR=/run/chelly"
+        "--tmpfs=/run/chelly:rw,mode=0700,U"
+        "--volume=chelly-messaging:/run/chelly/cc-socks:U"
+      ];
     };
   };
 in
