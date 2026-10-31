@@ -17,7 +17,9 @@ let
   owner = config.warashi.username;
   ownerHome = config.users.users.${owner}.home;
   homeConfig = config.home-manager.users.${owner};
-  chellyConfig = homeConfig.warashi.chelly;
+  # image 内のユーザー。既存の named volume の中身はこの所有で作られている。
+  containerUid = 1000;
+  containerGid = 100;
   chelly = inputs.chelly.packages.${pkgs.stdenv.hostPlatform.system}.chelly;
   proxy = config.warashi.chelly-nix-proxy;
   # 本人の home-manager が host の ~/.claude と ~/.copilot に書くものと同じ生成物。
@@ -65,14 +67,21 @@ let
       {
         runtime = "podman";
         subcommand = "build";
-        args = chellyConfig.runtime_options.podman.build;
+        args = [
+          "--build-arg=UID=${toString containerUid}"
+          "--build-arg=GID=${toString containerGid}"
+        ];
       }
       {
         runtime = "podman";
         subcommand = "run";
         args =
-          lib.filter (arg: !(lib.hasPrefix "--userns=" arg)) chellyConfig.runtime_options.podman.run
+          import ../../applications/chelly/podman-run-args.nix
+          ++ cfg.runArgs
           ++ [
+            # コンテナには ~/.nix-profile が無く、ホストの nix は /run/current-system 経由でしか
+            # 見えないため、daemon と同じ版の nix を store path で直接渡して entrypoint が PATH に足す。
+            "--env=CHELLY_NIX_BIN=${config.nix.package}/bin"
             "--env=CHELLY_AGENT_CONFIG=${agentConfig}"
             "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
             "--env=IS_DEMO=1"
@@ -82,8 +91,8 @@ let
             # 作業 clone は親の setgid で chelly-workspaces を持つ。コンテナ内で対応させて
             # 所属させないと、nixfmt などが書き戻しでグループを付け直せない。
             # --gidmap は --userns と併用できないので、keep-id 相当も + 記法の対応表で書く。
-            "--uidmap=+u${toString chellyConfig.uid}:0:1"
-            "--gidmap=+g${toString chellyConfig.gid}:0:1"
+            "--uidmap=+u${toString containerUid}:0:1"
+            "--gidmap=+g${toString containerGid}:0:1"
             "--gidmap=+g${toString workspacesGid}:@${toString workspacesGid}"
             "--group-add=${toString workspacesGid}"
           ];
@@ -159,6 +168,11 @@ in
         No model credentials are supplied by default.
       '';
     };
+    runArgs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Extra podman run arguments for agent containers.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -171,8 +185,8 @@ in
         message = "chelly-agent must not be a trusted Nix user or belong to a trusted Nix group";
       }
       {
-        assertion = chellyConfig.enable && chellyConfig.nixStore == "host" && proxy.enable;
-        message = "chelly-agent requires chelly with nixStore = host and the untrusted Nix proxy";
+        assertion = proxy.enable;
+        message = "chelly-agent requires the untrusted Nix proxy";
       }
       {
         assertion = lib.elem config.users.users.${owner}.homeMode [
@@ -226,7 +240,7 @@ in
     warashi.chelly-nix-proxy.socketGroup = username;
     environment.etc = {
       "chelly-agent/chelly/config.toml".source = configFile;
-      "chelly-agent/chelly/Dockerfile".source = chellyConfig.dockerfile;
+      "chelly-agent/chelly/Dockerfile".source = ../../applications/chelly/Dockerfile;
     };
     environment.systemPackages = [ launcher ];
     security.sudo.extraRules = [
