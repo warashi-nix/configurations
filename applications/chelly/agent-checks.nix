@@ -13,6 +13,9 @@ let
   runnerCommand = (lib.head (lib.head runnerRules).commands).command;
   ownerHome = workbench.home-manager.users.warashi;
   launcherNames = map (package: package.name or "") workbench.environment.systemPackages;
+  launcher = lib.findFirst (
+    package: (package.name or "") == "chelly"
+  ) null workbench.environment.systemPackages;
   tests = lib.runTests {
     # 本人の home には chelly が無いので、専用入口をそのまま chelly として呼ぶ。
     test-launcher-is-named-chelly = {
@@ -198,6 +201,11 @@ runCommand "chelly-agent-config-check"
     grep -Fq '# Output Style: grilling' ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
     test -f ${ownerHome.warashi.copilot.bundle}/settings.json
     test -f ${ownerHome.warashi.copilot.bundle}/skills/pair-programming/SKILL.md
+    # 補完は runner を通さずに返す。runner は作業領域の外での起動を拒むので、
+    # 通すと領域外では補完が効かない。check の sandbox には sudo が無いので、ここで通れば迂回できている。
+    test -f ${launcher}/share/fish/vendor_completions.d/chelly.fish
+    test -f ${launcher}/share/bash-completion/completions/chelly.bash
+    ${launcher}/bin/chelly __complete "" | grep -q '^build'
     if ${runnerCommand} run >stdout 2>stderr; then
       echo "agent runner accepted a different account" >&2
       exit 1

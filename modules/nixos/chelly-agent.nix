@@ -152,9 +152,21 @@ let
         ${lib.getExe' chelly "chelly"} "$@"
     '';
   };
-  launcher = pkgs.writeShellScriptBin "chelly" ''
+  launcherScript = pkgs.writeShellScriptBin "chelly" ''
+    # 補完は CLI 自身のコマンド一覧を返すだけなので、本人のまま本体に答えさせる。
+    # runner は作業領域の外での起動を拒むので、通すと領域外では補完が効かない。
+    case "''${1:-}" in
+      __complete | __completeNoDesc) exec ${lib.getExe' chelly "chelly"} "$@" ;;
+    esac
     exec ${config.security.wrapperDir}/sudo -n -H -u ${username} -- ${lib.getExe runner} "$@"
   '';
+  launcher = pkgs.symlinkJoin {
+    name = "chelly";
+    paths = [
+      launcherScript
+      (pkgs.callPackage ../../applications/chelly/completions.nix { inherit chelly; })
+    ];
+  };
 in
 {
   options.warashi.chelly-agent = {

@@ -229,6 +229,22 @@ let
         && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.script.text;
       expected = true;
     };
+    test-mac-dedicated-wrapper-ships-completions = {
+      expr =
+        let
+          wrapper = lib.findFirst (
+            package: (package.name or "") == "chelly-wrapper"
+          ) null darwinChellyHome.home.packages;
+        in
+        {
+          name = wrapper.completions.name or null;
+          joined = lib.elem "${wrapper.completions or ""}" wrapper.paths;
+        };
+      expected = {
+        name = "chelly-completions";
+        joined = true;
+      };
+    };
   };
 in
 assert lib.assertMsg (tests == [ ]) (builtins.toJSON tests);

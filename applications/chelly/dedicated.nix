@@ -39,10 +39,14 @@ let
     ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg brainiumWorkspace}
     exec ${getExe cfg.package} "$@"
   '';
+  completions = pkgs.callPackage ./completions.nix { chelly = cfg.package; };
   wrapper = pkgs.symlinkJoin {
     name = "chelly-wrapper";
-    paths = [ script ];
-    passthru = { inherit script; };
+    paths = [
+      script
+      completions
+    ];
+    passthru = { inherit script completions; };
   };
 in
 {
