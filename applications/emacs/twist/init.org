@@ -457,12 +457,7 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 ** just
 #+begin_src emacs-lisp
 (setup (:package just-ts-mode)
-  (:nixpkgs just just-lsp)
-  (:also-load justl)
-  (:keymap "C-c c" #'justl-exec-recipe-in-dir))
-
-(setup (:package justl)
-  (:nixpkgs just))
+  (:nixpkgs just just-lsp))
 #+end_src
 
 * 補完

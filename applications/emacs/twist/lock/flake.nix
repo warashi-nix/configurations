@@ -79,12 +79,6 @@
       repo = "exec-path-from-shell";
       type = "github";
     };
-    "f" = {
-      flake = false;
-      owner = "rejeep";
-      repo = "f.el";
-      type = "github";
-    };
     fish-completion = {
       flake = false;
       owner = "LemonBreezes";
@@ -113,12 +107,6 @@
       flake = false;
       owner = "leon-barrett";
       repo = "just-ts-mode.el";
-      type = "github";
-    };
-    justl = {
-      flake = false;
-      owner = "psibi";
-      repo = "justl.el";
       type = "github";
     };
     kkp = {
@@ -198,12 +186,6 @@
       flake = false;
       owner = "AmaiKinono";
       repo = "puni";
-      type = "github";
-    };
-    "s" = {
-      flake = false;
-      owner = "magnars";
-      repo = "s.el";
       type = "github";
     };
     setup = {

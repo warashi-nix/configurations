@@ -411,22 +411,6 @@
         "type": "github"
       }
     },
-    "f": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1727955076,
-        "narHash": "sha256-rDUl2oUlcnSjNbFZn9A/80RVk6neaTScw2kvh6FjmTE=",
-        "owner": "rejeep",
-        "repo": "f.el",
-        "rev": "931b6d0667fe03e7bf1c6c282d6d8d7006143c52",
-        "type": "github"
-      },
-      "original": {
-        "owner": "rejeep",
-        "repo": "f.el",
-        "type": "github"
-      }
-    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -742,22 +726,6 @@
         "type": "github"
       }
     },
-    "justl": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1789446966,
-        "narHash": "sha256-GzSncJwgt8rP389D9bGQhMGo1UjKDxGP7gS5/Z8IYLk=",
-        "owner": "psibi",
-        "repo": "justl.el",
-        "rev": "25ce659d99cd0ca3a1696db1a08315aa4d1e7e1c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "psibi",
-        "repo": "justl.el",
-        "type": "github"
-      }
-    },
     "kkp": {
       "flake": false,
       "locked": {
@@ -917,13 +885,11 @@
         "envrc": "envrc",
         "eshell-syntax-highlighting": "eshell-syntax-highlighting",
         "exec-path-from-shell": "exec-path-from-shell",
-        "f": "f",
         "fish-completion": "fish-completion",
         "fish-mode": "fish-mode",
         "hcl-mode": "hcl-mode",
         "inheritenv": "inheritenv",
         "just-ts-mode": "just-ts-mode",
-        "justl": "justl",
         "kkp": "kkp",
         "llama": "llama",
         "magit": "magit",
@@ -937,7 +903,6 @@
         "org-node": "org-node",
         "ppp": "ppp",
         "puni": "puni",
-        "s": "s",
         "setup": "setup",
         "term-title": "term-title",
         "terraform-mode": "terraform-mode",
@@ -1177,22 +1142,6 @@
         "owner": "rust-lang",
         "ref": "nightly",
         "repo": "rust-analyzer",
-        "type": "github"
-      }
-    },
-    "s": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1785632874,
-        "narHash": "sha256-C6T1Fh0t0YvcoMbTQpa3iRIMM0MV0f5HaZDhvmi/YaA=",
-        "owner": "magnars",
-        "repo": "s.el",
-        "rev": "d7c04b84d03481a1ed62ee13dbe595224ccbe57c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "magnars",
-        "repo": "s.el",
         "type": "github"
       }
     },
