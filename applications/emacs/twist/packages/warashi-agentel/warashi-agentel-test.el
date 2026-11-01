@@ -240,12 +240,27 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
 ;;;; 専用 runner への振り分け
 
 (ert-deftest warashi-agentel-test-command-prefix-routes-by-directory ()
-  "専用領域の中では専用 runner を使い、外では /resume などでも動かさない。"
+  "専用領域の中では専用 runner を使い、外では /resume などでも動かさない。
+project の外では session の名前を付けない。"
   (warashi-agentel-test--with-workspace (root outside)
     (should (equal '("chelly" "run" "--")
                    (warashi-agentel-command-prefix root)))
     (should-error (warashi-agentel-command-prefix outside)
                   :type 'user-error)))
+
+(ert-deftest warashi-agentel-test-command-prefix-names-session-after-project ()
+  "project の中では、Claude Code の session を project 名で登録させる。
+名前は専用 runner の中で agent に渡す。"
+  (warashi-agentel-test--with-workspace (root _outside)
+    (let ((clone (expand-file-name "repository/clone/" root)))
+      (make-directory (expand-file-name ".git" clone) t)
+      (unwind-protect
+          (progn
+            (warashi-chelly-workspace-install-project-name)
+            (should (equal '("chelly" "run" "--" "env"
+                             "CLAUDE_CODE_SESSION_NAME=repository / clone (chelly)")
+                           (warashi-agentel-command-prefix clone))))
+        (advice-remove 'project-name #'warashi-chelly-workspace--project-name)))))
 
 (ert-deftest warashi-agentel-test-command-prefix-refuses-symlink-escape ()
   "/resume など起動コマンドを通らない経路でも、逸脱した path では動かさない。"

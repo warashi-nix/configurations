@@ -9,7 +9,7 @@
 
 ;;; Commentary:
 
-;; agentel に足している三つのこと。
+;; agentel に足している四つのこと。
 ;;
 ;; - model と effort を固定した Claude と Copilot CLI の起動コマンド。
 ;;   起動しても表示も focus もしない。
@@ -17,6 +17,7 @@
 ;;   起動しても session には飛ばず、同じ project のメニューを開き直す。
 ;; - agent は `warashi-chelly-workspace-root' 以下でだけ、chelly の専用
 ;;   runner で動かす。
+;; - Claude Code の session を project 名で登録させる。
 ;;
 ;; 利用側で `agentel-command-prefix' に `warashi-agentel-command-prefix' を
 ;; 設定する。起動コマンドは
@@ -59,11 +60,21 @@
       (user-error "agents run only inside %s: %s"
                   warashi-chelly-workspace-root lexical)))))
 
+(defun warashi-agentel--session-name-command (cwd)
+  "CWD が project の中なら、Claude Code の session を project 名で登録させる
+コマンド列を返す。project の外では nil。"
+  ;; `agentel-environment' で渡さないのは、変数が prefix の先頭の chelly に
+  ;; しか届かず、NixOS では sudo と runner が環境を捨てるため。通すには
+  ;; 権限境界の許可を広げることになる。
+  (when-let* ((project (project-current nil cwd)))
+    (list "env" (concat "CLAUDE_CODE_SESSION_NAME=" (project-name project)))))
+
 (defun warashi-agentel-command-prefix (cwd)
   "CWD で agent を動かすコマンド列を返す。`agentel-command-prefix' 用。"
   ;; 起動コマンドを通らない /resume でも拒否するため、ここでも判定する。
   (warashi-agentel--dedicated-directory cwd)
-  warashi-agentel-dedicated-command-prefix)
+  (append warashi-agentel-dedicated-command-prefix
+          (warashi-agentel--session-name-command cwd)))
 
 ;;;; 起動コマンド
 
