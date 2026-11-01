@@ -91,12 +91,8 @@ esac
 EOF
   cat >"${case_dir}/bin/nix-shell" <<'EOF'
 #!/bin/sh
-printf '%s' "${COPILOT_CUSTOM_INSTRUCTIONS_DIRS-}" >instruction-dirs
-printf 'nix-shell'
-for argument in "$@"; do
-  printf ' <%s>' "${argument}"
-done
-printf '\n'
+printf 'nix-shell '
+[ "$1" = --run ] && exec sh -c "$2"
 EOF
   chmod +x "${case_dir}/bin/nix" "${case_dir}/bin/nix-shell"
 
@@ -119,8 +115,9 @@ run_mock_case broken "ACP response <one>" \
   "error: broken flake
 chelly: unable to evaluate default development environment; starting without it" \
   agent one
-run_mock_case shell-nix "nix-shell <--run> <agent one two>" "" agent one two
-run_mock_case broken-shell-nix "nix-shell <--run> <agent one two>" \
+run_mock_case shell-nix "nix-shell ACP response <A=it's a (chelly)> <one two> <three*>" "" \
+  agent "A=it's a (chelly)" "one two" 'three*'
+run_mock_case broken-shell-nix "nix-shell ACP response <one> <two>" \
   "error: broken flake
 chelly: unable to evaluate default development environment; starting without it" \
   agent one two

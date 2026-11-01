@@ -544,7 +544,12 @@ elif [ -f shell.nix ]; then
   if [ "$#" -eq 0 ]; then
     exec nix-shell
   fi
-  exec nix-shell --run "$*"
+  # --run は 1 つの shell 文字列しか受け取らないので、引数ごとに quote して渡す。
+  chelly_command=
+  for chelly_argument in "$@"; do
+    chelly_command="${chelly_command} '$(printf '%s' "${chelly_argument}" | sed "s/'/'\\\\''/g")'"
+  done
+  exec nix-shell --run "${chelly_command# }"
 else
   if [ "$#" -eq 0 ]; then
     exec bash
