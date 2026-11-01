@@ -1,6 +1,7 @@
 { config, ... }:
 {
-  # GRAFANA_CLOUD_REMOTE_WRITE_URL / GRAFANA_CLOUD_USERNAME / GRAFANA_CLOUD_API_KEY を持つ env ファイル
+  # GRAFANA_CLOUD_REMOTE_WRITE_URL / GRAFANA_CLOUD_USERNAME / GRAFANA_CLOUD_API_KEY /
+  # GRAFANA_CLOUD_LOKI_URL / GRAFANA_CLOUD_LOKI_USERNAME を持つ env ファイル
   sops.secrets.hestia-grafana-cloud-env.restartUnits = [ "alloy.service" ];
 
   services.alloy = {
@@ -75,6 +76,52 @@
 
         basic_auth {
           username = sys.env("GRAFANA_CLOUD_USERNAME")
+          password = sys.env("GRAFANA_CLOUD_API_KEY")
+        }
+      }
+    }
+  '';
+
+  # 侵入を疑ったときに、侵入者が消せない hestia の外で SSH ログインや sudo の記録を辿れるよう、
+  # journal を Grafana Cloud の Loki へ送る。痕跡が他の unit に出ることもあるので、絞らず全体を送る。
+  # journal の読み取り権限は、nixpkgs の alloy module が systemd-journal グループを付けている。
+  # sudo の行の unit はログインごとに番号が変わる session-N.scope なので、ストリームが
+  # 増え続けないよう 1 つに畳む。PID などの高カーディナリティな値はラベルにしない。
+  # 既存のキーは set:alloy-data-write でログも書けるので、URL とユーザーだけを足す。
+  environment.etc."alloy/journal.alloy".text = ''
+    loki.relabel "journal" {
+      forward_to = []
+
+      rule {
+        source_labels = ["__journal__systemd_unit"]
+        target_label  = "unit"
+      }
+
+      rule {
+        source_labels = ["__journal__systemd_unit"]
+        regex         = "session-[0-9]+\\.scope"
+        target_label  = "unit"
+        replacement   = "session.scope"
+      }
+
+      rule {
+        source_labels = ["__journal_syslog_identifier"]
+        target_label  = "identifier"
+      }
+    }
+
+    loki.source.journal "hestia" {
+      forward_to    = [loki.write.grafana_cloud.receiver]
+      relabel_rules = loki.relabel.journal.rules
+      labels        = { host = "hestia" }
+    }
+
+    loki.write "grafana_cloud" {
+      endpoint {
+        url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+        basic_auth {
+          username = sys.env("GRAFANA_CLOUD_LOKI_USERNAME")
           password = sys.env("GRAFANA_CLOUD_API_KEY")
         }
       }
