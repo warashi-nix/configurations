@@ -16,16 +16,6 @@
       sudo = {
         rssh = true;
       };
-      sshd = {
-        enableGnomeKeyring = true;
-      };
-    };
-  };
-  services = {
-    gnome = {
-      gnome-keyring = {
-        enable = true;
-      };
     };
   };
 }
