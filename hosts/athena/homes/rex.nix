@@ -16,6 +16,11 @@ let
     "ServerAliveInterval=15"
     "-o"
     "ServerAliveCountMax=2"
+    # Rex のシェルは SSH ログインを経ないので SSH_AUTH_SOCK を持たない。-N はセッションを開かず
+    # ForwardAgent が効かないため、agent の socket を直接転送する。~/.ssh/agent に置くと
+    # hestia の ssh-auth-sock-relink が拾って ~/.ssh/ssh_auth_sock に貼る。
+    "-R"
+    "/home/${config.home.username}/.ssh/agent/rex-tunnel.sock:${config.home.homeDirectory}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
   ];
 in
 {
