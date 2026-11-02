@@ -93,6 +93,11 @@
     org-babel = {
       url = "github:emacs-twist/org-babel";
     };
+    rex = {
+      # stable はまだリリースがなく、snapshot は不安定なので preview を追う
+      url = "https://pkgs.superlogical.com/rex/nix/preview.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     sekken = {
       url = "github:Warashi/sekken";
       inputs.nixpkgs.follows = "nixpkgs";
