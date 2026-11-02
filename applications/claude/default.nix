@@ -39,40 +39,15 @@ let
   '';
 
   settingsPath = "${cfg.configDir}/settings.json";
-  extraSources = imap0 (
-    index: source:
-    source
-    // {
-      workPath = "${cfg.configDir}/settings.source-${toString index}.json";
-    }
-  ) cfg.extraSettingsSources;
-
-  # jq のフィルタ結果は評価時に確定しないため、いったん作業ファイルに落としてから固定個数の入力としてマージする
-  prepareExtraSource = source: ''
-    if [ -f ${escapeShellArg source.path} ]; then
-      run ${lib.getExe pkgs.jq} ${escapeShellArg source.filter} ${escapeShellArg source.path} \
-        > ${escapeShellArg source.workPath}
-    ${
-      if source.optional then
-        ''
-          else
-            run echo '{}' > ${escapeShellArg source.workPath}
-          fi
-        ''
-      else
-        ''
-          else
-            errorEcho "claude: settings source ${source.path} not found"
-            exit 1
-          fi
-        ''
-    }'';
+  extraSettingsPath = "${cfg.configDir}/settings.extra.json";
+  extraSettings = pkgs.callPackage ./extra-settings.nix { sources = cfg.extraSettingsSources; };
+  hasExtraSettings = cfg.extraSettingsSources != [ ];
 
   mergeInputs = [
     settingsPath
     (toString settingsFile)
   ]
-  ++ map (source: source.workPath) extraSources;
+  ++ optional hasExtraSettings extraSettingsPath;
   mergeExpr = concatStringsSep " * " (imap0 (index: _: ".[${toString index}]") mergeInputs);
 in
 {
@@ -120,6 +95,14 @@ in
         activation が configDir に書く生成物と同じもので、認証状態や履歴は含まない。
       '';
     };
+    extraSettings = mkOption {
+      type = types.package;
+      readOnly = true;
+      description = ''
+        extraSettingsSources を順に重ねた JSON を標準出力に書く claude-extra-settings を含む package。
+        optional でない source が無ければ失敗する。
+      '';
+    };
     extraSettingsSources = mkOption {
       type = types.listOf (
         types.submodule {
@@ -151,7 +134,7 @@ in
 
   config = mkIf cfg.enable {
     warashi.claude = {
-      inherit bundle;
+      inherit bundle extraSettings;
       memory = config.warashi.agent-instructions.text;
 
       settings = mkDefaultRecursive {
@@ -307,13 +290,15 @@ in
           else
             run echo '{}' > ${escapeShellArg settingsPath}
           fi
-          ${concatMapStringsSep "\n" prepareExtraSource extraSources}
+          ${optionalString hasExtraSettings ''
+            run ${getExe extraSettings} > ${escapeShellArg extraSettingsPath}
+          ''}
           run ${lib.getExe pkgs.jq} -s ${escapeShellArg mergeExpr} \
             ${concatMapStringsSep " \\\n  " escapeShellArg mergeInputs} \
             > ${escapeShellArg "${cfg.configDir}/settings.merged.json"}
           run mv ${escapeShellArg "${cfg.configDir}/settings.merged.json"} ${escapeShellArg settingsPath}
-          ${optionalString (extraSources != [ ]) ''
-            run rm -f ${concatMapStringsSep " " (source: escapeShellArg source.workPath) extraSources}
+          ${optionalString hasExtraSettings ''
+            run rm -f ${escapeShellArg extraSettingsPath}
           ''}
         '';
       };
