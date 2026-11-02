@@ -12,6 +12,7 @@ let
   mkDefaultRecursive = mapAttrsRecursive (_path: mkDefault);
   settingsFile = jsonFormat.generate "claude-settings-override.json" cfg.settings;
   memoryFile = pkgs.writeText "claude-memory.md" cfg.memory;
+  # 最上位エージェントだけの指示は、subagent にも渡る CLAUDE.md ではなく output-style に置く
   outputStyles = pkgs.writeTextDir "grilling.md" (
     ''
       ---
@@ -22,6 +23,8 @@ let
 
     ''
     + config.warashi.agent-instructions.grillingBody
+    + "\n"
+    + builtins.readFile ./top-level-instructions.md
   );
   # activation が host の configDir に書くものを、別環境へ持ち出せる形で束ねる。
   # extraSettingsSources は host の runtime にある JSON なので含めない。
@@ -149,7 +152,7 @@ in
   config = mkIf cfg.enable {
     warashi.claude = {
       inherit bundle;
-      memory = config.warashi.agent-instructions.text + builtins.readFile ./claude-instructions.md;
+      memory = config.warashi.agent-instructions.text;
 
       settings = mkDefaultRecursive {
         # keep-sorted start
