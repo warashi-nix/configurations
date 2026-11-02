@@ -137,7 +137,7 @@ Claude/Copilot の設定は、本人の home-manager が `~/.claude` と `~/.cop
 `warashi.claude.bundle` と `warashi.copilot.bundle` で束ね、専用入口の `podman run` に
 `CHELLY_AGENT_CONFIG` として store path で渡す。image の entrypoint がそれを volume へ写し、
 settings は volume にある runtime の値を残して override を重ねる。認証状態・履歴・
-host の runtime にある `extraSettingsSources` は含めない。設定を変えたら switch と
+host の runtime にある `extraSettingsSources` は bundle に含めない (macOS の扱いは後述)。設定を変えたら switch と
 次回のコンテナ起動で反映され、image の再 build は要らない。global hooks の配布と
 private module の取得経路は未実装。
 
@@ -330,7 +330,7 @@ wrapper を入れる。
 | VM に共有するもの | `~/chelly-workspaces` (専用 clone) と `~/.local/share/chelly` (git-ignore と設定 bundle の実体)、Home Manager の podman モジュールが足す `~/.config/containers` (podman の設定、認証情報は含まない) だけ。home 全体・`~/.claude`・`~/.copilot`・`~/ghq` は共有しない |
 | 作業 clone | `~/chelly-workspaces/<repo 名>/<名前>`。`chelly-handoff create` で作る。本人の clone を直接 mount する経路は無い |
 | Claude・Copilot の状態 | `claude-state`・`copilot-state` の named volume。本人の `~/.claude`・`~/.copilot` は mount しない |
-| 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、同じ path に read-only で bind mount して `CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない。mount が無いと entrypoint は黙って何も写さない |
+| 設定の配布 | `warashi.claude.bundle`・`warashi.copilot.bundle` を activation で `~/.local/share/chelly/agent-config` に実体として写し、同じ path に read-only で bind mount して `CHELLY_AGENT_CONFIG` で渡す。Mac の `/nix` は VM に無いので store path は渡せない。mount が無いと entrypoint は黙って何も写さない。`warashi.claude.extraSettingsSources` は秘密情報を含みうるので、bundle ではなくこの実体の `claude/settings.json` にだけ activation で重ね、mode を 0600 にする |
 | モデル認証 | Home Manager の sops secret `chelly-agent-dotenv` だけ。本人の `chelly-dotenv` は使わない。`--env-file` は Mac 側の podman client が読むので VM に共有しなくてよい |
 | brainium | 本人の clone は mount しない。`~/chelly-workspaces/brainium` をコンテナの `~/ghq/github.com/Warashi` に見せ、`chelly-handoff create brainium` で作った clone を使う。mount 元は wrapper が起動ごとに作る。`remove brainium` は親ごと消すので、その直後も wrapper の `chelly run` なら起動できる |
 | Git ignore | 従来どおり `~/.local/share/chelly/git-ignore` の実体を read-only で渡す |

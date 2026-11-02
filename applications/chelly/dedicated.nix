@@ -19,6 +19,10 @@ let
   dataDir = "${config.xdg.dataHome}/chelly";
   # Mac の /nix は VM に無いので、配布 bundle は git-ignore と同じく実体を置いて渡す。
   agentConfigPath = "${dataDir}/agent-config";
+  # extraSettingsSources は秘密情報を含みうるので store の bundle には入れず、実体にだけ重ねる。
+  agentClaudeSettings = "${agentConfigPath}/claude/settings.json";
+  agentClaudeBase = "${agentConfigPath}/claude/settings.base.json";
+  agentClaudeExtra = "${agentConfigPath}/claude/settings.extra.json";
   agentConfig = pkgs.linkFarm "chelly-agent-config" [
     {
       name = "claude";
@@ -129,6 +133,16 @@ in
         run ${pkgs.coreutils}/bin/rm -rf ${escapeShellArg agentConfigPath}
         run ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg dataDir}
         run ${pkgs.coreutils}/bin/cp -RL --no-preserve=mode ${agentConfig} ${escapeShellArg agentConfigPath}
+        ${optionalString (config.warashi.claude.extraSettingsSources != [ ]) ''
+          # リダイレクトで新しく作るファイルは umask の mode になるので、書き込み先は 0600 で先に作る。
+          run ${pkgs.coreutils}/bin/mv ${escapeShellArg agentClaudeSettings} ${escapeShellArg agentClaudeBase}
+          run ${pkgs.coreutils}/bin/install -m 0600 /dev/null ${escapeShellArg agentClaudeExtra}
+          run ${pkgs.coreutils}/bin/install -m 0600 /dev/null ${escapeShellArg agentClaudeSettings}
+          run ${getExe config.warashi.claude.extraSettings} > ${escapeShellArg agentClaudeExtra}
+          run ${getExe pkgs.jq} -s '.[0] * .[1]' ${escapeShellArg agentClaudeBase} ${escapeShellArg agentClaudeExtra} \
+            > ${escapeShellArg agentClaudeSettings}
+          run ${pkgs.coreutils}/bin/rm -f ${escapeShellArg agentClaudeBase} ${escapeShellArg agentClaudeExtra}
+        ''}
       '';
       # podman は bind mount の元を作らない。brainium の handoff clone が無くても
       # 起動できるよう、専用領域とその親を先に用意する。

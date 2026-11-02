@@ -27,13 +27,21 @@ let
     };
 
   # dedicated.nix は本人の Claude/Copilot の配布 bundle を参照する。最小構成では
-  # applications/claude と copilot を取り込まず、bundle の option だけを空の store path で満たす。
+  # applications/claude と copilot を取り込まず、bundle と extraSettings の option だけをスタブで満たす。
   agentBundleStub =
     { lib, pkgs, ... }:
     {
       options.warashi.claude.bundle = lib.mkOption {
         type = lib.types.package;
         default = pkgs.emptyDirectory;
+      };
+      options.warashi.claude.extraSettingsSources = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [ ];
+      };
+      options.warashi.claude.extraSettings = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.writeShellScriptBin "claude-extra-settings" "echo '{}'";
       };
       options.warashi.copilot.bundle = lib.mkOption {
         type = lib.types.package;

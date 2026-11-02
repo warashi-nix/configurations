@@ -34,6 +34,13 @@ let
     pkgs = athenaPkgs;
     hostHomeModule = ../../hosts/athena/homes/chelly.nix;
   };
+  darwinChellyHomeWithExtraSettings = chellyHomeConfig {
+    pkgs = athenaPkgs;
+    hostHomeModule = ../../hosts/athena/homes/chelly.nix;
+    extraModules = [
+      { warashi.claude.extraSettingsSources = [ { path = "/managed-settings.json"; } ]; }
+    ];
+  };
   linuxChellyHome = chellyHomeConfig {
     pkgs = workbenchPkgs;
     hostHomeModule = { };
@@ -172,6 +179,26 @@ let
       expected = {
         bundle = true;
         workspaces = true;
+      };
+    };
+    # 秘密情報を含む extraSettingsSources は store の bundle に入れず、activation で
+    # 実体の settings.json にだけ重ね、本人以外に読ませない。
+    test-mac-dedicated-merges-extra-settings-on-activation = {
+      expr =
+        let
+          inherit (darwinChellyHomeWithExtraSettings) warashi home;
+          data = home.activation.chelly-agent-config.data;
+          settings = "${home.homeDirectory}/.local/share/chelly/agent-config/claude/settings.json";
+        in
+        {
+          runsScript = lib.hasInfix (builtins.unsafeDiscardStringContext (lib.getExe warashi.claude.extraSettings)) data;
+          restricts = lib.hasInfix "install -m 0600 /dev/null ${settings}" data;
+          withoutSources = lib.hasInfix "claude-extra-settings" darwinChellyHome.home.activation.chelly-agent-config.data;
+        };
+      expected = {
+        runsScript = true;
+        restricts = true;
+        withoutSources = false;
       };
     };
     # 本体の chelly を入れると wrapper と bin/chelly がぶつかるので、wrapper だけを入れる。
