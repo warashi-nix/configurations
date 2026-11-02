@@ -59,6 +59,7 @@ in
       + optionalString cfg.brainium.enable ''
         - タスク・ナレッジ管理には ~/ghq/github.com/Warashi/brainium を使う
         - brainium の task に着手したら、brainium の CLAUDE.md の規約に従って task の状態を更新する
+        - brainium のファイルを書き換えたら、続きの作業に移る前に、触ったファイルだけを `git commit -- <file>` でコミットする
       '';
 
     # 指示ファイルが subagent にも渡るかは Copilot CLI の docs に明記がないため、
