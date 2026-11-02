@@ -6,15 +6,6 @@
 with lib;
 let
   cfg = config.warashi.agent-instructions;
-
-  # Claude Code の output-style ファイルを正本にする。frontmatter は Claude 固有なので本文だけ使う
-  grillingSource = ../claude/output-styles/grilling.md;
-  grillingParts = splitString "\n---\n" (builtins.readFile grillingSource);
-  grillingBody =
-    assert assertMsg (
-      length grillingParts == 2
-    ) "${toString grillingSource}: frontmatter を 1 つだけ持つ前提が崩れている";
-    elemAt grillingParts 1;
 in
 {
   options.warashi.agent-instructions = {
@@ -42,12 +33,21 @@ in
         エージェント固有の指示は共通化しようがないものだけを各モジュール側で追記する。
       '';
     };
+    grillingBody = mkOption {
+      type = types.lines;
+      readOnly = true;
+      default = builtins.readFile ./grilling.md;
+      description = ''
+        依頼の意図を掘る指示の本文。最上位エージェントだけに適用するため text には含めない。
+        Claude Code は output-style の本文として使う。
+      '';
+    };
     grilling = mkOption {
       type = types.lines;
       readOnly = true;
       description = ''
-        依頼の意図を掘る指示。Claude Code は output-style として持つため text には含めず、
-        output-style を持たない Copilot CLI が自分の指示ファイルへ text の後に埋め込む。
+        grillingBody を、output-style を持たない Copilot CLI が自分の指示ファイルへ
+        text の後に埋め込める形にしたもの。
       '';
     };
   };
@@ -69,7 +69,8 @@ in
       # Output Style: grilling
       The following applies only to the top-level agent that converses directly with the user.
       A subagent working on a delegated task must not interview; it does the task as given.
+
     ''
-    + grillingBody;
+    + cfg.grillingBody;
   };
 }

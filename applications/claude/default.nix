@@ -12,13 +12,24 @@ let
   mkDefaultRecursive = mapAttrsRecursive (_path: mkDefault);
   settingsFile = jsonFormat.generate "claude-settings-override.json" cfg.settings;
   memoryFile = pkgs.writeText "claude-memory.md" cfg.memory;
+  outputStyles = pkgs.writeTextDir "grilling.md" (
+    ''
+      ---
+      name: grilling
+      description: 変更の背景と目的を掘り下げ、認識を合わせてから着手する。
+      keep-coding-instructions: true
+      ---
+
+    ''
+    + config.warashi.agent-instructions.grillingBody
+  );
   # activation が host の configDir に書くものを、別環境へ持ち出せる形で束ねる。
   # extraSettingsSources は host の runtime にある JSON なので含めない。
   bundle = pkgs.runCommand "claude-config-bundle" { } ''
     mkdir -p "$out/skills"
     ${optionalString (cfg.memory != "") ''cp ${memoryFile} "$out/CLAUDE.md"''}
     cp ${settingsFile} "$out/settings.json"
-    cp -r ${./output-styles} "$out/output-styles"
+    cp -r ${outputStyles} "$out/output-styles"
     ${concatStringsSep "\n" (
       mapAttrsToList (name: path: ''cp -r ${path} "$out/skills/${name}"'') cfg.skills
     )}
@@ -279,7 +290,7 @@ in
           ''}
 
           run mkdir -p ${lib.escapeShellArg "${cfg.configDir}/output-styles"}
-          run ${lib.getExe pkgs.rsync} -a ${./output-styles}/ ${lib.escapeShellArg "${cfg.configDir}/output-styles/"}
+          run ${lib.getExe pkgs.rsync} -a ${outputStyles}/ ${lib.escapeShellArg "${cfg.configDir}/output-styles/"}
 
           ${concatStringsSep "\n" (
             mapAttrsToList (name: path: ''
