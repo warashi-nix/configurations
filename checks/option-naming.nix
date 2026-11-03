@@ -34,16 +34,17 @@ let
 
   # warashi.<モジュール名> はディレクトリ名やプログラム名に合わせて kebab-case、
   # その下のフィールドは nixpkgs の option と並べて書くため camelCase にする。
+  isKebabCase = name: builtins.match "[a-z][a-z0-9]*(-[a-z0-9]+)*" name != null;
   isCamelCase = name: builtins.match "[a-z][a-zA-Z0-9]*" name != null;
 
   violations = lib.filter (
     path:
     !(lib.elem (lib.concatStringsSep "." path) externalNames)
-    && !(lib.all isCamelCase (lib.drop 2 path))
+    && !(isKebabCase (lib.elemAt path 1) && lib.all isCamelCase (lib.drop 2 path))
   ) paths;
 in
 assert lib.assertMsg (violations == [ ]) ''
-  warashi.<module> の下の option 名は camelCase にする (外部スキーマを写すものは checks/option-naming.nix の externalNames に足す):
+  warashi.<module> は kebab-case、その下の option 名は camelCase にする (外部スキーマを写すものは checks/option-naming.nix の externalNames に足す):
   ${lib.concatMapStringsSep "\n" (path: "  " + lib.concatStringsSep "." path) violations}
 '';
 runCommand "option-naming-check" { } ''
