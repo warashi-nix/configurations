@@ -9,18 +9,10 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   skkSources = pkgs.callPackage ./_sources/generated.nix { };
   sekkenPackage = inputs.sekken.packages.${system}.sekken;
-  sekkenRelease = "v${sekkenPackage.version}";
+  sekkenModels = inputs.sekken.packages.${system}.sekken-models;
   sekkenIpadic = pkgs.fetchzip {
     url = "https://github.com/daac-tools/vibrato/releases/download/v0.5.0/ipadic-mecab-2_7_0.tar.xz";
     hash = "sha256-4QwHxSjoCTIjFIPAxOV/r4TPos3aY7DGyxiALuaOKPI=";
-  };
-  sekkenModel = pkgs.fetchurl {
-    url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/model.zst";
-    hash = "sha256-hKrkXlsMz19ZBUUrvoQCSu9l+5XbUmECttCpiCtSHMI=";
-  };
-  sekkenLm = pkgs.fetchurl {
-    url = "https://github.com/Warashi/sekken/releases/download/${sekkenRelease}/lm.zst";
-    hash = "sha256-+EmWlqqAKcwi/YB0hM7LDbo3E8uleOMynZhqZCDjwV4=";
   };
   sekkenServer = lib.getExe' sekkenPackage "sekken";
 in
@@ -41,11 +33,11 @@ in
       };
       emacs-sekken-model = {
         target = "emacs/sekken/model.zst";
-        source = sekkenModel;
+        source = "${sekkenModels}/model.zst";
       };
       emacs-sekken-lm = {
         target = "emacs/sekken/lm.zst";
-        source = sekkenLm;
+        source = "${sekkenModels}/lm.zst";
       };
     };
   };
