@@ -582,7 +582,7 @@ path では起動しない。
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
-確認と取り込みは Magit の通常操作に任せる。手順は configurations の =applications/chelly/README.md= にある。
+確認と取り込みは Magit の通常操作に任せる。
 
 ** promptpane
 agent team のように agentel から扱えない機能は、Claude Code を TUI のまま
