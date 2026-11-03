@@ -477,11 +477,13 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 #+end_src
 
 ** vertico
+=vertico-resize= は既定 (=grow-only=) のままにする。=t= だと TTY で候補が減って
+ミニバッファが縮むとき、打った文字の次の全角文字が空白になる。
+
 #+begin_src emacs-lisp
 (setup (:package vertico)
   (:opt vertico-scroll-margin 0
         vertico-count 20
-        vertico-resize t
         vertico-cycle t)
   (:after-init vertico-mode))
 
