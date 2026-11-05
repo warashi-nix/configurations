@@ -291,11 +291,11 @@
     "kkp": {
       "flake": false,
       "locked": {
-        "lastModified": 1783328329,
-        "narHash": "sha256-33gsb8qumnYikvi6K9kNOlXRd9OJXnxLRR4KK0XjPII=",
+        "lastModified": 1793882456,
+        "narHash": "sha256-VR2WW89B+a4BU5nDZRbmjqShYfYu7CRI65Cx2HMKWhQ=",
         "owner": "benotn",
         "repo": "kkp",
-        "rev": "82b7443e10a2ba287467b62e90b6adb6dd93dc99",
+        "rev": "f6e9f8166995591a3ac1f62c79deebe93865ac49",
         "type": "github"
       },
       "original": {
