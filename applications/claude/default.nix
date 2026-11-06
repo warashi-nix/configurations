@@ -17,7 +17,7 @@ let
     ''
       ---
       name: grilling
-      description: 変更の背景と目的を掘り下げ、認識を合わせてから着手する。
+      description: 背景と目的を掘り下げて認識を合わせ、予測・解釈・判断を本人の手に残す。
       keep-coding-instructions: true
       ---
 
