@@ -7,7 +7,7 @@ groups:
           node_hwmon_temp_celsius
             * on(chip) group_left(chip_name)
               node_hwmon_chip_names{chip_name="k10temp"}
-          > 75
+          > 65
         for: 10m
         labels:
           __grafana_alert_rule_uid__: hestia-cpu-temp-warning
@@ -17,29 +17,29 @@ groups:
           node_hwmon_temp_celsius
             * on(chip) group_left(chip_name)
               node_hwmon_chip_names{chip_name="k10temp"}
-          > 90
+          > 70
         for: 3m
         labels:
           __grafana_alert_rule_uid__: hestia-cpu-temp-critical
 
+      # temp1・temp2 は値が動かないので、動く temp3 を見る
       - alert: "[warning] NVMe の高温"
         expr: |
-          node_hwmon_temp_celsius{sensor="temp1"}
+          node_hwmon_temp_celsius{sensor="temp3"}
             * on(chip) group_left(chip_name)
               node_hwmon_chip_names{chip_name="nvme"}
-          > 80
+          > 70
         for: 10m
         labels:
           __grafana_alert_rule_uid__: hestia-nvme-temp-warning
 
-      # 上限はチップ自身の値(spd5118 は 55°C)を使い、固定値を持たない。
-      # NVMe の temp2/temp3 の上限は不正値なので、対象を spd5118 に絞る
+      # spd5118 の high(55°C)はレジスタのリセット値で、寿命との関係が無いので使わない
       - alert: "[warning] メモリの高温"
         expr: |
           node_hwmon_temp_celsius
             * on(chip) group_left(chip_name)
               node_hwmon_chip_names{chip_name="spd5118"}
-          > on(chip, sensor) group_left() node_hwmon_temp_max_celsius
+          > 70
         for: 10m
         labels:
           __grafana_alert_rule_uid__: hestia-dram-temp-warning
