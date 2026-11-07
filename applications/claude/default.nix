@@ -179,6 +179,28 @@ in
         };
         permissions = {
           defaultMode = "auto";
+          # 書き込み系だけを列挙するのは、読み取り系まで巻き込む server 単位の deny は allow で例外を作れないため
+          deny = map (verb: "mcp__plugin_slack_slack__slack_${verb}*") [
+            # keep-sorted start
+            "add"
+            "archive"
+            "create"
+            "delete"
+            "edit"
+            "invite"
+            "join"
+            "leave"
+            "pin"
+            "post"
+            "react"
+            "remove"
+            "schedule"
+            "send"
+            "set"
+            "update"
+            "upload"
+            # keep-sorted end
+          ];
         };
         statusLine = {
           type = "command";
