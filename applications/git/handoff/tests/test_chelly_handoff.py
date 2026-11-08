@@ -46,6 +46,8 @@ class HandoffTest(unittest.TestCase):
         checker = self.bin / "git-check-new-ignored"
         checker.write_text(f"#!/bin/sh\nexec {sys.executable} {CHECKER} \"$@\"\n")
         checker.chmod(0o755)
+        # 裏で走る repack が tearDown の削除と競合するので、本人側の git でも起こさない。
+        (self.home / "gitconfig").write_text("[maintenance]\n\tauto = false\n")
         self.env = {
             **os.environ,
             "HOME": str(self.home),
@@ -76,7 +78,7 @@ class HandoffTest(unittest.TestCase):
 
     def git(self, *args, check=True):
         return subprocess.run(
-            ["git", "-c", "maintenance.auto=false", *map(str, args)],
+            ["git", *map(str, args)],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, check=check,
         )
 
