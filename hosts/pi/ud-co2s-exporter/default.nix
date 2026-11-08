@@ -19,4 +19,12 @@ in
       SupplementaryGroups = [ "dialout" ];
     };
   };
+
+  # Alloy は設定ディレクトリの .alloy をまとめて 1 つの設定として読むので、remote_write を共有できる。
+  environment.etc."alloy/ud-co2s.alloy".text = ''
+    prometheus.scrape "ud_co2s" {
+      targets    = [{"__address__" = "127.0.0.1:9126", "instance" = "pi"}]
+      forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+    }
+  '';
 }
