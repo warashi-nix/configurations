@@ -78,6 +78,11 @@ func (r *reader) session(ctx context.Context) {
 				log.Printf("device stopped sending")
 				return
 			}
+			v, isReading := parseReading(line)
+			// 値は 2 秒ごとに来るので残さない。応答や想定外の行は、開き直しの原因を辿れるよう残す。
+			if !isReading {
+				log.Printf("received %q", line)
+			}
 			if !started {
 				if strings.HasPrefix(line, "OK") || strings.HasPrefix(line, "NG") {
 					if !r.command(port, "STA") {
@@ -87,7 +92,7 @@ func (r *reader) session(ctx context.Context) {
 				}
 				continue
 			}
-			if v, ok := parseReading(line); ok {
+			if isReading {
 				r.state.record(v, time.Now())
 				silence.Reset(r.silence)
 			}
@@ -100,6 +105,7 @@ func (r *reader) command(port io.Writer, c string) bool {
 		log.Printf("send %s: %v", c, err)
 		return false
 	}
+	log.Printf("sent %s", c)
 	return true
 }
 

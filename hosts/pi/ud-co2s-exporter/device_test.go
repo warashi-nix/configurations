@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -178,6 +180,45 @@ func TestReaderPingsTheWatchdogWhileTheDeviceIsSilent(t *testing.T) {
 	startReader(t, &reader{open: open, state: &s, silence: time.Hour, retry: time.Millisecond, ping: func() { pings.Add(1) }, pingEvery: time.Millisecond})
 
 	eventually(t, "watchdog pings", func() bool { return pings.Load() >= 3 })
+}
+
+type syncBuffer struct {
+	mu sync.Mutex
+	b  strings.Builder
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.b.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.b.String()
+}
+
+func TestReaderLogsCommandsAndLinesThatAreNotReadings(t *testing.T) {
+	var logs syncBuffer
+	log.SetOutput(&logs)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+	dev := newFakeDevice()
+	dev.answer(t, "HELLO", "CO2=812,HUM=45.2,TMP=23.1")
+	open, _ := opener(dev)
+	var s state
+	startReader(t, &reader{open: open, state: &s, silence: time.Hour, retry: time.Millisecond, ping: func() {}, pingEvery: time.Hour})
+
+	eventually(t, "a reading", func() bool { return strings.Contains(s.render(), "ud_co2s_co2_ppm 812\n") })
+	for _, want := range []string{`sent STP`, `received "OK STP"`, `sent STA`, `received "OK STA"`, `received "HELLO"`} {
+		if !strings.Contains(logs.String(), want) {
+			t.Errorf("logs lack %q:\n%s", want, logs.String())
+		}
+	}
+	if strings.Contains(logs.String(), "CO2=812") {
+		t.Errorf("logged a reading, which would flood the journal every 2 seconds:\n%s", logs.String())
+	}
 }
 
 func TestReaderClosesTheDeviceWhenStopped(t *testing.T) {
