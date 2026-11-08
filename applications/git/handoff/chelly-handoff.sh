@@ -51,7 +51,8 @@ export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=
 parent=$1 dest=$2 base=$3 branch=$4
 case "$dest" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$dest" in *..*) exit 90 ;; esac
-if [ -e "$dest" ] || [ -L "$dest" ]; then
+# 空のディレクトリは、chelly の起動時に bind mount の元として用意されたものなので受け入れる。
+if [ -L "$dest" ] || { [ -e "$dest" ] && ! rmdir -- "$dest" 2>/dev/null; }; then
   echo "workspace already exists: $dest" >&2
   exit 1
 fi
@@ -95,7 +96,7 @@ export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=
 parent=$1 workspace=$2
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
-test -d "$workspace" || { echo missing; exit 0; }
+test -n "$(ls -A -- "$workspace" 2>/dev/null)" || { echo missing; exit 0; }
 cd "$workspace"
 git rev-parse --verify HEAD^{commit}
 git symbolic-ref --quiet --short HEAD || echo

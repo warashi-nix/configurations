@@ -149,6 +149,39 @@ class HandoffTest(unittest.TestCase):
         self.assertEqual(duplicate.returncode, 1)
         self.assertIn(b"already exists", duplicate.stderr)
 
+    def test_create_fills_an_empty_directory_prepared_as_a_mount_source(self):
+        self.workspace.mkdir(parents=True)
+        self.handoff("create", "fix")
+        self.assertEqual(self.rev(self.workspace), self.base)
+
+    def test_create_rejects_a_non_empty_directory_or_a_symlink(self):
+        self.workspace.mkdir(parents=True)
+        self.write(self.workspace, "stray", "x\n")
+        result = self.handoff("create", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"already exists", result.stderr)
+        self.assertTrue((self.workspace / "stray").exists())
+
+        (self.workspace / "stray").unlink()
+        self.workspace.rmdir()
+        target = self.root / "elsewhere"
+        target.mkdir()
+        self.workspace.symlink_to(target)
+        result = self.handoff("create", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"already exists", result.stderr)
+        self.assertEqual(list(target.iterdir()), [])
+
+    def test_empty_directory_left_as_a_mount_source_counts_as_a_missing_clone(self):
+        self.handoff("create", "fix")
+        subprocess.run(["rm", "-rf", str(self.workspace)], check=True)
+        self.workspace.mkdir()
+        result = self.handoff("update", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"missing; run create", result.stderr)
+        self.handoff("remove", "fix")
+        self.assertEqual(self.git("-C", self.repo, "remote").stdout, b"")
+
     def test_harness_cannot_reach_a_repository_outside_the_test_root(self):
         # 専用領域がまだ repo でない状態で git を動かしても、上位の repo に触れないこと。
         stray = self.agent_root / "stray"
