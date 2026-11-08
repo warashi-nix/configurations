@@ -28,7 +28,8 @@ in
   config = mkIf cfg.enable {
     inherit sops;
 
-    home-manager.users.${username} = {
+    # home-manager の sops モジュールは warashi.homes が有効なときだけ import される
+    home-manager.users.${username} = mkIf config.warashi.homes.enable {
       sops = sops // {
         secrets = {
           age-public-key = {
