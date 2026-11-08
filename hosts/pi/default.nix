@@ -1,7 +1,18 @@
+let
+  entries = builtins.readDir ./.;
+  # .nix 以外のファイルと、default.nix を持たないディレクトリ(パッケージのソースなど)は import しない
+  isModule =
+    name:
+    name != "default.nix"
+    && (
+      if entries.${name} == "directory" then
+        builtins.pathExists (./. + "/${name}/default.nix")
+      else
+        builtins.match ".*\\.nix" name != null
+    );
+in
 {
-  imports = (
-    builtins.map (module: ./. + "/${module}") (
-      builtins.filter (x: x != "default.nix") (builtins.attrNames (builtins.readDir ./.))
-    )
+  imports = builtins.map (module: ./. + "/${module}") (
+    builtins.filter isModule (builtins.attrNames entries)
   );
 }
