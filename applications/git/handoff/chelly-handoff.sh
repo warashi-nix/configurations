@@ -52,7 +52,7 @@ parent=$1 dest=$2 base=$3 branch=$4
 case "$dest" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$dest" in *..*) exit 90 ;; esac
 # 空のディレクトリは、chelly の起動時に bind mount の元として用意されたものなので受け入れる。
-if [ -L "$dest" ] || { [ -e "$dest" ] && ! rmdir -- "$dest" 2>/dev/null; }; then
+if [ -L "$dest" ] || { [ -e "$dest" ] && [ -n "$(ls -A -- "$dest")" ]; }; then
   echo "workspace already exists: $dest" >&2
   exit 1
 fi
@@ -60,7 +60,7 @@ mkdir -p -- "${dest%/*}"
 bundle="${dest}.bundle.$$"
 trap "rm -f -- \"$bundle\"" EXIT
 cat >"$bundle"
-mkdir -- "$dest"
+mkdir -p -- "$dest"
 git -c init.defaultBranch="$branch" clone --quiet --no-checkout --template= "$bundle" "$dest"
 cd "$dest"
 git remote remove origin

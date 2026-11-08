@@ -98,7 +98,9 @@ bytes, so paths never carry other symbols and `ID` decodes back to `NAME`.
 the remote `handoff-ID` whose URL is a bundle file under
 `.git/chelly-handoff/`, and records the fixed base and workspace path in
 `remote.handoff-ID.chelly-base` and `remote.handoff-ID.chelly-workspace`.
-An existing remote or workspace is rejected without changes. Uncommitted owner
+An existing remote or a non-empty workspace is rejected without changes; an
+empty workspace directory, such as a bind mount source prepared when chelly
+starts, is used as is and counts as missing elsewhere. Uncommitted owner
 changes are not transferred.
 
 Submodules, including private ones, reach the agent without credentials:
