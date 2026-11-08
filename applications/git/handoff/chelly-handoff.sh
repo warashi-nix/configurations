@@ -34,6 +34,9 @@ fail() {
 # 専用ユーザー側で動かすスクリプトは引数だけを受け取り、本人の環境変数を継承しない。
 # stdin は bundle を渡す create 以外では /dev/null にする。端末のまま渡すと
 # podman が --tty 無しで端末を attach したまま終了せず、CPU を使い続ける。
+# 各スクリプトは global を読まず、agent が書き換えられる clone の設定より優先される
+# GIT_CONFIG_COUNT で設定を強制する。裏の maintenance は remove の削除と競合し、
+# untracked cache はコンテナのファイルシステムでは使えない。
 agent() {
   local script=$1
   shift
@@ -48,6 +51,8 @@ agent() {
 create_script='
 umask 0027
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false \
+  GIT_CONFIG_KEY_1=core.untrackedCache GIT_CONFIG_VALUE_1=false
 parent=$1 dest=$2 base=$3 branch=$4
 case "$dest" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$dest" in *..*) exit 90 ;; esac
@@ -76,6 +81,8 @@ test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=a
 fetch_script='
 umask 0077
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false \
+  GIT_CONFIG_KEY_1=core.untrackedCache GIT_CONFIG_VALUE_1=false
 parent=$1 workspace=$2 base=$3
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
@@ -93,6 +100,8 @@ cat "$bundle"
 
 probe_script='
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false \
+  GIT_CONFIG_KEY_1=core.untrackedCache GIT_CONFIG_VALUE_1=false
 parent=$1 workspace=$2
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
@@ -110,6 +119,8 @@ git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all | wc -l
 update_script='
 umask 0027
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false \
+  GIT_CONFIG_KEY_1=core.untrackedCache GIT_CONFIG_VALUE_1=false
 parent=$1 workspace=$2 branch=$3 tip=$4 source=$5
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
@@ -139,6 +150,8 @@ fi
 submodule_script='
 umask 0027
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false \
+  GIT_CONFIG_KEY_1=core.untrackedCache GIT_CONFIG_VALUE_1=false
 export GIT_LITERAL_PATHSPECS=1
 parent=$1 workspace=$2 path=$3 commit=$4
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac

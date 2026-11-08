@@ -1,3 +1,4 @@
+import json
 import os
 import pty
 import subprocess
@@ -558,6 +559,31 @@ class HandoffTest(unittest.TestCase):
         # 次の受け渡しが clean な workspace を前提に続けられる。
         self.agent_commit("feature", "done\n")
         self.handoff("fetch", "fix")
+
+    def test_handoff_git_starts_no_background_maintenance(self):
+        trace = self.root / "trace.json"
+        self.env["GIT_TRACE2_EVENT"] = str(trace)
+        self.add_submodule("sub")
+        self.handoff("create", "fix")
+        self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+        self.bump_submodule("sub")
+        self.handoff("update", "fix")
+        events = [json.loads(line) for line in trace.read_text().splitlines()]
+        self.assertEqual(
+            [e["argv"] for e in events if e["event"] == "start" and "maintenance" in e["argv"]],
+            [],
+        )
+
+    def test_handoff_git_drops_the_untracked_cache_an_agent_enabled(self):
+        self.handoff("create", "fix")
+        self.git("-C", self.workspace, "config", "core.untrackedCache", "true")
+        self.agent_commit("feature", "done\n")
+        self.git("-C", self.workspace, "status", "--porcelain")
+        index = self.workspace / ".git" / "index"
+        self.assertTrue(b"UNTR" in index.read_bytes())
+        self.handoff("fetch", "fix")
+        self.assertFalse(b"UNTR" in index.read_bytes())
 
     def test_workspace_left_behind_by_a_failed_submodule_send_is_recreated(self):
         self.add_submodule("sub")
