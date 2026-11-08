@@ -54,6 +54,11 @@ build-for HOST:
 switch-for HOST:
   just {{ if os() == "macos" { "_darwin-rebuild-switch-for" } else { "_nixos-rebuild-switch-for" } }} {{HOST}}
 
+# 別のマシンから NixOS のホストへ反映する。ビルドは TARGET 自身で行うので、打つ側の arch は問わない
+# sudo は TARGET の pam rssh を forward した ssh-agent で通す
+switch-remote HOST TARGET ACTION="switch":
+  NIX_SSHOPTS="-A" nix run --inputs-from . nixpkgs#nixos-rebuild-ng -- {{ACTION}} --accept-flake-config --flake .#{{HOST}} --target-host {{TARGET}} --build-host {{TARGET}} --sudo
+
 _darwin-rebuild-for HOST:
   {{nix}} build --accept-flake-config --keep-going --no-link --show-trace --system {{system}} .#darwinConfigurations.{{HOST}}.system
 
