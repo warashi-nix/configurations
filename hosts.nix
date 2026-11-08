@@ -12,6 +12,10 @@
     hestia = {
       system = "x86_64-linux";
     };
+    # CO2 monitor (Raspberry Pi 4 Model B)
+    pi = {
+      system = "aarch64-linux";
+    };
     # remote workbench (OCI A1 Flex)
     workbench = {
       system = "aarch64-linux";
