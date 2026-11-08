@@ -18,6 +18,8 @@ class IntakeTest(unittest.TestCase):
         self.home = self.root / "home"
         self.home.mkdir()
         (self.home / ".config/git").mkdir(parents=True)
+        # push を受ける receive-pack には -c が届かず、裏で走る repack が tearDown の削除と競合する。
+        (self.home / "gitconfig").write_text("[maintenance]\n\tauto = false\n")
         self.env = {
             **os.environ,
             "GIT_CONFIG_NOSYSTEM": "1",
@@ -52,7 +54,7 @@ class IntakeTest(unittest.TestCase):
 
     def git(self, *args, check=True, input=None):
         return subprocess.run(
-            ["git", "-c", "maintenance.auto=false", *args],
+            ["git", *args],
             env=self.env,
             input=input,
             stdout=subprocess.PIPE,
