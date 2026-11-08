@@ -231,7 +231,10 @@
                     chelly-agent-config = pkgs.callPackage ./applications/chelly/agent-checks.nix {
                       workbenchSystem = self.nixosConfigurations.workbench;
                     };
-                  };
+                  }
+              // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+                pi-ud-co2s-exporter = pkgs.callPackage ./hosts/pi/ud-co2s-exporter/package.nix { };
+              };
             apps = inputs'.my-emacs.packages.default.makeApps {
               lockDirName = "applications/emacs/twist/lock";
             };
