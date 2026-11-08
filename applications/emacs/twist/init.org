@@ -501,7 +501,8 @@ journal/<YYYY>/<YYYY-MM-DD>.org のデイリーノートを org-node-seq
 ** consult
 =C-x p p= は ghq の repository を選び、その後段で作業場所 (本人の checkout、
 git-wit の worktree、専用ユーザーの clone) を一つの prompt から選ぶ。候補に無い
-名前を打てば、その名前で worktree か専用 clone を作ってそこへ移る。worktree や
+名前を打てば、その名前で worktree か専用 clone を作ってそこへ移る。両方を選ぶと
+同じ名前の worktree を作り、その worktree から専用 clone を作って clone へ移る。worktree や
 clone を作ったかどうかを覚えていなくても、同じ操作で辿り着けるようにするため。
 
 #+begin_src emacs-lisp

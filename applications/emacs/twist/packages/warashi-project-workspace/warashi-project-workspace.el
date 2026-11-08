@@ -133,15 +133,21 @@ ANNOTATION は候補の右に出す補足。"
       (car (read-multiple-choice
             (format "Create %s as" name)
             '((?w "git-wit worktree" "本人の repository の HEAD から worktree を作る")
-              (?c "chelly clone" "専用ユーザーの clone を chelly-handoff create で作る"))))
+              (?c "chelly clone" "専用ユーザーの clone を chelly-handoff create で作る")
+              (?b "both" "同じ名前で worktree を作り、その worktree から clone を作る"))))
     ?w))
 
 (defun warashi-project-workspace--create (repository name)
-  "REPOSITORY に NAME の作業場所を作り、そのディレクトリを返す。"
+  "REPOSITORY に NAME の作業場所を作り、そのディレクトリを返す。
+両方を作るときは clone のディレクトリを返す。"
   (file-name-as-directory
    (pcase (warashi-project-workspace--read-kind name)
      (?w (warashi-git-wit-add repository name))
-     (?c (warashi-chelly-workspace-create repository name)))))
+     (?c (warashi-chelly-workspace-create repository name))
+     ;; clone の作成に失敗しても worktree は消さない。そこから @ c で作り直せる。
+     (?b (warashi-chelly-workspace-create
+          (file-name-as-directory (warashi-git-wit-add repository name))
+          name)))))
 
 ;;;; 切り替え
 

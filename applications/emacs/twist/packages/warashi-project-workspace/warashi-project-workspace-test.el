@@ -173,6 +173,24 @@ SELECTOR は候補リストを受け取り、候補か入力文字列を返す�
                               "feature-x")
                         warashi-project-workspace-test--calls))))))
 
+(ert-deftest warashi-project-workspace-test-switch-creates-worktree-and-chelly-clone ()
+  "候補に無い名前を打ち両方を選ぶと、同じ名前で worktree を作り、その worktree から
+専用 clone を作って clone へ移る。"
+  (warashi-project-workspace-test--with-sources
+    (cl-letf (((symbol-function 'warashi-chelly-workspace-available-p) (lambda () t))
+              ((symbol-function 'read-multiple-choice)
+               (lambda (&rest _) '(?b "both"))))
+      (warashi-project-workspace-test--with-selection (lambda (_) "ログイン 修正")
+        (warashi-project-workspace-switch warashi-project-workspace-test--repository)
+        (should (equal "/srv/chelly-workspaces/configurations/ログイン 修正/" switched))
+        (should (equal (list (list 'git-wit-add
+                                   (concat warashi-project-workspace-test--repository "/")
+                                   "ログイン 修正")
+                             '(chelly-create "/home/me/wt/new-id/" "ログイン 修正"))
+                       (seq-filter (lambda (call)
+                                     (memq (car call) '(git-wit-add chelly-create)))
+                                   (reverse warashi-project-workspace-test--calls))))))))
+
 (ert-deftest warashi-project-workspace-test-switch-skips-kind-prompt-without-handoff ()
   "専用 clone を作れないホストでは種類を聞かずに worktree を作る。"
   (warashi-project-workspace-test--with-sources
