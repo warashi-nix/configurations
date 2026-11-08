@@ -12,11 +12,12 @@ let
   workspaces = "/srv/chelly-workspaces";
   # 作業領域の既存ファイルが持つ gid と同じ値。変えると既存 clone のグループが外れる。
   workspacesGid = 988;
-  # brainium の handoff clone の親。コンテナ内では本人の CLAUDE.md が指す path に見せる。
-  brainiumWorkspace = "${workspaces}/brainium";
   owner = config.warashi.username;
   ownerHome = config.users.users.${owner}.home;
   homeConfig = config.home-manager.users.${owner};
+  # macOS と同じ handoff clone を同じ path に見せる。定義は applications/chelly/handoff-repos.nix。
+  handoffRepos = homeConfig.warashi.chelly.handoffRepos;
+  handoffSources = map (clone: "${workspaces}/${clone}") (lib.attrValues handoffRepos);
   # image 内のユーザー。既存の named volume の中身はこの所有で作られている。
   containerUid = 1000;
   containerGid = 100;
@@ -48,15 +49,13 @@ let
       "/nix:/nix:ro"
       "${proxy.socketDir}:/nix/var/nix/daemon-socket:ro"
       "${homeConfig.xdg.configFile."git/ignore".source}:/home/warashi/.config/git/ignore:ro"
-      # brainium は本人の clone ではなく、chelly-handoff で専用領域に作った clone を
-      # 本人の CLAUDE.md が指すのと同じ path に見せる。clone が無ければ空のまま。
-      "${brainiumWorkspace}:/home/warashi/ghq/github.com/Warashi"
       "claude-state:/home/warashi/.claude"
       "copilot-state:/home/warashi/.copilot"
       "go-cache:/home/warashi/.cache/go-build"
       "go-mod:/home/warashi/go/pkg/mod"
       "nix-cache:/home/warashi/.cache/nix"
-    ];
+    ]
+    ++ lib.mapAttrsToList (ghq: clone: "${workspaces}/${clone}:/home/warashi/ghq/${ghq}") handoffRepos;
     inherit (sessionMessaging.settings) init;
     env_files = cfg.envfiles;
     inherit_env = [
@@ -122,9 +121,11 @@ let
           ;;
       esac
       # podman は bind mount の元を作らず statfs で落ちる。clone を remove した後も
-      # 起動できるよう、ここで毎回用意する。mode は chelly-handoff create が作る project
-      # ディレクトリと同じで、親の setgid で chelly-workspaces から閲覧できる。
-      [[ -d ${brainiumWorkspace} ]] || mkdir -m 2750 ${brainiumWorkspace}
+      # 起動できるよう、ここで毎回用意する。mode は chelly-handoff create と同じ umask で、
+      # 親の setgid で chelly-workspaces から閲覧できる。
+      ${lib.optionalString (
+        handoffSources != [ ]
+      ) "(umask 0027 && mkdir -p -- ${lib.escapeShellArgs handoffSources})"}
       runtime_dir="/run/user/$(id -u)"
       if [[ ! -d "$runtime_dir" ]]; then
         echo "chelly-agent: user runtime directory is missing; check the lingering user manager" >&2

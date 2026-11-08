@@ -24,6 +24,7 @@ in
   imports = [
     ./dedicated.nix
     ./go-proxy
+    ./handoff-repos.nix
   ];
 
   options.warashi.chelly = {

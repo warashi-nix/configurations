@@ -33,12 +33,15 @@ let
       path = config.warashi.copilot.bundle;
     }
   ];
-  brainiumWorkspace = "${cfg.workspaces}/brainium";
+  handoffSources = map (clone: "${cfg.workspaces}/${clone}") (attrValues cfg.handoffRepos);
+  mkHandoffSources = "${pkgs.coreutils}/bin/mkdir -p -- ${
+    escapeShellArgs ([ cfg.workspaces ] ++ handoffSources)
+  }";
   sessionMessaging = pkgs.callPackage ./session-messaging.nix { };
-  # brainium の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
-  # bind mount の元を作らず、chelly-handoff remove brainium が親ごと rmdir するため。
+  # handoff clone の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
+  # bind mount の元を作らず、chelly-handoff remove が clone とその親を消すため。
   script = pkgs.writeShellScriptBin "chelly" ''
-    ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg brainiumWorkspace}
+    ${mkHandoffSources}
     # 補完のたびに Podman machine へ問い合わせない。
     case "''${1:-}" in
       __complete | __completeNoDesc) ;;
@@ -86,11 +89,13 @@ in
         # bundle は CHELLY_AGENT_CONFIG と同じ path で見せる。NixOS 版は /nix の mount 越しに
         # store path が届くが、Mac では実体を bind mount しないと entrypoint が黙って何も写さない。
         "${agentConfigPath}:${agentConfigPath}:ro"
-        "${brainiumWorkspace}:/home/warashi/ghq/github.com/Warashi"
         "claude-state:/home/warashi/.claude"
         "copilot-state:/home/warashi/.copilot"
         # keep-sorted end
-      ];
+      ]
+      ++ mapAttrsToList (
+        ghq: clone: "${cfg.workspaces}/${clone}:/home/warashi/ghq/${ghq}"
+      ) cfg.handoffRepos;
       runtime_options.podman.run = [
         "--env=CHELLY_AGENT_CONFIG=${agentConfigPath}"
         "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"
@@ -144,10 +149,10 @@ in
           run ${pkgs.coreutils}/bin/rm -f ${escapeShellArg agentClaudeBase} ${escapeShellArg agentClaudeExtra}
         ''}
       '';
-      # podman は bind mount の元を作らない。brainium の handoff clone が無くても
-      # 起動できるよう、専用領域とその親を先に用意する。
+      # podman machine は VM 起動時に無い source を共有できず、podman は bind mount の元を
+      # 作らない。handoff clone が無くても起動できるよう、専用領域と mount 元を先に用意する。
       chelly-workspaces = hm.dag.entryBetween [ "podmanMachines" ] [ "writeBoundary" ] ''
-        run ${pkgs.coreutils}/bin/mkdir -p ${escapeShellArg brainiumWorkspace}
+        run ${mkHandoffSources}
       '';
     };
   };

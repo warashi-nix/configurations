@@ -118,9 +118,29 @@ let
       expr = lib.all (mount: lib.elem mount macMounts) [
         "claude-state:/home/warashi/.claude"
         "copilot-state:/home/warashi/.copilot"
-        "${macWorkspaces}/brainium:/home/warashi/ghq/github.com/Warashi"
       ];
       expected = true;
+    };
+    # handoff clone 単体だけを ghq の path に見せる。ghq の親を mount すると、
+    # コンテナ内で ghq get した clone が handoff の管理外のまま専用領域に残る。
+    test-mac-dedicated-mounts-only-handoff-clones-under-ghq = {
+      expr = lib.filter (lib.hasInfix ":/home/warashi/ghq/") macMounts;
+      expected = [ "${macWorkspaces}/brainium/brainium:/home/warashi/ghq/github.com/Warashi/brainium" ];
+    };
+    test-mac-dedicated-merges-downstream-handoff-repos = {
+      expr =
+        let
+          home = chellyHomeConfig {
+            pkgs = athenaPkgs;
+            hostHomeModule = ../../hosts/athena/homes/chelly.nix;
+            extraModules = [ { warashi.chelly.handoffRepos."github.com/acme/pkm" = "pkm/main"; } ];
+          };
+        in
+        lib.filter (lib.hasInfix ":/home/warashi/ghq/") home.warashi.chelly.settings.additional_mounts;
+      expected = [
+        "${macWorkspaces}/brainium/brainium:/home/warashi/ghq/github.com/Warashi/brainium"
+        "${macWorkspaces}/pkm/main:/home/warashi/ghq/github.com/acme/pkm"
+      ];
     };
     test-mac-dedicated-mount-sources-stay-in-shared-paths = {
       expr = lib.filter (
@@ -174,7 +194,7 @@ let
     test-mac-dedicated-materializes-bundle-and-workspaces = {
       expr = {
         bundle = lib.hasInfix "${macHome.xdg.dataHome}/chelly/agent-config" macHome.home.activation.chelly-agent-config.data;
-        workspaces = lib.hasInfix "${macWorkspaces}/brainium" macHome.home.activation.chelly-workspaces.data;
+        workspaces = lib.hasInfix "${macWorkspaces}/brainium/brainium" macHome.home.activation.chelly-workspaces.data;
       };
       expected = {
         bundle = true;
@@ -249,9 +269,9 @@ let
         };
       };
     };
-    # chelly-handoff remove brainium は mount 元の親ごと rmdir するので、NixOS の runner と
-    # 同じく wrapper が起動のたびに用意しないと次の switch まで起動できなくなる。
-    test-mac-dedicated-wrapper-recreates-brainium-mount-source = {
+    # chelly-handoff remove は clone とその親を消すので、NixOS の runner と同じく
+    # wrapper が起動のたびに用意しないと次の switch まで起動できなくなる。
+    test-mac-dedicated-wrapper-recreates-handoff-mount-sources = {
       expr =
         let
           wrapper = lib.findFirst (
@@ -259,7 +279,7 @@ let
           ) null darwinChellyHome.home.packages;
         in
         wrapper != null
-        && lib.hasInfix "mkdir -p /Users/warashi/chelly-workspaces/brainium" wrapper.script.text;
+        && lib.hasInfix "mkdir -p -- /Users/warashi/chelly-workspaces /Users/warashi/chelly-workspaces/brainium/brainium" wrapper.script.text;
       expected = true;
     };
     # セッション間メッセージのため、NixOS と同じく anchor の pid namespace と socket の置き場を共有する。
