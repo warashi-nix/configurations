@@ -70,7 +70,6 @@ git -c init.defaultBranch="$branch" clone --quiet --no-checkout --template= "$bu
 cd "$dest"
 git remote remove origin
 git -c core.hooksPath=/dev/null switch --quiet -c "$branch" "$base"
-git config --local commit.gpgsign false
 test "$(git rev-parse HEAD)" = "$base"
 test -z "$(git -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all)" ||
   { echo "new agent workspace is not clean" >&2; exit 1; }
