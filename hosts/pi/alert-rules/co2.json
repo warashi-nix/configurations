@@ -1,0 +1,86 @@
+{
+  "title": "pi",
+  "folderUid": "pi",
+  "interval": 60,
+  "rules": [
+    {
+      "uid": "pi-co2-high",
+      "title": "[warning] CO2 濃度が高い",
+      "condition": "threshold",
+      "data": [
+        {
+          "refId": "query",
+          "datasourceUid": "grafanacloud-prom",
+          "relativeTimeRange": { "from": 600, "to": 0 },
+          "model": {
+            "refId": "query",
+            "expr": "ud_co2s_co2_ppm{instance=\"pi\"}",
+            "instant": true,
+            "range": false
+          }
+        },
+        {
+          "refId": "threshold",
+          "datasourceUid": "__expr__",
+          "relativeTimeRange": { "from": 0, "to": 0 },
+          "model": {
+            "refId": "threshold",
+            "type": "threshold",
+            "expression": "query",
+            "conditions": [
+              {
+                "evaluator": { "type": "gt", "params": [1000] },
+                "unloadEvaluator": { "type": "lt", "params": [800] }
+              }
+            ]
+          }
+        }
+      ],
+      "noDataState": "KeepLast",
+      "execErrState": "KeepLast",
+      "for": "1m",
+      "annotations": {
+        "summary": "換気する。800 ppm を下回ると解消の通知が来る"
+      },
+      "isPaused": false,
+      "notification_settings": {
+        "receiver": "しん-n-grafana",
+        "group_interval": "1m",
+        "repeat_interval": "5m"
+      }
+    },
+    {
+      "uid": "pi-co2-absent",
+      "title": "[warning] CO2 の値の途絶",
+      "condition": "threshold",
+      "data": [
+        {
+          "refId": "query",
+          "datasourceUid": "grafanacloud-prom",
+          "relativeTimeRange": { "from": 600, "to": 0 },
+          "model": {
+            "refId": "query",
+            "expr": "absent_over_time(ud_co2s_co2_ppm{instance=\"pi\"}[1h])",
+            "instant": true,
+            "range": false
+          }
+        },
+        {
+          "refId": "threshold",
+          "datasourceUid": "__expr__",
+          "relativeTimeRange": { "from": 0, "to": 0 },
+          "model": {
+            "refId": "threshold",
+            "type": "threshold",
+            "expression": "query",
+            "conditions": [{ "evaluator": { "type": "gt", "params": [0] } }]
+          }
+        }
+      ],
+      "noDataState": "OK",
+      "execErrState": "Error",
+      "for": "0s",
+      "isPaused": false
+    }
+  ]
+}
