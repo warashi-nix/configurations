@@ -1074,11 +1074,11 @@
     "ppp": {
       "flake": false,
       "locked": {
-        "lastModified": 1793691945,
-        "narHash": "sha256-0lFcPlPXO4wYljUo4WQPGtiyAXH3xAUe3rX1Eb34mFM=",
+        "lastModified": 1794202030,
+        "narHash": "sha256-7CSBozbcYCfHPLyoQzWXpoVEC4QUBBDDnqhQfKMOOG4=",
         "owner": "conao3",
         "repo": "ppp.el",
-        "rev": "ecdf3a585d58d566203714bc37c21c2ab37061ea",
+        "rev": "2eb2e5dbec9f25489254ce93bb7f188e4e8c899b",
         "type": "github"
       },
       "original": {
