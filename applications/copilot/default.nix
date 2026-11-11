@@ -11,6 +11,7 @@ let
     colorMode = "default";
     continueOnAutoMode = true;
     copyOnSelect = true;
+    defaultPermissionMode = "assisted";
     experimental = false;
     includeCoAuthoredBy = true;
     mergeStrategy = "rebase";
