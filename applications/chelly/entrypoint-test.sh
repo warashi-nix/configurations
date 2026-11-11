@@ -218,7 +218,8 @@ run_config_case() {
   case_dir="${work}/config-${name}"
   bundle="${case_dir}/bundle"
   mkdir -p "${case_dir}/bin" "${case_dir}/home/.claude/skills/stale" "${case_dir}/home/.copilot" \
-    "${bundle}/claude/skills/pair/nested" "${bundle}/claude/output-styles" "${bundle}/copilot/skills/pair"
+    "${bundle}/claude/skills/pair/nested" "${bundle}/claude/output-styles" "${bundle}/copilot/skills/pair" \
+    "${bundle}/copilot/agents"
   make_agent "${case_dir}/bin"
   cat >"${case_dir}/bin/nix" <<'EOF'
 #!/bin/sh
@@ -234,6 +235,7 @@ EOF
   printf 'instructions\n' >"${bundle}/copilot/copilot-instructions.md"
   printf '{"theme":"auto","disabledSkills":["b"],"footer":{"showAgent":true}}\n' >"${bundle}/copilot/settings.json"
   printf 'skill\n' >"${bundle}/copilot/skills/pair/SKILL.md"
+  printf 'agent\n' >"${bundle}/copilot/agents/grilling.agent.md"
   printf '{"runtime":"kept","env":{"A":"runtime","C":"runtime"},"permissions":{"allow":["a"]}}\n' \
     >"${case_dir}/home/.claude/settings.json"
   printf 'old\n' >"${case_dir}/home/.claude/skills/stale/SKILL.md"
@@ -266,6 +268,7 @@ expect_output "${work}/config-applied/home/.claude/skills/pair/nested/file" "dee
 test -f "${work}/config-applied/home/.claude/skills/stale/SKILL.md"
 expect_output "${work}/config-applied/home/.copilot/copilot-instructions.md" "instructions"
 expect_output "${work}/config-applied/home/.copilot/skills/pair/SKILL.md" "skill"
+expect_output "${work}/config-applied/home/.copilot/agents/grilling.agent.md" "agent"
 # Claude は host の activation と同じ jq の * で、object は深く、配列は bundle 側で置き換える。
 jq -e '.runtime == "kept" and .outputStyle == "grilling"
   and .env == {A: "bundle", B: "bundle", C: "runtime"} and .permissions.allow == ["b"]' \
@@ -280,11 +283,13 @@ chmod -R u+w "${work}/config-applied/bundle"
 printf 'memory 2\n' >"${work}/config-applied/bundle/claude/CLAUDE.md"
 printf 'style 2\n' >"${work}/config-applied/bundle/claude/output-styles/grilling.md"
 printf 'skill 2\n' >"${work}/config-applied/bundle/copilot/skills/pair/SKILL.md"
+printf 'agent 2\n' >"${work}/config-applied/bundle/copilot/agents/grilling.agent.md"
 chmod -R a-w "${work}/config-applied/bundle"
 run_config_entrypoint "${work}/config-applied" "${work}/config-applied/bundle"
 expect_output "${work}/config-applied/home/.claude/CLAUDE.md" "memory 2"
 expect_output "${work}/config-applied/home/.claude/output-styles/grilling.md" "style 2"
 expect_output "${work}/config-applied/home/.copilot/skills/pair/SKILL.md" "skill 2"
+expect_output "${work}/config-applied/home/.copilot/agents/grilling.agent.md" "agent 2"
 
 run_config_case untouched ""
 test ! -e "${work}/config-untouched/home/.claude/CLAUDE.md"

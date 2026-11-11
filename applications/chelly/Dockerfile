@@ -365,7 +365,7 @@ RUN mkdir -p ~/.config/nixpkgs && \
 
 # 専用環境の ~/.claude と ~/.copilot は Podman volume なので、ホストの home-manager の
 # activation では書けない。同じ生成物 (CLAUDE.md、settings の override、output-styles、
-# skills、copilot-instructions.md) を起動時に volume へ写す。呼ぶのは CHELLY_AGENT_CONFIG が
+# skills、copilot-instructions.md、Copilot の agents) を起動時に volume へ写す。呼ぶのは CHELLY_AGENT_CONFIG が
 # 指す bundle があるときだけで、通常入口は本人の実 ~/.claude を mount しているため触らない。
 # settings は volume にある runtime の値を残して bundle を重ねる。Claude は host と同じ
 # jq の * (配列は置き換え)、Copilot は host の deep_merge と同じ配列の和集合にする。
@@ -413,6 +413,9 @@ fi
 if [ -f "${bundle}/copilot/copilot-instructions.md" ]; then
   mkdir -p "${copilot_dir}"
   cp --no-preserve=mode "${bundle}/copilot/copilot-instructions.md" "${copilot_dir}/copilot-instructions.md"
+fi
+if [ -d "${bundle}/copilot/agents" ]; then
+  copy_tree "${bundle}/copilot/agents" "${copilot_dir}/agents"
 fi
 for skill in "${bundle}"/copilot/skills/*/; do
   [ -d "${skill}" ] || continue
