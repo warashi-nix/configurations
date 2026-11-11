@@ -568,12 +568,13 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 
 ;; MODEL と EFFORT は Copilot CLI の config option の値。
 (warashi-agentel-define-copilot-variants
- (luna-low     "gpt-6-luna"  "low")
- (luna-medium  "gpt-6-luna"  "medium")
- (sol-low      "gpt-6.1-sol" "low")
- (sol-medium   "gpt-6.1-sol" "medium")
- (astra-low    "gpt-6-astra" "low")
- (astra-medium "gpt-6-astra" "medium"))
+ (gemini-carbon-low    "gemini-4-carbon" "low")
+ (gemini-carbon-medium "gemini-4-carbon" "medium")
+ (gpt-terra-high       "gpt-6.1-terra"   "high")
+ (gpt-sol-low          "gpt-6.1-sol"     "low")
+ (gpt-sol-medium       "gpt-6.1-sol"     "medium")
+ (gpt-astra-low        "gpt-6-astra"     "low")
+ (gpt-astra-medium     "gpt-6-astra"     "medium"))
 #+end_src
 
 定義した variant は =warashi-agentel-project-switch= から名前で選べる。
