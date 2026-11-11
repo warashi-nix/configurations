@@ -39,15 +39,7 @@ in
       default = builtins.readFile ./grilling.md;
       description = ''
         依頼の意図を掘る指示の本文。最上位エージェントだけに適用するため text には含めない。
-        Claude Code は output-style の本文として使う。
-      '';
-    };
-    grilling = mkOption {
-      type = types.lines;
-      readOnly = true;
-      description = ''
-        grillingBody を、output-style を持たない Copilot CLI が自分の指示ファイルへ
-        text の後に埋め込める形にしたもの。
+        Claude Code は output-style、Copilot CLI は custom agent の本文として使う。
       '';
     };
   };
@@ -61,16 +53,5 @@ in
         - brainium の task に着手したら、brainium の CLAUDE.md の規約に従って task の状態を更新する
         - brainium のファイルを書き換えたら、続きの作業に移る前に、触ったファイルだけを `git commit -- <file>` でコミットする
       '';
-
-    # 指示ファイルが subagent にも渡るかは Copilot CLI の docs に明記がないため、
-    # 渡っても委譲先が質問で止まらないよう最上位エージェント限定と明示する
-    grilling = ''
-
-      # Output Style: grilling
-      The following applies only to the top-level agent that converses directly with the user.
-      A subagent working on a delegated task must not interview; it does the task as given.
-
-    ''
-    + cfg.grillingBody;
   };
 }

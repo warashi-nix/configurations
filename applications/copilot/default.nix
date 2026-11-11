@@ -59,11 +59,23 @@ let
   };
 
   # 共通指示のあとに copilot 固有の指示を続ける。固有側は共通化しようがないものだけ。
-  # grilling を末尾に置くのは、見出し付きの散文なので箇条書きの間に挟むと一覧が途切れるため。
   instructions = pkgs.writeText "copilot-instructions.md" (
-    config.warashi.agent-instructions.text
-    + builtins.readFile ./copilot-instructions.md
-    + config.warashi.agent-instructions.grilling
+    config.warashi.agent-instructions.text + builtins.readFile ./copilot-instructions.md
+  );
+
+  # 最上位エージェントだけの指示は、subagent にも渡る指示ファイルではなく custom agent に置く。
+  # 補足は本文を「下の」で参照するので本文より前に置く。
+  agents = pkgs.writeTextDir "grilling.agent.md" (
+    ''
+      ---
+      name: grilling
+      description: 背景と目的を掘り下げて認識を合わせ、予測・解釈・判断を本人の手に残す。
+      ---
+
+    ''
+    + builtins.readFile ./top-level-instructions.md
+    + "\n# Output Style: grilling\n\n"
+    + config.warashi.agent-instructions.grillingBody
   );
 
   # activation が ~/.copilot に書くものを、別環境へ持ち出せる形で束ねる。
@@ -72,6 +84,7 @@ let
   bundle = pkgs.runCommand "copilot-config-bundle" { } ''
     mkdir -p "$out"
     cp ${instructions} "$out/copilot-instructions.md"
+    cp -r ${agents} "$out/agents"
     cp ${settings-overrides} "$out/settings.json"
     ${if skillsBundle == null then ''mkdir "$out/skills"'' else ''cp -r ${skillsBundle} "$out/skills"''}
   '';
@@ -81,7 +94,7 @@ in
     type = lib.types.package;
     readOnly = true;
     description = ''
-      copilot-instructions.md、settings の override、skills を束ねた store path。
+      copilot-instructions.md、settings の override、agents、skills を束ねた store path。
       activation が ~/.copilot に書く生成物と同じもので、認証状態や履歴は含まない。
     '';
   };
@@ -109,6 +122,8 @@ in
         }
 
         run cp -af ${instructions} ${config.home.homeDirectory}/.copilot/copilot-instructions.md
+        run mkdir -p ${config.home.homeDirectory}/.copilot/agents
+        run cp -f ${agents}/grilling.agent.md ${config.home.homeDirectory}/.copilot/agents/grilling.agent.md
         if [ -f ${config.home.homeDirectory}/.copilot/settings.json ]; then
         run cp -af ${config.home.homeDirectory}/.copilot/settings.json ${config.home.homeDirectory}/.copilot/settings.json.backup
         fi

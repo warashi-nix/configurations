@@ -196,9 +196,14 @@ runCommand "chelly-agent-config-check"
     test -f ${ownerHome.warashi.claude.bundle}/skills/pair-programming/SKILL.md
     grep -Fq '"outputStyle": "grilling"' ${ownerHome.warashi.claude.bundle}/settings.json
     test -f ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
-    # Copilot CLI の base prompt が調査量と応答量を抑えるため、grilling の補足が指示ファイルに載っていること。
-    grep -Fq '# grilling の Copilot CLI 向け補足' ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
-    grep -Fq '# Output Style: grilling' ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md
+    # grilling は subagent に渡らない custom agent にだけ載り、指示ファイルには載らないこと。
+    if grep -Fq 'grilling' ${ownerHome.warashi.copilot.bundle}/copilot-instructions.md; then
+      echo "copilot-instructions.md must not carry grilling" >&2
+      exit 1
+    fi
+    grep -Fq 'name: grilling' ${ownerHome.warashi.copilot.bundle}/agents/grilling.agent.md
+    # Copilot CLI の base prompt が調査量と応答量を抑えるため、grilling の補足が agent に載っていること。
+    grep -Fq '# grilling の Copilot CLI 向け補足' ${ownerHome.warashi.copilot.bundle}/agents/grilling.agent.md
     test -f ${ownerHome.warashi.copilot.bundle}/settings.json
     test -f ${ownerHome.warashi.copilot.bundle}/skills/pair-programming/SKILL.md
     # 補完は runner を通さずに返す。runner は作業領域の外での起動を拒むので、
@@ -266,6 +271,7 @@ runCommand "chelly-agent-config-check"
     assert bundle.startswith("/nix/store/"), bundle
     for path in ("claude/CLAUDE.md", "claude/settings.json", "claude/output-styles/grilling.md",
                  "copilot/copilot-instructions.md", "copilot/settings.json",
+                 "copilot/agents/grilling.agent.md",
                  "copilot/skills/pair-programming/SKILL.md"):
         assert os.path.isfile(os.path.join(bundle, path)), path
     PY
