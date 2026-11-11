@@ -536,10 +536,17 @@ Claude Code と Copilot CLI は agentel で使う。
 =C-c a= で session の一覧を開く。どの session が許可や質問の答え待ちで止まって
 いるかを一覧の状態から拾う。session の buffer は [[*sekken][sekken]] を最初から有効にして開く。
 
+Copilot CLI は custom agent の grilling で始める。grilling は subagent に渡さない
+よう指示ファイルではなく custom agent に置いてあり (=applications/copilot=)、
+起動時に選ばないと効かない。
+
 #+begin_src emacs-lisp
 (setup (:package agentel)
   (:global-keymap "C-c a" #'agentel-list)
   (:opt agentel-command-prefix #'warashi-agentel-command-prefix)
+  (:when-loaded
+    (setf (alist-get 'copilot agentel-agents)
+          '("copilot" "--acp" "--agent" "grilling")))
   (:with-hook agentel-chat-mode-hook
     (:hook agentel-focus-mode)
     (:hook (lambda ()
