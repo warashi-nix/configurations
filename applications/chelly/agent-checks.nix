@@ -211,6 +211,8 @@ runCommand "chelly-agent-config-check"
     test -f ${launcher}/share/fish/vendor_completions.d/chelly.fish
     test -f ${launcher}/share/bash-completion/completions/chelly.bash
     ${launcher}/bin/chelly __complete "" | grep -q '^build'
+    # --handoff の名前は handoff-session が答える。本体は未知の flag として :0 を返す。
+    ${launcher}/bin/chelly __complete --handoff "" | grep -Fxq ':4'
     # 横断セッションは handoff-session が brainium に移って起動する。runner は領域の外の cwd を
     # 拒むので、本人の home などから打っても通るよう、入口で領域に入ってから runner を呼ぶ。
     grep -Fxq '  --handoff) cd -- /srv/chelly-workspaces ;;' ${launcher}/bin/chelly

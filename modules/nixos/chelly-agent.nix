@@ -167,10 +167,10 @@ let
     '';
   };
   launcherScript = pkgs.writeShellScriptBin "chelly" ''
-    # 補完は CLI 自身のコマンド一覧を返すだけなので、本人のまま本体に答えさせる。
+    # 補完はコマンド一覧と、本人も読める専用領域の handoff 名を返すだけなので、本人のまま答えさせる。
     # runner は作業領域の外での起動を拒むので、通すと領域外では補完が効かない。
     case "''${1:-}" in
-      __complete | __completeNoDesc) exec ${lib.getExe' chelly "chelly"} "$@" ;;
+      __complete | __completeNoDesc) exec ${lib.getExe handoffSession} "$@" ;;
       # 横断セッションは handoff-session が brainium に移って起動する。本人の home などから
       # 打っても runner の cwd の判定を通るよう、先に領域に入る。
       --handoff) cd -- ${workspaces} ;;

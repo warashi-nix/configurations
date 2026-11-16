@@ -107,6 +107,47 @@ class HandoffSessionTest(unittest.TestCase):
         self.session("--handoff", "main", "run", cwd=lib)
         self.assertEqual(self.launched()["cwd"], str(self.fixed))
 
+    def complete(self, *args, command="__complete"):
+        result = self.session(command, *args)
+        self.assertIsNone(self.launched())
+        lines = result.stdout.decode().splitlines()
+        self.assertEqual(lines[-1], ":4")
+        return lines[:-1]
+
+    def test_handoff_completes_the_names_a_session_would_collect(self):
+        self.clone("github.com/acme/lib/fix")
+        self.clone("github.com/Warashi/app/fix")
+        self.clone("github.com/acme/lib/x-" + "ログイン".encode().hex())
+        self.clone("github.com/acme/lib/feature")
+        # 起動時に集めないものは候補にしない。
+        self.clone("github.com/acme/lib/main")
+        self.clone("github.com/Warashi/brainium/only-brainium")
+        self.clone("configurations/former")
+        self.clone("github.com/acme/lib/x-666978")
+        (self.workspaces / "github.com" / "acme" / "lib" / "nogit").mkdir()
+        self.assertEqual(self.complete("--handoff", ""), [
+            "feature\tgithub.com/acme/lib",
+            "fix\tgithub.com/Warashi/app, github.com/acme/lib",
+            "ログイン\tgithub.com/acme/lib",
+        ])
+        self.assertEqual(self.complete("--handoff", "f"), [
+            "feature\tgithub.com/acme/lib",
+            "fix\tgithub.com/Warashi/app, github.com/acme/lib",
+        ])
+        self.assertEqual(self.complete("--handoff", "fi", command="__completeNoDesc"), ["fix"])
+
+    def test_handoff_completes_run_after_the_name_and_chelly_after_run(self):
+        self.assertEqual(self.complete("--handoff", "fix", ""), ["run"])
+        self.assertEqual(self.complete("--handoff", "fix", "b"), [])
+        self.session("__complete", "--handoff", "fix", "run", "--", "")
+        self.assertEqual(self.launched()["args"], ["__complete", "run", "--", ""])
+        self.session("__completeNoDesc", "--handoff", "fix", "run", "")
+        self.assertEqual(self.launched()["args"], ["__completeNoDesc", "run", ""])
+
+    def test_handoff_completion_works_without_a_workspace(self):
+        self.env["HANDOFF_SESSION_WORKSPACES"] = str(self.root / "missing")
+        self.assertEqual(self.complete("--handoff", ""), [])
+
     def test_handoff_mounts_every_clone_of_the_name_at_its_ghq_path(self):
         lib = self.clone("github.com/acme/lib/fix")
         app = self.clone("github.com/Warashi/app/fix")
