@@ -33,9 +33,9 @@ let
       path = config.warashi.copilot.bundle;
     }
   ];
-  handoffSources = map (clone: "${cfg.workspaces}/${clone}") (attrValues cfg.handoffRepos);
+  handoffSources = mapAttrs (ghq: id: "${cfg.workspaces}/${ghq}/${id}") cfg.handoffRepos;
   mkHandoffSources = "${pkgs.coreutils}/bin/mkdir -p -- ${
-    escapeShellArgs ([ cfg.workspaces ] ++ handoffSources)
+    escapeShellArgs ([ cfg.workspaces ] ++ attrValues handoffSources)
   }";
   sessionMessaging = pkgs.callPackage ./session-messaging.nix { };
   # handoff clone の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
@@ -93,9 +93,7 @@ in
         "copilot-state:/home/warashi/.copilot"
         # keep-sorted end
       ]
-      ++ mapAttrsToList (
-        ghq: clone: "${cfg.workspaces}/${clone}:/home/warashi/ghq/${ghq}"
-      ) cfg.handoffRepos;
+      ++ mapAttrsToList (ghq: source: "${source}:/home/warashi/ghq/${ghq}") handoffSources;
       runtime_options.podman.run = [
         "--env=CHELLY_AGENT_CONFIG=${agentConfigPath}"
         "--env=CLAUDE_CONFIG_DIR=/home/warashi/.claude"

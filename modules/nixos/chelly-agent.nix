@@ -17,7 +17,7 @@ let
   homeConfig = config.home-manager.users.${owner};
   # macOS と同じ handoff clone を同じ path に見せる。定義は applications/chelly/handoff-repos.nix。
   handoffRepos = homeConfig.warashi.chelly.handoffRepos;
-  handoffSources = map (clone: "${workspaces}/${clone}") (lib.attrValues handoffRepos);
+  handoffSources = lib.mapAttrs (ghq: id: "${workspaces}/${ghq}/${id}") handoffRepos;
   # image 内のユーザー。既存の named volume の中身はこの所有で作られている。
   containerUid = 1000;
   containerGid = 100;
@@ -55,7 +55,7 @@ let
       "go-mod:/home/warashi/go/pkg/mod"
       "nix-cache:/home/warashi/.cache/nix"
     ]
-    ++ lib.mapAttrsToList (ghq: clone: "${workspaces}/${clone}:/home/warashi/ghq/${ghq}") handoffRepos;
+    ++ lib.mapAttrsToList (ghq: source: "${source}:/home/warashi/ghq/${ghq}") handoffSources;
     inherit (sessionMessaging.settings) init;
     env_files = cfg.envfiles;
     inherit_env = [
@@ -124,8 +124,8 @@ let
       # 起動できるよう、ここで毎回用意する。mode は chelly-handoff create と同じ umask で、
       # 親の setgid で chelly-workspaces から閲覧できる。
       ${lib.optionalString (
-        handoffSources != [ ]
-      ) "(umask 0027 && mkdir -p -- ${lib.escapeShellArgs handoffSources})"}
+        handoffSources != { }
+      ) "(umask 0027 && mkdir -p -- ${lib.escapeShellArgs (lib.attrValues handoffSources)})"}
       runtime_dir="/run/user/$(id -u)"
       if [[ ! -d "$runtime_dir" ]]; then
         echo "chelly-agent: user runtime directory is missing; check the lingering user manager" >&2

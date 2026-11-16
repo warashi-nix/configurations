@@ -5,17 +5,17 @@
 with lib;
 {
   options.warashi.chelly.handoffRepos = mkOption {
-    type = types.attrsOf (types.strMatching "[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*");
+    type = types.attrsOf (types.strMatching "[A-Za-z0-9][A-Za-z0-9._-]*");
     default = { };
     example = {
-      "github.com/acme/pkm" = "pkm/main";
+      "github.com/acme/pkm" = "main";
     };
     description = ''
       コンテナ内の ~/ghq 配下に見せる chelly-handoff の clone。
-      キーは ~/ghq からの path、値は専用領域からの `<project>/<NAME>`。
+      キーは ~/ghq からの path、値は handoff の ID。clone は専用領域の `<キー>/<ID>` にある。
     '';
   };
 
   # 本人の CLAUDE.md が指す path で、brainium の handoff clone を使う。
-  config.warashi.chelly.handoffRepos."github.com/Warashi/brainium" = "brainium/brainium";
+  config.warashi.chelly.handoffRepos."github.com/Warashi/brainium" = "brainium";
 }

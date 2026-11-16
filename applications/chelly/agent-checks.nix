@@ -219,7 +219,7 @@ runCommand "chelly-agent-config-check"
     grep -Fxq "chelly-agent: run through the chelly launcher" stderr
     # podman は bind mount の元を作らないので、handoff clone の mount 元は runner が毎回用意する。
     # mode は chelly-handoff create と同じ umask で、親の setgid から chelly-workspaces を引き継ぐ。
-    grep -Fq '(umask 0027 && mkdir -p -- /srv/chelly-workspaces/brainium/brainium)' ${runnerCommand}
+    grep -Fq '(umask 0027 && mkdir -p -- /srv/chelly-workspaces/github.com/Warashi/brainium/brainium)' ${runnerCommand}
     # anchor は chelly と同じ podman の storage に作るので、同じ環境変数で呼ぶ。
     grep -Eq '^env -i "\$\{agent_env\[@\]\}" /nix/store/[^ ]*/bin/chelly-pid-anchor$' ${runnerCommand}
 
@@ -244,7 +244,7 @@ runCommand "chelly-agent-config-check"
     assert not any(mount.startswith("/home/") for mount in mounts), mounts
     # ghq の親ではなく clone 単体を見せ、コンテナ内で ghq get した clone を専用領域に残さない。
     assert [m for m in mounts if ":/home/warashi/ghq/" in m] == [
-        "/srv/chelly-workspaces/brainium/brainium:/home/warashi/ghq/github.com/Warashi/brainium"
+        "/srv/chelly-workspaces/github.com/Warashi/brainium/brainium:/home/warashi/ghq/github.com/Warashi/brainium"
     ], mounts
     assert not any("brainium" in mount and not mount.startswith("/srv/chelly-workspaces/") for mount in mounts), mounts
     assert config["env_files"] == ["/run/secrets/chelly-agent-dotenv"], config["env_files"]
