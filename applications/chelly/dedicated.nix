@@ -38,6 +38,13 @@ let
     escapeShellArgs ([ cfg.workspaces ] ++ attrValues handoffSources)
   }";
   sessionMessaging = pkgs.callPackage ./session-messaging.nix { };
+  # --handoff NAME で同じ名前の clone を集める。共有範囲は専用領域だけなので、走査もその中に閉じる。
+  handoffSession = pkgs.callPackage ./handoff-session/package.nix {
+    inherit (cfg) workspaces;
+    chelly = cfg.package;
+    additionalMounts = cfg.settings.additional_mounts;
+    fixedSources = attrValues handoffSources;
+  };
   # handoff clone の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
   # bind mount の元を作らず、chelly-handoff remove が clone とその親を消すため。
   script = pkgs.writeShellScriptBin "chelly" ''
@@ -47,7 +54,7 @@ let
       __complete | __completeNoDesc) ;;
       *) ${getExe sessionMessaging.anchor} ;;
     esac
-    exec ${getExe cfg.package} "$@"
+    exec ${getExe handoffSession} "$@"
   '';
   completions = pkgs.callPackage ./completions.nix { chelly = cfg.package; };
   wrapper = pkgs.symlinkJoin {

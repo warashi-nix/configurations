@@ -284,6 +284,19 @@ let
         && lib.hasInfix "mkdir -p -- /Users/warashi/chelly-workspaces /Users/warashi/chelly-workspaces/github.com/Warashi/brainium/brainium" wrapper.script.text;
       expected = true;
     };
+    # --handoff NAME で同じ名前の clone を集めるため、本体は handoff-session 経由で起動する。
+    test-mac-dedicated-wrapper-starts-through-handoff-session = {
+      expr =
+        let
+          wrapper = lib.findFirst (
+            package: (package.name or "") == "chelly-wrapper"
+          ) null darwinChellyHome.home.packages;
+        in
+        lib.any (
+          line: builtins.match "exec /nix/store/[^ ]*/bin/chelly-handoff-session \"\\$@\"" line != null
+        ) (lib.splitString "\n" wrapper.script.text);
+      expected = true;
+    };
     # セッション間メッセージのため、NixOS と同じく anchor の pid namespace と socket の置き場を共有する。
     test-mac-dedicated-agents-share-session-messaging = {
       expr =

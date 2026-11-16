@@ -43,19 +43,25 @@ let
   ++ config.users.users.${username}.extraGroups
   ++ lib.attrNames (lib.filterAttrs (_: group: lib.elem username group.members) config.users.groups);
   tomlFormat = pkgs.formats.toml { };
+  additionalMounts = [
+    "/nix:/nix:ro"
+    "${proxy.socketDir}:/nix/var/nix/daemon-socket:ro"
+    "${homeConfig.xdg.configFile."git/ignore".source}:/home/warashi/.config/git/ignore:ro"
+    "claude-state:/home/warashi/.claude"
+    "copilot-state:/home/warashi/.copilot"
+    "go-cache:/home/warashi/.cache/go-build"
+    "go-mod:/home/warashi/go/pkg/mod"
+    "nix-cache:/home/warashi/.cache/nix"
+  ]
+  ++ lib.mapAttrsToList (ghq: source: "${source}:/home/warashi/ghq/${ghq}") handoffSources;
+  # --handoff NAME で同じ名前の clone を集める。名前の解決と走査は専用ユーザーのまま行う。
+  handoffSession = pkgs.callPackage ../../applications/chelly/handoff-session/package.nix {
+    inherit chelly workspaces additionalMounts;
+    fixedSources = lib.attrValues handoffSources;
+  };
   configFile = tomlFormat.generate "chelly-agent.toml" {
     container_cmd = lib.getExe pkgs.podman;
-    additional_mounts = [
-      "/nix:/nix:ro"
-      "${proxy.socketDir}:/nix/var/nix/daemon-socket:ro"
-      "${homeConfig.xdg.configFile."git/ignore".source}:/home/warashi/.config/git/ignore:ro"
-      "claude-state:/home/warashi/.claude"
-      "copilot-state:/home/warashi/.copilot"
-      "go-cache:/home/warashi/.cache/go-build"
-      "go-mod:/home/warashi/go/pkg/mod"
-      "nix-cache:/home/warashi/.cache/nix"
-    ]
-    ++ lib.mapAttrsToList (ghq: source: "${source}:/home/warashi/ghq/${ghq}") handoffSources;
+    additional_mounts = additionalMounts;
     inherit (sessionMessaging.settings) init;
     env_files = cfg.envfiles;
     inherit_env = [
@@ -156,7 +162,7 @@ let
       )
       # anchor は chelly が使うのと同じ podman の storage に作る。
       env -i "''${agent_env[@]}" ${lib.getExe sessionMessaging.anchor}
-      exec env -i "''${agent_env[@]}" ${lib.getExe' chelly "chelly"} "$@"
+      exec env -i "''${agent_env[@]}" ${lib.getExe handoffSession} "$@"
     '';
   };
   launcherScript = pkgs.writeShellScriptBin "chelly" ''

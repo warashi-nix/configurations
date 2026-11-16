@@ -200,6 +200,10 @@
                 claude-extra-settings = pkgs.callPackage ./applications/claude/extra-settings-test.nix { };
                 chelly-session-messaging = pkgs.callPackage ./applications/chelly/session-messaging-test.nix { };
                 chelly-go-proxy = pkgs.callPackage ./applications/chelly/go-proxy/package.nix { };
+                chelly-handoff-session = pkgs.callPackage ./applications/chelly/handoff-session/package.nix {
+                  chelly = inputs.chelly.packages.${system}.chelly;
+                  workspaces = "/srv/chelly-workspaces";
+                };
                 chelly-go-proxy-config = pkgs.callPackage ./applications/chelly/go-proxy/checks.nix {
                   athenaPkgs = self.darwinConfigurations.athena.pkgs;
                   workbenchPkgs = self.nixosConfigurations.workbench.pkgs;

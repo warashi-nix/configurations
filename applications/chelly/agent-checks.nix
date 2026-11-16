@@ -222,6 +222,8 @@ runCommand "chelly-agent-config-check"
     grep -Fq '(umask 0027 && mkdir -p -- /srv/chelly-workspaces/github.com/Warashi/brainium/brainium)' ${runnerCommand}
     # anchor は chelly と同じ podman の storage に作るので、同じ環境変数で呼ぶ。
     grep -Eq '^env -i "\$\{agent_env\[@\]\}" /nix/store/[^ ]*/bin/chelly-pid-anchor$' ${runnerCommand}
+    # --handoff NAME で同じ名前の clone を集めるため、本体は handoff-session 経由で起動する。
+    grep -Eq '^exec env -i "\$\{agent_env\[@\]\}" /nix/store/[^ ]*/bin/chelly-handoff-session "\$@"$' ${runnerCommand}
 
     python3 - \
       ${workbench.environment.etc."chelly-agent/chelly/config.toml".source} \
