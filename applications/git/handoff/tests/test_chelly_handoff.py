@@ -247,6 +247,16 @@ class HandoffTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn(b"ghq", result.stderr)
 
+    def test_id_prints_the_id_of_a_name_outside_any_repository(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        for name, expected in (("fix", "fix"), ("feature/x", "x-" + b"feature/x".hex())):
+            result = self.handoff("id", name, cwd=outside)
+            self.assertEqual(result.stdout.decode(), f"{expected}\n")
+        for args in (("id",), ("id", ""), ("id", "a\tb")):
+            result = self.handoff(*args, check=False, cwd=outside)
+            self.assertNotEqual(result.returncode, 0, args)
+
     def test_create_rejects_a_repository_outside_ghq_root(self):
         loose = self.root / "loose"
         self.git("clone", "-q", self.repo, loose)

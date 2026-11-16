@@ -79,6 +79,7 @@ chelly-handoff fetch [fix-issue-123]
 chelly-handoff update [fix-issue-123]
 chelly-handoff remove [fix-issue-123] [--force]
 chelly-handoff where
+chelly-handoff id fix-issue-123
 ```
 
 `create` bundles the current `HEAD` and lets `chelly` clone it into
@@ -170,6 +171,8 @@ changes or a `HEAD` that this repository has not fetched yet.
 
 `where` prints `WORKSPACES/PROJECT` for the repository it runs in, so other
 tools can list its workspaces without deriving `PROJECT` themselves.
+`id` prints the `ID` of `NAME` and works outside any repository, so a
+cross-repository launch can find the workspaces sharing that name.
 
 The owner's SSH agent and Git identity variables are not passed to the
 transport, and nothing is ever pushed. `chelly` must be on the host

@@ -13,6 +13,7 @@ usage: chelly-handoff create [NAME]
        chelly-handoff update [NAME]
        chelly-handoff remove [NAME] [--force]
        chelly-handoff where
+       chelly-handoff id NAME
 
 create  現在の HEAD から専用領域の <ghq path>/ID に clone を作り、remote handoff-ID を追加する
 fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り込み、新規追跡ファイルを検査する
@@ -21,6 +22,7 @@ update  専用 clone を本人の branch の先端に合わせ直す (未取得�
         detached HEAD から create したときは、update を実行した場所の HEAD に合わせる
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 where   この repository の専用 clone を並べるディレクトリを表示する
+id      NAME の ID を表示する (repository の外でも使える)
 
 NAME を省略すると現在の branch 名を使う。detached HEAD では NAME が要る。
 ID は NAME が英数字と '.' '_' '-' だけならそのもの、それ以外は x- に UTF-8 の 16 進を続けたもの。
@@ -464,6 +466,12 @@ remove)
 where)
   [[ $# -eq 1 ]] || usage
   where
+  ;;
+id)
+  # 横断セッションの起動で、名前から clone の場所を引くときに同じ変換を使う。
+  [[ $# -eq 2 && -n $2 ]] || usage
+  resolve_name "$2"
+  echo "$id"
   ;;
 *) usage ;;
 esac
