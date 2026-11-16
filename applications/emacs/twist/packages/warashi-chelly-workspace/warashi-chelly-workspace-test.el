@@ -21,21 +21,33 @@ ROOT はその一時ディレクトリを束縛する変数名。"
          (progn ,@body)
        (delete-directory ,root t))))
 
+(defconst warashi-chelly-workspace-test--project "github.com/Warashi/configurations"
+  "本人の ghq root からの path。専用領域でも clone をこの下に置く。")
+
+(defun warashi-chelly-workspace-test--clone (root id &optional project)
+  "ROOT の下に PROJECT (既定は configurations) の ID の clone を作り、場所を返す。"
+  (let ((clone (expand-file-name
+                (concat (or project warashi-chelly-workspace-test--project) "/" id)
+                root)))
+    (make-directory (expand-file-name ".git" clone) t)
+    clone))
+
 (ert-deftest warashi-chelly-workspace-test-parse-clone ()
-  "root 直下の 2 段目だけを clone と見て (repo . name) を返す。"
+  "ghq の path の下で .git を持つディレクトリを clone と見て (project . name) を返す。"
   (warashi-chelly-workspace-test--with-root root
-    (let ((clone (expand-file-name "configurations/main" root)))
+    (let ((clone (warashi-chelly-workspace-test--clone root "main")))
       (make-directory (expand-file-name "sub" clone) t)
-      (should (equal '("configurations" . "main")
+      (make-directory (expand-file-name "deps/lib/.git" clone) t)
+      (should (equal (cons warashi-chelly-workspace-test--project "main")
                      (warashi-chelly-workspace-parse clone)))
-      (should (equal '("configurations" . "main")
+      (should (equal (cons warashi-chelly-workspace-test--project "main")
                      (warashi-chelly-workspace-parse (file-name-as-directory clone))))
-      ;; 1 段目は repo 名の置き場で clone ではない。
-      (should-not (warashi-chelly-workspace-parse
-                   (expand-file-name "configurations" root)))
-      ;; clone の下のディレクトリも clone ではない。
-      (should-not (warashi-chelly-workspace-parse
-                   (expand-file-name "sub" clone)))
+      ;; ghq の path の途中は clone の置き場で clone ではない。
+      (dolist (place '("github.com" "github.com/Warashi" "github.com/Warashi/configurations"))
+        (should-not (warashi-chelly-workspace-parse (expand-file-name place root))))
+      ;; clone の下のディレクトリも、clone の中の submodule も clone ではない。
+      (should-not (warashi-chelly-workspace-parse (expand-file-name "sub" clone)))
+      (should-not (warashi-chelly-workspace-parse (expand-file-name "deps/lib" clone)))
       (should-not (warashi-chelly-workspace-parse root)))))
 
 ;; 日本語や空白を含む名前は、chelly-handoff が x- と UTF-8 の 16 進にした
@@ -47,15 +59,13 @@ ROOT はその一時ディレクトリを束縛する変数名。"
 (ert-deftest warashi-chelly-workspace-test-parse-decodes-hex-id ()
   "16 進の ID のディレクトリからは元の名前を返す。"
   (warashi-chelly-workspace-test--with-root root
-    (let ((clone (expand-file-name
-                  (concat "configurations/" warashi-chelly-workspace-test--hex-id) root))
-          (ascii (expand-file-name "configurations/x-zz" root)))
-      (make-directory clone t)
-      (make-directory ascii t)
-      (should (equal '("configurations" . "ログイン 修正")
+    (let ((clone (warashi-chelly-workspace-test--clone
+                  root warashi-chelly-workspace-test--hex-id))
+          (ascii (warashi-chelly-workspace-test--clone root "x-zz")))
+      (should (equal (cons warashi-chelly-workspace-test--project "ログイン 修正")
                      (warashi-chelly-workspace-parse clone)))
       ;; 16 進でなければ chelly-handoff が作った ID ではないので、そのまま返す。
-      (should (equal '("configurations" . "x-zz")
+      (should (equal (cons warashi-chelly-workspace-test--project "x-zz")
                      (warashi-chelly-workspace-parse ascii))))))
 
 (ert-deftest warashi-chelly-workspace-test-parse-outside ()
@@ -63,24 +73,23 @@ ROOT はその一時ディレクトリを束縛する変数名。"
   (warashi-chelly-workspace-test--with-root root
     (let ((outside (make-temp-file "chelly-outside-" t)))
       (unwind-protect
-          (progn
-            (make-directory (expand-file-name "configurations/main" outside) t)
-            (should-not (warashi-chelly-workspace-parse
-                         (expand-file-name "configurations/main" outside))))
+          (should-not (warashi-chelly-workspace-parse
+                       (warashi-chelly-workspace-test--clone outside "main")))
         (delete-directory outside t)))
     (should-not (warashi-chelly-workspace-parse
-                 "/ssh:workbench:/srv/chelly-workspaces/configurations/main/"))))
+                 "/ssh:workbench:/srv/chelly-workspaces/github.com/Warashi/configurations/main/"))))
 
 (ert-deftest warashi-chelly-workspace-test-parse-resolves-symlink ()
   "root や clone への symlink 経由でも実体で判定する。"
   (warashi-chelly-workspace-test--with-root root
     (let ((link (concat (make-temp-file "chelly-link-") "-dir")))
-      (make-directory (expand-file-name "configurations/main" root) t)
+      (warashi-chelly-workspace-test--clone root "main")
       (make-symbolic-link root link)
       (unwind-protect
-          (should (equal '("configurations" . "main")
+          (should (equal (cons warashi-chelly-workspace-test--project "main")
                          (warashi-chelly-workspace-parse
-                          (expand-file-name "configurations/main" link))))
+                          (expand-file-name
+                           (concat warashi-chelly-workspace-test--project "/main") link))))
         (delete-file link)))))
 
 ;;;; project 名
@@ -103,10 +112,9 @@ ROOT はその一時ディレクトリを束縛する変数名。"
   "専用 clone の project 名は <repo> / <handoff 名> (chelly) になり、
 別 repo の同名 handoff と区別できる。"
   (warashi-chelly-workspace-test--with-root root
-    (let ((clone (expand-file-name "configurations/main" root))
-          (other (expand-file-name "brainium/main" root)))
-      (dolist (directory (list clone other))
-        (make-directory (expand-file-name ".git" directory) t))
+    (let ((clone (warashi-chelly-workspace-test--clone root "main"))
+          (other (warashi-chelly-workspace-test--clone
+                  root "main" "github.com/Warashi/brainium")))
       (make-directory (expand-file-name "sub" clone))
       (warashi-chelly-workspace-test--with-project-name
         (should (equal "configurations / main (chelly)"
@@ -121,9 +129,8 @@ ROOT はその一時ディレクトリを束縛する変数名。"
 (ert-deftest warashi-chelly-workspace-test-project-name-decodes-hex-id ()
   "16 進の ID の clone の project 名には元の名前を出す。"
   (warashi-chelly-workspace-test--with-root root
-    (let ((clone (expand-file-name
-                  (concat "configurations/" warashi-chelly-workspace-test--hex-id) root)))
-      (make-directory (expand-file-name ".git" clone) t)
+    (let ((clone (warashi-chelly-workspace-test--clone
+                  root warashi-chelly-workspace-test--hex-id)))
       (warashi-chelly-workspace-test--with-project-name
         (should (equal "configurations / ログイン 修正 (chelly)"
                        (warashi-chelly-workspace-test--project-name clone)))))))
@@ -153,45 +160,9 @@ ROOT はその一時ディレクトリを束縛する変数名。"
                (lambda (&rest _) (ert-fail "file-truename was called for a remote project"))))
       (should (equal "main"
                      (project-name
-                      '(vc Git "/ssh:workbench:/srv/chelly-workspaces/configurations/main/")))))))
+                      '(vc Git "/ssh:workbench:/srv/chelly-workspaces/github.com/Warashi/configurations/main/")))))))
 
 ;;;; 本人の repository から見た clone の列挙と作成
-
-(ert-deftest warashi-chelly-workspace-test-list-clones-of-repository ()
-  "repository の basename と同じ置き場にある clone を (name . dir) で返す。"
-  (warashi-chelly-workspace-test--with-root root
-    (make-directory (expand-file-name "configurations/main" root) t)
-    (make-directory (expand-file-name "configurations/feature-x" root) t)
-    (make-directory (expand-file-name "configurations/.hidden" root) t)
-    (make-directory (expand-file-name "other/main" root) t)
-    (with-temp-file (expand-file-name "configurations/note.txt" root))
-    (should (equal (list (cons "feature-x"
-                               (file-name-as-directory
-                                (expand-file-name "configurations/feature-x" root)))
-                         (cons "main"
-                               (file-name-as-directory
-                                (expand-file-name "configurations/main" root))))
-                   (warashi-chelly-workspace-list
-                    "/home/me/ghq/github.com/Warashi/configurations")))
-    ;; 末尾のスラッシュは問わない。
-    (should (equal 2 (length (warashi-chelly-workspace-list
-                              "/home/me/ghq/github.com/Warashi/configurations/"))))
-    (should-not (warashi-chelly-workspace-list "/home/me/ghq/github.com/Warashi/none"))))
-
-(ert-deftest warashi-chelly-workspace-test-list-decodes-hex-id ()
-  "16 進の ID の clone は元の名前で返す。"
-  (warashi-chelly-workspace-test--with-root root
-    (let ((clone (expand-file-name
-                  (concat "configurations/" warashi-chelly-workspace-test--hex-id) root)))
-      (make-directory clone t)
-      (should (equal (list (cons "ログイン 修正" (file-name-as-directory clone)))
-                     (warashi-chelly-workspace-list
-                      "/home/me/ghq/github.com/Warashi/configurations"))))))
-
-(ert-deftest warashi-chelly-workspace-test-list-without-root ()
-  "専用領域の無いホストでは nil。"
-  (let ((warashi-chelly-workspace-root "/nonexistent/chelly-workspaces/"))
-    (should-not (warashi-chelly-workspace-list "/home/me/ghq/github.com/Warashi/configurations"))))
 
 (defvar warashi-chelly-workspace-test--output ""
   "stub した chelly-handoff の出力。")
@@ -212,21 +183,79 @@ chelly-handoff は `warashi-chelly-workspace-test--output' を出力する。"
                 (lambda (program _infile destination _display &rest args)
                   (push (cons default-directory (cons program args))
                         warashi-chelly-workspace-test--calls)
-                  (with-current-buffer destination
-                    (insert warashi-chelly-workspace-test--output))
+                  (let ((buffer (if (consp destination) (car destination) destination)))
+                    (with-current-buffer (if (eq buffer t) (current-buffer) buffer)
+                      (insert warashi-chelly-workspace-test--output)))
                   ,status)))
        (ignore displayed)
        ,@body)))
+
+(ert-deftest warashi-chelly-workspace-test-list-clones-of-repository ()
+  "chelly-handoff where が示す置き場にある clone を (name . dir) で返す。"
+  (warashi-chelly-workspace-test--with-root root
+    (let ((place (expand-file-name warashi-chelly-workspace-test--project root)))
+      (make-directory (expand-file-name "main" place) t)
+      (make-directory (expand-file-name "feature-x" place) t)
+      (make-directory (expand-file-name ".hidden" place) t)
+      (make-directory (expand-file-name "github.com/Warashi/other/main" root) t)
+      (with-temp-file (expand-file-name "note.txt" place))
+      (let ((warashi-chelly-workspace-test--output (concat place "\n")))
+        (warashi-chelly-workspace-test--with-handoff 0
+          (setq warashi-chelly-workspace-root root)
+          (should (equal (list (cons "feature-x"
+                                     (file-name-as-directory
+                                      (expand-file-name "feature-x" place)))
+                               (cons "main"
+                                     (file-name-as-directory
+                                      (expand-file-name "main" place))))
+                         (warashi-chelly-workspace-list
+                          "/home/me/ghq/github.com/Warashi/configurations")))
+          (should (equal '(("/home/me/ghq/github.com/Warashi/configurations/"
+                            "chelly-handoff" "where"))
+                         warashi-chelly-workspace-test--calls))))
+      (let ((warashi-chelly-workspace-test--output
+             (concat (expand-file-name "github.com/Warashi/none" root) "\n")))
+        (warashi-chelly-workspace-test--with-handoff 0
+          (setq warashi-chelly-workspace-root root)
+          (should-not (warashi-chelly-workspace-list
+                       "/home/me/ghq/github.com/Warashi/none")))))))
+
+(ert-deftest warashi-chelly-workspace-test-list-decodes-hex-id ()
+  "16 進の ID の clone は元の名前で返す。"
+  (warashi-chelly-workspace-test--with-root root
+    (let* ((clone (warashi-chelly-workspace-test--clone
+                   root warashi-chelly-workspace-test--hex-id))
+           (warashi-chelly-workspace-test--output
+            (concat (directory-file-name (file-name-directory clone)) "\n")))
+      (warashi-chelly-workspace-test--with-handoff 0
+        (setq warashi-chelly-workspace-root root)
+        (should (equal (list (cons "ログイン 修正" (file-name-as-directory clone)))
+                       (warashi-chelly-workspace-list
+                        "/home/me/ghq/github.com/Warashi/configurations")))))))
+
+(ert-deftest warashi-chelly-workspace-test-list-without-place ()
+  "専用領域の無いホスト、ghq の外の repository、リモートでは nil。"
+  (let ((warashi-chelly-workspace-root "/nonexistent/chelly-workspaces/"))
+    (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) "/bin/chelly-handoff"))
+              ((symbol-function 'call-process)
+               (lambda (&rest _) (ert-fail "chelly-handoff was called"))))
+      (should-not (warashi-chelly-workspace-list
+                   "/home/me/ghq/github.com/Warashi/configurations"))))
+  (let ((warashi-chelly-workspace-test--output "chelly-handoff: not under ghq root\n"))
+    (warashi-chelly-workspace-test--with-handoff 1
+      (should-not (warashi-chelly-workspace-list "/home/me/loose"))
+      (should-not (warashi-chelly-workspace-list "/ssh:host:/home/me/ghq/x"))
+      (should (equal 1 (length warashi-chelly-workspace-test--calls))))))
 
 (ert-deftest warashi-chelly-workspace-test-create-runs-handoff-in-repository ()
   "create は本人の repository の中で chelly-handoff create NAME を走らせ、
 最終行に出た clone の場所を返す。"
   (let ((warashi-chelly-workspace-test--output
          (concat "chelly-handoff: submodule deps is not initialized here; not sent\n"
-                 "/srv/chelly-workspaces/configurations/"
+                 "/srv/chelly-workspaces/github.com/Warashi/configurations/"
                  warashi-chelly-workspace-test--hex-id "\n")))
     (warashi-chelly-workspace-test--with-handoff 0
-      (should (equal (concat "/srv/chelly-workspaces/configurations/"
+      (should (equal (concat "/srv/chelly-workspaces/github.com/Warashi/configurations/"
                              warashi-chelly-workspace-test--hex-id "/")
                      (warashi-chelly-workspace-create
                       "/home/me/ghq/github.com/Warashi/configurations" "ログイン 修正")))

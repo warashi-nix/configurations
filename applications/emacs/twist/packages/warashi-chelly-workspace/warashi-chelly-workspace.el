@@ -10,8 +10,8 @@
 ;;; Commentary:
 
 ;; chelly-handoff が置く専用 clone の場所と命名規則を、一箇所で持つ。
-;; clone は <root>/<repo 名>/<ID> に置かれ、repo 名は本人の
-;; repository の toplevel の basename になる。ID は handoff 名そのものか、
+;; clone は <root>/<ghq の path>/<ID> に置かれ、ghq の path は本人の
+;; repository の ghq root からの path になる。ID は handoff 名そのものか、
 ;; path に使えない名前なら x- に UTF-8 の 16 進を続けたもの。
 ;;
 ;; agentel の専用 runner への振り分けや project の切り替えなど、専用 clone
@@ -56,16 +56,25 @@ NixOS では chelly-agent runner の作業領域、macOS では Podman machine �
     id))
 
 (defun warashi-chelly-workspace-parse (directory)
-  "ローカルの DIRECTORY が専用 clone そのものなら (REPO . NAME) を返す。
-root の 1 段目は repo 名の置き場で clone ではなく、clone の下の
-ディレクトリも clone ではない。それらと専用領域外では nil。"
+  "ローカルの DIRECTORY が専用 clone そのものなら (PROJECT . NAME) を返す。
+PROJECT は ghq の path。ghq の path の深さは repository ごとに違うので、
+.git を持つ最初のディレクトリを clone とみなす。その途中の置き場、clone
+の下のディレクトリ、専用領域外では nil。"
   (when-let* (((not (file-remote-p directory)))
               (root (warashi-chelly-workspace--root))
               (directory (file-name-as-directory (file-truename directory)))
               ((string-prefix-p root directory))
               (parts (split-string (string-remove-prefix root directory) "/" t))
-              ((= 2 (length parts))))
-    (cons (car parts) (warashi-chelly-workspace-name (cadr parts)))))
+              ((<= 2 (length parts)))
+              ((file-exists-p (expand-file-name ".git" directory)))
+              ((not (seq-some
+                     (lambda (depth)
+                       (file-exists-p
+                        (expand-file-name
+                         ".git" (concat root (string-join (seq-take parts depth) "/")))))
+                     (number-sequence 1 (1- (length parts)))))))
+    (cons (string-join (butlast parts) "/")
+          (warashi-chelly-workspace-name (car (last parts))))))
 
 ;;;; project 名
 
@@ -74,7 +83,8 @@ root の 1 段目は repo 名の置き場で clone ではなく、clone の下�
 それ以外では nil。種類を付けるのは、同じ repo の git-wit の memo と
 handoff 名が同じでも別の名前にするため。"
   (when-let* ((workspace (warashi-chelly-workspace-parse directory)))
-    (format "%s / %s (chelly)" (car workspace) (cdr workspace))))
+    (format "%s / %s (chelly)"
+            (file-name-nondirectory (car workspace)) (cdr workspace))))
 
 (defun warashi-chelly-workspace--project-name (orig project)
   "PROJECT が専用 clone なら repo 名付きの名前を返し、それ以外は ORIG に任せる。"
@@ -107,18 +117,24 @@ handoff 名が同じでも別の名前にするため。"
        (file-directory-p warashi-chelly-workspace-root)
        t))
 
-(defun warashi-chelly-workspace--repository-name (repository)
-  "本人の REPOSITORY に対応する専用領域の repo 名を返す。
-chelly-handoff は toplevel の basename を使う。"
-  (file-name-nondirectory (directory-file-name repository)))
+(defun warashi-chelly-workspace--place (repository)
+  "本人の REPOSITORY の専用 clone を並べるディレクトリを返す。
+ghq の path の導出は chelly-handoff だけが持つので、where に聞く。
+専用領域が無いホスト、ghq の外の repository、リモートでは nil。"
+  (when (and (not (file-remote-p repository))
+             (warashi-chelly-workspace-available-p))
+    (with-temp-buffer
+      (let ((default-directory (file-name-as-directory repository)))
+        (when (eql 0 (call-process warashi-chelly-workspace-handoff-program
+                                   nil (list (current-buffer) nil) nil "where"))
+          (let ((line (string-trim (buffer-string))))
+            (and (file-name-absolute-p line) line)))))))
 
 (defun warashi-chelly-workspace-list (repository)
   "本人の REPOSITORY から作られた専用 clone を (NAME . DIRECTORY) で返す。
 専用領域が無いホストでは nil。"
-  (let ((parent (expand-file-name
-                 (warashi-chelly-workspace--repository-name repository)
-                 warashi-chelly-workspace-root)))
-    (when (file-directory-p parent)
+  (let ((parent (warashi-chelly-workspace--place repository)))
+    (when (and parent (file-directory-p parent))
       (mapcar (lambda (id)
                 (cons (warashi-chelly-workspace-name id)
                       (file-name-as-directory (expand-file-name id parent))))
