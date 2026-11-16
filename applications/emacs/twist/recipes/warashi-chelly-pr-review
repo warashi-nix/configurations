@@ -1,0 +1,2 @@
+(warashi-chelly-pr-review :fetcher github
+                          :repo "Warashi/configurations")

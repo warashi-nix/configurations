@@ -663,6 +663,17 @@ branch 名が既定になり、日本語や空白も使える。create は作る
     (warashi-chelly-handoff-install)))
 #+end_src
 
+*** PR をレビューする専用 clone
+=@ p= で =gh pr list= から PR を選ぶと、=pr-番号= の git-wit worktree で
+=gh pr checkout --detach= してから同じ名前の専用 clone を作り、そこへ移る。PR の
+コードは専用環境の agent に build・test させ、本人は worktree で同じコードを読む。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-chelly-pr-review)
+  (with-eval-after-load 'magit
+    (warashi-chelly-pr-review-install)))
+#+end_src
+
 *** 同じ repository の作業場所へ移る
 本人の checkout や git-wit の worktree の Magit で =&= を押すと、=C-x p p= の後段と
 同じ prompt でその repository の作業場所 (checkout、worktree、専用 clone) を選び、
