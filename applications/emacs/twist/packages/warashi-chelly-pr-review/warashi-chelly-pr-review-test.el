@@ -23,6 +23,12 @@
 (defvar warashi-chelly-pr-review-test--calls nil
   "差し替えた関数の呼び出し。(name . args) を積む。")
 
+(defvar warashi-chelly-pr-review-test--available t
+  "`warashi-chelly-workspace-available-p' が返す値。")
+
+(defvar warashi-chelly-pr-review-test--clones nil
+  "`warashi-chelly-workspace-list' が返す一覧。")
+
 (defmacro warashi-chelly-pr-review-test--with-sources (gh &rest body)
   "gh を GH (引数を受けて出力を返す関数) に差し替え、git-wit と chelly を固定して BODY を実行する。"
   (declare (indent 1))
@@ -31,6 +37,10 @@
                 (lambda (directory &rest args)
                   (push (list 'gh directory args) warashi-chelly-pr-review-test--calls)
                   (apply ,gh args)))
+               ((symbol-function 'warashi-chelly-workspace-available-p)
+                (lambda () warashi-chelly-pr-review-test--available))
+               ((symbol-function 'warashi-chelly-workspace-list)
+                (lambda (_repository) warashi-chelly-pr-review-test--clones))
                ((symbol-function 'warashi-git-wit-add)
                 (lambda (repository memo)
                   (push (list 'git-wit-add repository memo) warashi-chelly-pr-review-test--calls)
@@ -73,6 +83,25 @@
     (should-error (warashi-chelly-pr-review-create "/home/me/repo/" 12)
                   :type 'user-error)
     (should-not (assq 'chelly-create warashi-chelly-pr-review-test--calls))))
+
+(ert-deftest warashi-chelly-pr-review-test-refuses-before-worktree ()
+  "専用 clone を作れないときは、worktree を作る前に止める。"
+  (dolist (case '((nil . nil)
+                  (t . (("pr-12" . "/srv/chelly-workspaces/github.com/o/r/pr-12/")))))
+    (let ((warashi-chelly-pr-review-test--available (car case))
+          (warashi-chelly-pr-review-test--clones (cdr case)))
+      (warashi-chelly-pr-review-test--with-sources (lambda (&rest _) "")
+        (should-error (warashi-chelly-pr-review-create "/home/me/repo/" 12)
+                      :type 'user-error)
+        (should-not warashi-chelly-pr-review-test--calls)))))
+
+(ert-deftest warashi-chelly-pr-review-test-gh-ignores-stderr-on-success ()
+  "成功時の stderr は出力に混ぜない。gh の警告で JSON の解析が落ちないように。"
+  (let ((warashi-chelly-pr-review-gh-program "sh"))
+    (should (equal "[]"
+                   (string-trim
+                    (warashi-chelly-pr-review--gh temporary-file-directory
+                                                  "-c" "echo notice >&2; echo '[]'"))))))
 
 (ert-deftest warashi-chelly-pr-review-test-gh-reports-output-on-failure ()
   "gh が失敗したら、端末を待たずに出力を添えて user-error にする。"

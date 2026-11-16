@@ -42,19 +42,27 @@
 
 (defun warashi-chelly-pr-review--gh (directory &rest args)
   "DIRECTORY で gh を ARGS で走らせ、標準出力を返す。
-失敗したら出力を添えて `user-error' を出す。"
-  (with-temp-buffer
-    (let* ((default-directory (file-name-as-directory directory))
-           ;; 既定 repo の選択などで端末の入力を待たず、失敗として返させる。
-           (process-environment (cons "GH_PROMPT_DISABLED=1" process-environment))
-           (status (apply #'process-file warashi-chelly-pr-review-gh-program
-                          nil t nil args))
-           (output (buffer-string)))
-      (unless (eql status 0)
-        (user-error "%s %s failed (%s): %s"
-                    warashi-chelly-pr-review-gh-program
-                    (string-join args " ") status (string-trim output)))
-      output)))
+失敗したら stderr と標準出力を添えて `user-error' を出す。"
+  (let ((stderr (make-temp-file "warashi-chelly-pr-review")))
+    (unwind-protect
+        (with-temp-buffer
+          (let* ((default-directory (file-name-as-directory directory))
+                 ;; 既定 repo の選択などで端末の入力を待たず、失敗として返させる。
+                 (process-environment (cons "GH_PROMPT_DISABLED=1" process-environment))
+                 (status (apply #'process-file warashi-chelly-pr-review-gh-program
+                                nil (list t stderr) nil args))
+                 (output (buffer-string)))
+            (unless (eql status 0)
+              (user-error "%s %s failed (%s): %s"
+                          warashi-chelly-pr-review-gh-program
+                          (string-join args " ") status
+                          (string-trim
+                           (concat (with-temp-buffer
+                                     (insert-file-contents stderr)
+                                     (buffer-string))
+                                   output))))
+            output))
+      (delete-file stderr))))
 
 (defun warashi-chelly-pr-review--candidates (repository)
   "REPOSITORY の open な PR を (LABEL . (:number N :annotation A)) で返す。"
@@ -90,8 +98,14 @@
 (defun warashi-chelly-pr-review-create (repository number)
   "REPOSITORY の PR NUMBER のレビュー用 worktree と専用 clone を作る。
 clone のディレクトリを返す。"
-  (let* ((name (format "pr-%d" number))
-         (worktree (file-name-as-directory (warashi-git-wit-add repository name))))
+  (let ((name (format "pr-%d" number))
+        worktree)
+    ;; 作れないと分かっている clone のために worktree を残さない。
+    (unless (warashi-chelly-workspace-available-p)
+      (user-error "chelly workspaces are not available on this host"))
+    (when (assoc name (warashi-chelly-workspace-list repository))
+      (user-error "Handoff %s already exists" name))
+    (setq worktree (file-name-as-directory (warashi-git-wit-add repository name)))
     ;; checkout や clone の作成に失敗しても worktree は消さない。そこから
     ;; checkout し直して @ c で作り直せる。
     (warashi-chelly-pr-review--gh worktree "pr" "checkout" "--detach"
