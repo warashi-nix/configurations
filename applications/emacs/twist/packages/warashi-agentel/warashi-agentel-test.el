@@ -290,12 +290,12 @@ clone を集めさせる。起動の後は、他の session の prefix に名前
                 ((symbol-function 'warashi-agentel-test--variant-command)
                  (lambda ()
                    (setq started (cons default-directory
-                                       (warashi-agentel-command-prefix default-directory))))))
+                                       (warashi-agentel-command-prefix (list :cwd default-directory)))))))
         (call-interactively #'warashi-agentel-handoff))
       (should (equal '(("fix") t) offered))
       (should (equal (cons brainium '("chelly" "--handoff" "fix" "run" "--"))
                      started))
-      (should (equal '("chelly" "run" "--") (warashi-agentel-command-prefix brainium))))))
+      (should (equal '("chelly" "run" "--") (warashi-agentel-command-prefix (list :cwd brainium)))))))
 
 (ert-deftest warashi-agentel-test-handoff-without-clones-does-not-ask ()
   "集める clone が無ければ、名前も variant も聞かずに止める。"
@@ -322,8 +322,8 @@ clone を集めさせる。起動の後は、他の session の prefix に名前
 project の外では session の名前を付けない。"
   (warashi-agentel-test--with-workspace (root outside)
     (should (equal '("chelly" "run" "--")
-                   (warashi-agentel-command-prefix root)))
-    (should-error (warashi-agentel-command-prefix outside)
+                   (warashi-agentel-command-prefix (list :cwd root))))
+    (should-error (warashi-agentel-command-prefix (list :cwd outside))
                   :type 'user-error)))
 
 (ert-deftest warashi-agentel-test-command-prefix-names-session-after-project ()
@@ -337,7 +337,7 @@ project の外では session の名前を付けない。"
             (warashi-chelly-workspace-install-project-name)
             (should (equal '("chelly" "run" "--" "env"
                              "CLAUDE_CODE_SESSION_NAME=repository / clone (chelly)")
-                           (warashi-agentel-command-prefix clone))))
+                           (warashi-agentel-command-prefix (list :cwd clone)))))
         (advice-remove 'project-name #'warashi-chelly-workspace--project-name)))))
 
 (ert-deftest warashi-agentel-test-command-prefix-refuses-symlink-escape ()
@@ -346,7 +346,7 @@ project の外では session の名前を付けない。"
     (let ((escape (expand-file-name "escape" root)))
       (make-symbolic-link outside escape)
       (should-error (warashi-agentel-command-prefix
-                     (file-name-as-directory escape))
+                     (list :cwd (file-name-as-directory escape)))
                     :type 'user-error))))
 
 (provide 'warashi-agentel-test)

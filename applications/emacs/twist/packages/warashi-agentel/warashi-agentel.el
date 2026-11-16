@@ -74,17 +74,19 @@
   (when-let* ((project (project-current nil cwd)))
     (list "env" (concat "CLAUDE_CODE_SESSION_NAME=" (project-name project)))))
 
-(defun warashi-agentel-command-prefix (cwd)
-  "CWD で agent を動かすコマンド列を返す。`agentel-command-prefix' 用。"
+(defun warashi-agentel-command-prefix (options)
+  "起動 option の OPTIONS で agent を動かすコマンド列を返す。
+`agentel-command-prefix' 用。"
   ;; 起動コマンドを通らない /resume でも拒否するため、ここでも判定する。
-  (warashi-agentel--dedicated-directory cwd)
-  (append (if warashi-agentel--handoff
-              ;; chelly の入口が --handoff を run の前で受け取る。
-              (append (list (car warashi-agentel-dedicated-command-prefix)
-                            "--handoff" warashi-agentel--handoff)
-                      (cdr warashi-agentel-dedicated-command-prefix))
-            warashi-agentel-dedicated-command-prefix)
-          (warashi-agentel--session-name-command cwd)))
+  (let ((cwd (plist-get options :cwd)))
+    (warashi-agentel--dedicated-directory cwd)
+    (append (if warashi-agentel--handoff
+                ;; chelly の入口が --handoff を run の前で受け取る。
+                (append (list (car warashi-agentel-dedicated-command-prefix)
+                              "--handoff" warashi-agentel--handoff)
+                        (cdr warashi-agentel-dedicated-command-prefix))
+              warashi-agentel-dedicated-command-prefix)
+            (warashi-agentel--session-name-command cwd))))
 
 ;;;; 起動コマンド
 
