@@ -9,7 +9,7 @@
 
 ;;; Commentary:
 
-;; agentel に足している四つのこと。
+;; agentel に足している五つのこと。
 ;;
 ;; - model と effort を固定した Claude と Copilot CLI の起動コマンド。
 ;;   起動しても表示も focus もしない。
@@ -18,6 +18,8 @@
 ;; - agent は `warashi-chelly-workspace-root' 以下でだけ、chelly の専用
 ;;   runner で動かす。
 ;; - Claude Code の session を project 名で登録させる。
+;; - brainium の clone から、同じ handoff 名の clone を集めて起動する
+;;   (`warashi-agentel-handoff')。
 ;;
 ;; 利用側で `agentel-command-prefix' に `warashi-agentel-command-prefix' を
 ;; 設定する。起動コマンドは
@@ -36,6 +38,9 @@
 
 (defconst warashi-agentel-dedicated-command-prefix '("chelly" "run" "--")
   "専用作業領域の中で agent の前に置くコマンド列。")
+
+(defvar warashi-agentel--handoff nil
+  "起動中の横断 session の handoff 名。起動コマンドの間だけ束縛する。")
 
 (defun warashi-agentel--dedicated-directory (directory)
   "DIRECTORY が専用作業領域の中なら、symlink を解決した絶対パスを返す。
@@ -73,7 +78,12 @@
   "CWD で agent を動かすコマンド列を返す。`agentel-command-prefix' 用。"
   ;; 起動コマンドを通らない /resume でも拒否するため、ここでも判定する。
   (warashi-agentel--dedicated-directory cwd)
-  (append warashi-agentel-dedicated-command-prefix
+  (append (if warashi-agentel--handoff
+              ;; chelly の入口が --handoff を run の前で受け取る。
+              (append (list (car warashi-agentel-dedicated-command-prefix)
+                            "--handoff" warashi-agentel--handoff)
+                      (cdr warashi-agentel-dedicated-command-prefix))
+            warashi-agentel-dedicated-command-prefix)
           (warashi-agentel--session-name-command cwd)))
 
 ;;;; 起動コマンド
@@ -166,6 +176,28 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
   ;; ことになる。M-x から呼んだときに開かないのは、戻る先のメニューが無いため。
   (when project-current-directory-override
     (project-switch-project project-current-directory-override)))
+
+;;;; 横断作業の起動
+
+(defcustom warashi-agentel-handoff-directory
+  (expand-file-name "github.com/Warashi/brainium/brainium/"
+                    warashi-chelly-workspace-root)
+  "横断作業の session を起動する brainium の clone。
+計画は brainium の task で立て、そこから各 repo の clone を編集する。"
+  :type 'directory
+  :group 'warashi-chelly-workspace)
+
+(defun warashi-agentel-handoff (name command)
+  "brainium の clone で起動コマンド COMMAND を、handoff NAME の clone を集めて動かす。
+各 repo で同じ NAME を指定して作った clone が、本人と同じ ghq の path に
+mount される。"
+  (interactive (list (read-string "Handoff: ")
+                     (warashi-agentel--read-variant)))
+  (when (string-empty-p name)
+    (user-error "handoff name is required"))
+  (let ((default-directory (file-name-as-directory warashi-agentel-handoff-directory))
+        (warashi-agentel--handoff name))
+    (funcall command)))
 
 (provide 'warashi-agentel)
 ;;; warashi-agentel.el ends here

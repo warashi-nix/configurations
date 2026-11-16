@@ -237,6 +237,38 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
     (should started)
     (should-not reopened)))
 
+;;;; 横断作業の起動
+
+(ert-deftest warashi-agentel-test-handoff-starts-variant-from-brainium ()
+  "brainium の clone で variant を起動し、同じ handoff 名の clone を集めさせる。
+起動の後は、他の session の prefix に名前を残さない。"
+  (warashi-agentel-test--with-workspace (root _outside)
+    (let* ((brainium (expand-file-name "github.com/Warashi/brainium/brainium/" root))
+           (warashi-agentel-handoff-directory brainium)
+           (warashi-agentel-variants
+            '(("claude-test" . warashi-agentel-test--variant-command)))
+           (started nil))
+      (make-directory brainium t)
+      (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
+                ((symbol-function 'read-string) (lambda (&rest _) "fix"))
+                ((symbol-function 'warashi-agentel-test--variant-command)
+                 (lambda ()
+                   (setq started (cons default-directory
+                                       (warashi-agentel-command-prefix default-directory))))))
+        (call-interactively #'warashi-agentel-handoff))
+      (should (equal (cons brainium '("chelly" "--handoff" "fix" "run" "--"))
+                     started))
+      (should (equal '("chelly" "run" "--") (warashi-agentel-command-prefix brainium))))))
+
+(ert-deftest warashi-agentel-test-handoff-requires-name ()
+  "handoff 名が空なら起動しない。"
+  (let ((started nil))
+    (cl-letf (((symbol-function 'warashi-agentel-test--variant-command)
+               (lambda () (setq started t))))
+      (should-error (warashi-agentel-handoff "" #'warashi-agentel-test--variant-command)
+                    :type 'user-error))
+    (should-not started)))
+
 ;;;; 専用 runner への振り分け
 
 (ert-deftest warashi-agentel-test-command-prefix-routes-by-directory ()
