@@ -6,6 +6,7 @@
 #   HANDOFF_SESSION_FIXED       設定で常に mount する clone (改行区切り)
 #   HANDOFF_SESSION_CHELLY      本体の chelly
 #   HANDOFF_SESSION_DIRECTORY   --handoff のときに起動する clone
+#   HANDOFF_SESSION_BUSY_WAIT   使用中の clone が空くのを待つ秒数 (既定 10)
 set -euo pipefail
 
 usage() {
@@ -23,8 +24,9 @@ base_mounts=$HANDOFF_SESSION_MOUNTS
 fixed_list=$HANDOFF_SESSION_FIXED
 chelly=$HANDOFF_SESSION_CHELLY
 session_directory=$HANDOFF_SESSION_DIRECTORY
+busy_wait=${HANDOFF_SESSION_BUSY_WAIT:-10}
 unset HANDOFF_SESSION_WORKSPACES HANDOFF_SESSION_MOUNTS HANDOFF_SESSION_FIXED HANDOFF_SESSION_CHELLY \
-  HANDOFF_SESSION_DIRECTORY
+  HANDOFF_SESSION_DIRECTORY HANDOFF_SESSION_BUSY_WAIT
 
 # default branch の名前は参加 repo を表さないので集めない。
 excluded_names=(main master)
@@ -127,11 +129,11 @@ cwd_clone() {
   done
 }
 
-# 同じ clone に複数の agent が書かないよう、他のコンテナが mount している clone では起動しない。
+# 他のコンテナが mount している clone を busy に集める。
 # 単独起動は cwd を mount するので、clone の下のディレクトリもその clone の使用にあたる。
-refuse_busy_targets() {
+find_busy_targets() {
   local ids source target
-  local -a busy=()
+  busy=()
   ((${#targets[@]})) || return 0
   ids=$(podman ps --quiet) || fail "cannot list running containers to check workspaces in use"
   [[ -n $ids ]] || return 0
@@ -147,8 +149,19 @@ refuse_busy_targets() {
     # shellcheck disable=SC2086  # ID は空白区切りの一覧として渡す
     podman inspect --format '{{range .Mounts}}{{.Source}}{{"\n"}}{{end}}' $ids
   )
-  ((${#busy[@]} == 0)) ||
-    fail "workspace in use by another container: $(printf '%s\n' "${busy[@]}" | sort -u | tr '\n' ' ')"
+}
+
+# 同じ clone に複数の agent が書かないよう、他のコンテナが mount している clone では起動しない。
+# agentel の /clear と /resume は古い agent を止めてすぐ起動し直すが、コンテナは agent が
+# 終わった後で消えるので、空くまで少し待つ。
+refuse_busy_targets() {
+  local deadline=$((SECONDS + busy_wait))
+  local -a busy
+  while find_busy_targets && ((${#busy[@]})); do
+    ((SECONDS < deadline)) ||
+      fail "workspace in use by another container: $(printf '%s\n' "${busy[@]}" | sort -u | tr '\n' ' ')"
+    sleep 0.5
+  done
 }
 
 # CLONE の ghq の path を project に入れる。ghq の path は host/path の 2 段以上で、

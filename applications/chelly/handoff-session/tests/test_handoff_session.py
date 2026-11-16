@@ -16,9 +16,16 @@ python3 -c 'import json, os, sys; json.dump({"args": sys.argv[1:], "cwd": os.get
 """
 
 # 動いているコンテナの mount 元を、テストが書いたファイルから返す。
+# PODMAN_PS_LEFT のファイルがあれば、その回数だけ ps に答えた後はコンテナが消えたことにする。
 FAKE_PODMAN = """#!/bin/sh
 case "$1" in
-ps) cat "$PODMAN_CONTAINERS" ;;
+ps)
+  if [ -n "$PODMAN_PS_LEFT" ]; then
+    left=$(cat "$PODMAN_PS_LEFT")
+    [ "$left" -gt 0 ] || exit 0
+    echo $((left - 1)) >"$PODMAN_PS_LEFT"
+  fi
+  cat "$PODMAN_CONTAINERS" ;;
 inspect) cat "$PODMAN_SOURCES" ;;
 *) exit 90 ;;
 esac
@@ -61,6 +68,7 @@ class HandoffSessionTest(unittest.TestCase):
             "CHELLY_LOG": str(self.log),
             "PODMAN_CONTAINERS": str(self.containers),
             "PODMAN_SOURCES": str(self.sources),
+            "HANDOFF_SESSION_BUSY_WAIT": "0",
         }
 
     def tearDown(self):
@@ -231,6 +239,27 @@ class HandoffSessionTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn(str(app).encode(), result.stderr)
         self.assertNotIn(str(lib).encode(), result.stderr)
+        self.assertIsNone(self.launched())
+
+    def test_handoff_waits_for_the_container_it_replaces_to_stop(self):
+        # /clear や /resume は古い agent を止めてすぐ起動し直すが、コンテナはその後で消える。
+        app = self.clone("github.com/Warashi/app/fix")
+        self.running(str(app))
+        left = self.root / "ps-left"
+        left.write_text("2")
+        self.env["PODMAN_PS_LEFT"] = str(left)
+        self.env["HANDOFF_SESSION_BUSY_WAIT"] = "10"
+        self.session("--handoff", "fix", "run", cwd=self.fixed)
+        self.assertEqual(self.mounts(), [f"{app}:/home/warashi/ghq/github.com/Warashi/app"])
+        self.assertEqual(self.launched()["leaked"], [])
+
+    def test_handoff_refuses_a_container_still_running_after_the_wait(self):
+        app = self.clone("github.com/Warashi/app/fix")
+        self.running(str(app))
+        self.env["HANDOFF_SESSION_BUSY_WAIT"] = "1"
+        result = self.session("--handoff", "fix", "run", cwd=self.fixed, check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(str(app).encode(), result.stderr)
         self.assertIsNone(self.launched())
 
     def test_single_run_refuses_a_clone_a_handoff_session_uses(self):
