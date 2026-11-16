@@ -57,6 +57,59 @@ list_clones() {
 }
 
 mounts=()
+# 書き込む clone。集めた clone と cwd の clone で、設定で常に mount する clone は除く。
+targets=()
+
+add_target() {
+  local target
+  is_fixed "$1" && return
+  for target in "${targets[@]}"; do
+    [[ $1 == "$target" ]] && return
+  done
+  targets+=("$1")
+}
+
+# cwd を含む clone は、領域の root から下りて最初に .git を持つディレクトリ。
+cwd_clone() {
+  local dir path component
+  local -a components
+  dir=$(pwd -P)
+  [[ $dir == "$root"/?* ]] || return 0
+  path=$root
+  IFS=/ read -r -a components <<<"${dir#"$root"/}"
+  for component in "${components[@]}"; do
+    path=$path/$component
+    if [[ -e $path/.git ]]; then
+      add_target "$path"
+      return
+    fi
+  done
+}
+
+# 同じ clone に複数の agent が書かないよう、他のコンテナが mount している clone では起動しない。
+# 単独起動は cwd を mount するので、clone の下のディレクトリもその clone の使用にあたる。
+refuse_busy_targets() {
+  local ids source target
+  local -a busy=()
+  ((${#targets[@]})) || return 0
+  ids=$(podman ps --quiet) || fail "cannot list running containers to check workspaces in use"
+  [[ -n $ids ]] || return 0
+  while IFS= read -r source; do
+    [[ $source == /* ]] || continue
+    source=$(realpath -m -- "$source")
+    for target in "${targets[@]}"; do
+      if [[ $source == "$target" || $source == "$target"/* ]]; then
+        busy+=("$target")
+      fi
+    done
+  done < <(
+    # shellcheck disable=SC2086  # ID は空白区切りの一覧として渡す
+    podman inspect --format '{{range .Mounts}}{{.Source}}{{"\n"}}{{end}}' $ids
+  )
+  ((${#busy[@]} == 0)) ||
+    fail "workspace in use by another container: $(printf '%s\n' "${busy[@]}" | sort -u | tr '\n' ' ')"
+}
+
 if [[ -n $name ]]; then
   for excluded in "${excluded_names[@]}"; do
     if [[ $name == "$excluded" ]]; then
@@ -74,9 +127,12 @@ if [[ -n $name ]]; then
     project=${clone#"$root"/}
     project=${project%/*}
     mounts+=("$clone:/home/warashi/ghq/$project")
+    add_target "$clone"
   done < <(list_clones)
   ((${#mounts[@]})) || fail "no workspace named '$name' under $root"
 fi
+cwd_clone
+refuse_busy_targets
 
 if ((${#mounts[@]})); then
   extra=$(

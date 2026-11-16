@@ -152,6 +152,50 @@ class HandoffSessionTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, args)
             self.assertIsNone(self.launched(), args)
 
+    def running(self, *sources):
+        self.containers.write_text("abc\n" if sources else "")
+        self.sources.write_text("".join(f"{source}\n" for source in sources))
+
+    def test_handoff_refuses_clones_another_container_mounts(self):
+        lib = self.clone("github.com/acme/lib/fix")
+        app = self.clone("github.com/Warashi/app/fix")
+        # 単独起動は cwd を mount するので、clone の下のディレクトリも使用中にあたる。
+        self.running("/nix", "claude-state", str(self.fixed), f"{app}/sub")
+        result = self.session("--handoff", "fix", "run", cwd=self.fixed, check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(str(app).encode(), result.stderr)
+        self.assertNotIn(str(lib).encode(), result.stderr)
+        self.assertIsNone(self.launched())
+
+    def test_single_run_refuses_a_clone_a_handoff_session_uses(self):
+        app = self.clone("github.com/Warashi/app/fix")
+        (app / "sub").mkdir()
+        self.running(str(app))
+        result = self.session("run", cwd=app / "sub", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(str(app).encode(), result.stderr)
+        self.assertIsNone(self.launched())
+
+    def test_brainium_and_the_workspace_root_are_shared_freely(self):
+        # brainium は複数のセッションが同時に書く前提で、chelly-handoff の転送は領域の
+        # root から起動する。どちらも使用中の判定に入れない。
+        self.clone("github.com/acme/lib/fix")
+        self.running(str(self.fixed), str(self.workspaces))
+        self.session("run", cwd=self.fixed)
+        self.assertEqual(self.launched()["args"], ["run"])
+        self.session("--handoff", "fix", "run", cwd=self.fixed)
+        self.assertEqual(len(self.mounts()), 1)
+        self.env["PODMAN_CONTAINERS"] = str(self.root / "missing")
+        self.session("run", "--", "bash", cwd=self.workspaces)
+        self.assertEqual(self.launched()["args"], ["run", "--", "bash"])
+
+    def test_session_does_not_start_when_running_containers_are_unknown(self):
+        self.clone("github.com/acme/lib/fix")
+        self.env["PODMAN_CONTAINERS"] = str(self.root / "missing")
+        result = self.session("--handoff", "fix", "run", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIsNone(self.launched())
+
 
 if __name__ == "__main__":
     unittest.main()
