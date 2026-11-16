@@ -78,6 +78,7 @@ chelly-handoff create [fix-issue-123]
 chelly-handoff fetch [fix-issue-123]
 chelly-handoff update [fix-issue-123]
 chelly-handoff remove [fix-issue-123] [--force]
+chelly-handoff where
 ```
 
 `create` bundles the current `HEAD` and lets `chelly` clone it into
@@ -166,6 +167,9 @@ fails after the workspace has moved, the workspace is left unclean; run
 `remove` deletes the agent workspace, the remote, its remote-tracking refs, and
 the bundle. Without `--force` it refuses when the workspace has uncommitted
 changes or a `HEAD` that this repository has not fetched yet.
+
+`where` prints `WORKSPACES/PROJECT` for the repository it runs in, so other
+tools can list its workspaces without deriving `PROJECT` themselves.
 
 The owner's SSH agent and Git identity variables are not passed to the
 transport, and nothing is ever pushed. `chelly` must be on the host

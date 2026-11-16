@@ -234,6 +234,19 @@ class HandoffTest(unittest.TestCase):
         result = self.handoff("create", "fix", cwd=repo)
         self.assertEqual(result.stdout.decode().strip(), str(expected))
 
+    def test_where_prints_the_directory_holding_the_clones_of_the_repository(self):
+        worktree = self.root / "wit-1234"
+        self.git("-C", self.repo, "worktree", "add", "-q", "--detach", worktree)
+        for cwd in (self.repo, worktree):
+            result = self.handoff("where", cwd=cwd)
+            self.assertEqual(result.stdout.decode(), f"{self.agent_root / self.project}\n")
+        self.assertEqual(list(self.agent_root.iterdir()), [])
+        loose = self.root / "loose"
+        self.git("init", "-q", loose)
+        result = self.handoff("where", check=False, cwd=loose)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"ghq", result.stderr)
+
     def test_create_rejects_a_repository_outside_ghq_root(self):
         loose = self.root / "loose"
         self.git("clone", "-q", self.repo, loose)

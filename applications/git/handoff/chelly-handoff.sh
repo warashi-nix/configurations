@@ -12,6 +12,7 @@ usage: chelly-handoff create [NAME]
        chelly-handoff fetch [NAME]
        chelly-handoff update [NAME]
        chelly-handoff remove [NAME] [--force]
+       chelly-handoff where
 
 create  現在の HEAD から専用領域の <ghq path>/ID に clone を作り、remote handoff-ID を追加する
 fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り込み、新規追跡ファイルを検査する
@@ -19,6 +20,7 @@ update  専用 clone を本人の branch の先端に合わせ直す (未取得�
         agent が切った branch は消し、create 時の branch に戻す
         detached HEAD から create したときは、update を実行した場所の HEAD に合わせる
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
+where   この repository の専用 clone を並べるディレクトリを表示する
 
 NAME を省略すると現在の branch 名を使う。detached HEAD では NAME が要る。
 ID は NAME が英数字と '.' '_' '-' だけならそのもの、それ以外は x- に UTF-8 の 16 進を続けたもの。
@@ -429,6 +431,13 @@ remove() {
   echo "removed $remote"
 }
 
+# 本人側の Emacs などが clone を列挙するときに、ghq の path の導出をここだけに置く。
+where() {
+  gitdir=$(git rev-parse --path-format=absolute --git-common-dir) || fail "run inside the owner's repository"
+  ghq_path
+  echo "$workspaces/$project"
+}
+
 [[ $# -ge 1 ]] || usage
 case "$1" in
 create)
@@ -451,6 +460,10 @@ remove)
     [[ $# -le 3 ]] || usage
     remove "${2:-}" "${3:-}"
   fi
+  ;;
+where)
+  [[ $# -eq 1 ]] || usage
+  where
   ;;
 *) usage ;;
 esac
