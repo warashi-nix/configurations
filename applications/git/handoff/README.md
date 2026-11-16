@@ -80,6 +80,7 @@ chelly-handoff update [fix-issue-123]
 chelly-handoff remove [fix-issue-123] [--force]
 chelly-handoff where
 chelly-handoff id fix-issue-123
+chelly-handoff name x-...
 ```
 
 `create` bundles the current `HEAD` and lets `chelly` clone it into
@@ -173,6 +174,8 @@ changes or a `HEAD` that this repository has not fetched yet.
 tools can list its workspaces without deriving `PROJECT` themselves.
 `id` prints the `ID` of `NAME` and works outside any repository, so a
 cross-repository launch can find the workspaces sharing that name.
+`name` turns an `ID` back into its `NAME` and fails for an `ID` that `id`
+never produces, so completion can offer workspace directories by name.
 
 The owner's SSH agent and Git identity variables are not passed to the
 transport, and nothing is ever pushed. `chelly` must be on the host

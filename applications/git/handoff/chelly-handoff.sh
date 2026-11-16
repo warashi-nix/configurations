@@ -14,6 +14,7 @@ usage: chelly-handoff create [NAME]
        chelly-handoff remove [NAME] [--force]
        chelly-handoff where
        chelly-handoff id NAME
+       chelly-handoff name ID
 
 create  現在の HEAD から専用領域の <ghq path>/ID に clone を作り、remote handoff-ID を追加する
 fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り込み、新規追跡ファイルを検査する
@@ -23,6 +24,7 @@ update  専用 clone を本人の branch の先端に合わせ直す (未取得�
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 where   この repository の専用 clone を並べるディレクトリを表示する
 id      NAME の ID を表示する (repository の外でも使える)
+name    ID の NAME を表示する (id が作らない形の ID は失敗する)
 
 NAME を省略すると現在の branch 名を使う。detached HEAD では NAME が要る。
 ID は NAME が英数字と '.' '_' '-' だけならそのもの、それ以外は x- に UTF-8 の 16 進を続けたもの。
@@ -472,6 +474,26 @@ id)
   [[ $# -eq 2 && -n $2 ]] || usage
   resolve_name "$2"
   echo "$id"
+  ;;
+name)
+  # 横断セッションの名前の補完で、専用領域のディレクトリ名から名前を引く。
+  [[ $# -eq 2 && -n $2 ]] || usage
+  given=$2
+  candidate=$given
+  if [[ $given =~ ^$id_prefix([0-9a-f][0-9a-f])+$ ]]; then
+    hex=${given#"$id_prefix"}
+    escaped=
+    for ((i = 0; i < ${#hex}; i += 2)); do
+      escaped+="\\x${hex:i:2}"
+    done
+    printf -v candidate '%b' "$escaped"
+  fi
+  # ID に戻して一致したものだけを名前とみなす。id が作らない形の ID は、どの名前の clone でもない。
+  # resolve_name は名前が不正なら exit するので subshell で呼ぶ。
+  if [[ -z $candidate ]] || ! (resolve_name "$candidate" >/dev/null 2>&1 && [[ $id == "$given" ]]); then
+    fail "'$given' is not a handoff id"
+  fi
+  printf '%s\n' "$candidate"
   ;;
 *) usage ;;
 esac

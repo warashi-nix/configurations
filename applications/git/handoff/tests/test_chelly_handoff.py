@@ -257,6 +257,24 @@ class HandoffTest(unittest.TestCase):
             result = self.handoff(*args, check=False, cwd=outside)
             self.assertNotEqual(result.returncode, 0, args)
 
+    def test_name_turns_an_id_back_into_its_name(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        for name in ("fix", "feature/x", "ログイン"):
+            id_ = self.handoff("id", name, cwd=outside).stdout.decode().strip()
+            result = self.handoff("name", id_, cwd=outside)
+            self.assertEqual(result.stdout.decode(), f"{name}\n")
+
+    def test_name_rejects_what_id_never_produces(self):
+        # x-666978 は fix に戻るが、fix の ID は fix なので、その名前の clone ではない。
+        outside = self.root / "outside"
+        outside.mkdir()
+        for args in (("name",), ("name", ""), ("name", "x-666978"), ("name", "x-0a"),
+                     ("name", "x-6"), ("name", "x-zz"), ("name", "-fix"), ("name", "fix", "more")):
+            result = self.handoff(*args, check=False, cwd=outside)
+            self.assertNotEqual(result.returncode, 0, args)
+            self.assertEqual(result.stdout, b"", args)
+
     def test_create_rejects_a_repository_outside_ghq_root(self):
         loose = self.root / "loose"
         self.git("clone", "-q", self.repo, loose)
