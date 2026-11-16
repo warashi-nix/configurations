@@ -187,11 +187,42 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
   :type 'directory
   :group 'warashi-chelly-workspace)
 
+(defun warashi-agentel--handoff-candidates ()
+  "起動時に集められる handoff 名を (NAME . 参加 repo の一覧) で返す。"
+  ;; 集める clone の判定を Emacs に複製しないため、chelly が shell に返す補完を読む。
+  ;; stderr には cobra の終わりの報告が出るので混ぜない。TRAMP の buffer から呼んでも
+  ;; ローカルの chelly に聞くよう、cwd はローカルにあるディレクトリにする。
+  (with-temp-buffer
+    (let ((default-directory temporary-file-directory))
+      (call-process (car warashi-agentel-dedicated-command-prefix) nil '(t nil) nil
+                    "__complete" "--handoff" ""))
+    ;; 候補は「名前<TAB>説明」の行で、最後に :4 のような directive の行が続く。
+    (delq nil
+          (mapcar (lambda (line)
+                    (pcase (split-string line "\t")
+                      (`(,name ,repositories) (cons name repositories))))
+                  (split-string (buffer-string) "\n" t)))))
+
+(defun warashi-agentel--read-handoff ()
+  "集められる handoff 名から一つ選ばせる。候補が無ければ `user-error'。"
+  (let ((candidates (or (warashi-agentel--handoff-candidates)
+                        (user-error "No handoff clone to collect; create one first"))))
+    (completing-read
+     "Handoff: "
+     (lambda (string predicate action)
+       (if (eq action 'metadata)
+           `(metadata (annotation-function
+                       . ,(lambda (name)
+                            (when-let* ((repositories (cdr (assoc name candidates))))
+                              (concat "  " repositories)))))
+         (complete-with-action action candidates string predicate)))
+     nil t)))
+
 (defun warashi-agentel-handoff (name command)
   "brainium の clone で起動コマンド COMMAND を、handoff NAME の clone を集めて動かす。
 各 repo で同じ NAME を指定して作った clone が、本人と同じ ghq の path に
 mount される。"
-  (interactive (list (read-string "Handoff: ")
+  (interactive (list (warashi-agentel--read-handoff)
                      (warashi-agentel--read-variant)))
   (when (string-empty-p name)
     (user-error "handoff name is required"))

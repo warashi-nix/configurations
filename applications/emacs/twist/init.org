@@ -592,9 +592,10 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 path では起動しない。
 
 複数 repo を横断する作業は、各 repo で同じ handoff 名の専用 clone を作ってから
-=M-x warashi-agentel-handoff= で handoff 名と variant を選ぶ。brainium の clone で
-起動し、同じ名前の clone が本人と同じ =~/ghq/...= の path に見える。 =main= と
-=master= は集めない。 =/resume= で開き直した session には clone が mount されない。
+=M-x warashi-agentel-handoff= で handoff 名と variant を選ぶ。名前は集められる clone
+がある名前から選び、参加する repo が注釈に並ぶ。どの buffer から呼んでも brainium の
+clone で起動し、同じ名前の clone が本人と同じ =~/ghq/...= の path に見える。 =main=
+と =master= は集めない。 =/resume= で開き直した session には clone が mount されない。
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の

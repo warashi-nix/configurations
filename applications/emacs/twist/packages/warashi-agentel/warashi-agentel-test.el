@@ -239,26 +239,72 @@ init.org を評価し直すたびに候補が伸びると選べなくなるた�
 
 ;;;; 横断作業の起動
 
+(defmacro warashi-agentel-test--with-chelly (output &rest body)
+  "`__complete' に OUTPUT を返す偽の chelly を exec-path の先頭に置いて BODY を実行する。
+cobra と同じく、終わりの報告は stderr に出す。"
+  (declare (indent 1))
+  `(let* ((bin (make-temp-file "chelly-bin-" t))
+          (exec-path (cons bin exec-path)))
+     (unwind-protect
+         (progn
+           (with-temp-file (expand-file-name "chelly" bin)
+             (insert "#!/bin/sh\n"
+                     "[ \"$*\" = '__complete --handoff ' ] || exit 1\n"
+                     "printf '%s' " (shell-quote-argument ,output) "\n"
+                     "echo 'Completion ended with directive: ShellCompDirectiveNoFileComp' >&2\n"))
+           (set-file-modes (expand-file-name "chelly" bin) #o755)
+           ,@body)
+       (delete-directory bin t))))
+
+(ert-deftest warashi-agentel-test-handoff-candidates-come-from-chelly-completion ()
+  "chelly の --handoff の補完から、名前と参加 repo を返す。"
+  (warashi-agentel-test--with-chelly
+      "fix\tgithub.com/Warashi/app, github.com/acme/lib\nログイン\tgithub.com/acme/lib\n:4\n"
+    (should (equal '(("fix" . "github.com/Warashi/app, github.com/acme/lib")
+                     ("ログイン" . "github.com/acme/lib"))
+                   (warashi-agentel--handoff-candidates))))
+  (warashi-agentel-test--with-chelly ":4\n"
+    (should-not (warashi-agentel--handoff-candidates))))
+
 (ert-deftest warashi-agentel-test-handoff-starts-variant-from-brainium ()
-  "brainium の clone で variant を起動し、同じ handoff 名の clone を集めさせる。
-起動の後は、他の session の prefix に名前を残さない。"
+  "候補の handoff 名から選ばせ、brainium の clone で variant を起動して同じ名前の
+clone を集めさせる。起動の後は、他の session の prefix に名前を残さない。"
   (warashi-agentel-test--with-workspace (root _outside)
     (let* ((brainium (expand-file-name "github.com/Warashi/brainium/brainium/" root))
            (warashi-agentel-handoff-directory brainium)
            (warashi-agentel-variants
             '(("claude-test" . warashi-agentel-test--variant-command)))
+           (offered nil)
            (started nil))
       (make-directory brainium t)
-      (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "claude-test"))
-                ((symbol-function 'read-string) (lambda (&rest _) "fix"))
+      (cl-letf (((symbol-function 'warashi-agentel--handoff-candidates)
+                 (lambda () '(("fix" . "github.com/acme/lib"))))
+                ((symbol-function 'completing-read)
+                 (lambda (prompt collection _predicate require-match &rest _)
+                   (if (string-prefix-p "Handoff" prompt)
+                       (progn
+                         (setq offered (list (all-completions "" collection)
+                                             require-match))
+                         "fix")
+                     "claude-test")))
                 ((symbol-function 'warashi-agentel-test--variant-command)
                  (lambda ()
                    (setq started (cons default-directory
                                        (warashi-agentel-command-prefix default-directory))))))
         (call-interactively #'warashi-agentel-handoff))
+      (should (equal '(("fix") t) offered))
       (should (equal (cons brainium '("chelly" "--handoff" "fix" "run" "--"))
                      started))
       (should (equal '("chelly" "run" "--") (warashi-agentel-command-prefix brainium))))))
+
+(ert-deftest warashi-agentel-test-handoff-without-clones-does-not-ask ()
+  "集める clone が無ければ、名前も variant も聞かずに止める。"
+  (let ((asked nil))
+    (cl-letf (((symbol-function 'warashi-agentel--handoff-candidates) #'ignore)
+              ((symbol-function 'completing-read)
+               (lambda (&rest _) (setq asked t) "")))
+      (should-error (call-interactively #'warashi-agentel-handoff) :type 'user-error))
+    (should-not asked)))
 
 (ert-deftest warashi-agentel-test-handoff-requires-name ()
   "handoff 名が空なら起動しない。"
