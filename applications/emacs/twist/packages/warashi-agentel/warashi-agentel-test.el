@@ -70,6 +70,14 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
       (should (plist-member captured :display))
       (should-not (plist-get captured :display)))))
 
+(ert-deftest warashi-agentel-test-start-passes-extra-options ()
+  "起動コマンドに足した option はそのまま `agentel-start' に渡す。"
+  (warashi-agentel-test--with-workspace (root _outside)
+    (let* ((default-directory root)
+           (captured (warashi-agentel-test--capture-start
+                       (warashi-agentel--start 'claude "opus" "low" :handoff "fix"))))
+      (should (equal "fix" (plist-get captured :handoff))))))
+
 (ert-deftest warashi-agentel-test-start-inside-workspace-uses-real-path ()
   "専用領域では alias 経由でも実体のパスで起動する。"
   (warashi-agentel-test--with-workspace (root outside)
@@ -131,7 +139,11 @@ BINDINGS は (SESSION BUFFER) で、それぞれ session と buffer に束縛す
         (cl-letf (((symbol-function 'warashi-agentel--start)
                    (lambda (&rest a) (setq args a) session)))
           (funcall 'eshell/claude-warashi-agentel-test-variant))
-        (should (equal '(claude "test-model" "high") args))))))
+        (should (equal '(claude "test-model" "high") args))
+        (cl-letf (((symbol-function 'warashi-agentel--start)
+                   (lambda (&rest a) (setq args a) session)))
+          (funcall 'warashi-agentel-claude-warashi-agentel-test-variant :handoff "fix"))
+        (should (equal '(claude "test-model" "high" :handoff "fix") args))))))
 
 (ert-deftest warashi-agentel-test-define-copilot-variants ()
   "Copilot の variant も M-x と eshell から同じ設定で起動する。"
@@ -267,8 +279,8 @@ cobra と同じく、終わりの報告は stderr に出す。"
     (should-not (warashi-agentel--handoff-candidates))))
 
 (ert-deftest warashi-agentel-test-handoff-starts-variant-from-brainium ()
-  "候補の handoff 名から選ばせ、brainium の clone で variant を起動して同じ名前の
-clone を集めさせる。起動の後は、他の session の prefix に名前を残さない。"
+  "候補の handoff 名から選ばせ、brainium の clone で variant を起動する。
+handoff 名と、それを表す session 名を起動 option で渡す。"
   (warashi-agentel-test--with-workspace (root _outside)
     (let* ((brainium (expand-file-name "github.com/Warashi/brainium/brainium/" root))
            (warashi-agentel-handoff-directory brainium)
@@ -288,14 +300,12 @@ clone を集めさせる。起動の後は、他の session の prefix に名前
                          "fix")
                      "claude-test")))
                 ((symbol-function 'warashi-agentel-test--variant-command)
-                 (lambda ()
-                   (setq started (cons default-directory
-                                       (warashi-agentel-command-prefix (list :cwd default-directory)))))))
+                 (lambda (&rest options)
+                   (setq started (cons default-directory options)))))
         (call-interactively #'warashi-agentel-handoff))
       (should (equal '(("fix") t) offered))
-      (should (equal (cons brainium '("chelly" "--handoff" "fix" "run" "--"))
-                     started))
-      (should (equal '("chelly" "run" "--") (warashi-agentel-command-prefix (list :cwd brainium)))))))
+      (should (equal (list brainium :handoff "fix" :project "fix (handoff)")
+                     started)))))
 
 (ert-deftest warashi-agentel-test-handoff-without-clones-does-not-ask ()
   "集める clone が無ければ、名前も variant も聞かずに止める。"
@@ -310,7 +320,7 @@ clone を集めさせる。起動の後は、他の session の prefix に名前
   "handoff 名が空なら起動しない。"
   (let ((started nil))
     (cl-letf (((symbol-function 'warashi-agentel-test--variant-command)
-               (lambda () (setq started t))))
+               (lambda (&rest _) (setq started t))))
       (should-error (warashi-agentel-handoff "" #'warashi-agentel-test--variant-command)
                     :type 'user-error))
     (should-not started)))
@@ -339,6 +349,15 @@ project の外では session の名前を付けない。"
                              "CLAUDE_CODE_SESSION_NAME=repository / clone (chelly)")
                            (warashi-agentel-command-prefix (list :cwd clone)))))
         (advice-remove 'project-name #'warashi-chelly-workspace--project-name)))))
+
+(ert-deftest warashi-agentel-test-command-prefix-collects-handoff-clones ()
+  "handoff 名があれば chelly に同じ名前の clone を集めさせ、session を
+起動 option の名前で登録させる。"
+  (warashi-agentel-test--with-workspace (root _outside)
+    (should (equal '("chelly" "--handoff" "fix" "run" "--" "env"
+                     "CLAUDE_CODE_SESSION_NAME=fix (handoff)")
+                   (warashi-agentel-command-prefix
+                    (list :cwd root :handoff "fix" :project "fix (handoff)"))))))
 
 (ert-deftest warashi-agentel-test-command-prefix-refuses-symlink-escape ()
   "/resume など起動コマンドを通らない経路でも、逸脱した path では動かさない。"

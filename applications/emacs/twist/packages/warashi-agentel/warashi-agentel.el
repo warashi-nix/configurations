@@ -39,9 +39,6 @@
 (defconst warashi-agentel-dedicated-command-prefix '("chelly" "run" "--")
   "専用作業領域の中で agent の前に置くコマンド列。")
 
-(defvar warashi-agentel--handoff nil
-  "起動中の横断 session の handoff 名。起動コマンドの間だけ束縛する。")
-
 (defun warashi-agentel--dedicated-directory (directory)
   "DIRECTORY が専用作業領域の中なら、symlink を解決した絶対パスを返す。
 専用領域の外のときは `user-error' を投げる。"
@@ -65,28 +62,31 @@
       (user-error "agents run only inside %s: %s"
                   warashi-chelly-workspace-root lexical)))))
 
-(defun warashi-agentel--session-name-command (cwd)
-  "CWD が project の中なら、Claude Code の session を project 名で登録させる
-コマンド列を返す。project の外では nil。"
+(defun warashi-agentel--session-name-command (options)
+  "Claude Code の session を名前で登録させるコマンド列を返す。
+名前は起動 option の OPTIONS の :project、無ければ :cwd の project 名。
+どちらも無ければ nil。"
   ;; `agentel-environment' で渡さないのは、変数が prefix の先頭の chelly に
   ;; しか届かず、NixOS では sudo と runner が環境を捨てるため。通すには
   ;; 権限境界の許可を広げることになる。
-  (when-let* ((project (project-current nil cwd)))
-    (list "env" (concat "CLAUDE_CODE_SESSION_NAME=" (project-name project)))))
+  (when-let* ((name (or (plist-get options :project)
+                        (when-let* ((project (project-current nil (plist-get options :cwd))))
+                          (project-name project)))))
+    (list "env" (concat "CLAUDE_CODE_SESSION_NAME=" name))))
 
 (defun warashi-agentel-command-prefix (options)
   "起動 option の OPTIONS で agent を動かすコマンド列を返す。
+:handoff があれば、その名前の clone を chelly に集めさせる。
 `agentel-command-prefix' 用。"
   ;; 起動コマンドを通らない /resume でも拒否するため、ここでも判定する。
-  (let ((cwd (plist-get options :cwd)))
-    (warashi-agentel--dedicated-directory cwd)
-    (append (if warashi-agentel--handoff
-                ;; chelly の入口が --handoff を run の前で受け取る。
-                (append (list (car warashi-agentel-dedicated-command-prefix)
-                              "--handoff" warashi-agentel--handoff)
-                        (cdr warashi-agentel-dedicated-command-prefix))
-              warashi-agentel-dedicated-command-prefix)
-            (warashi-agentel--session-name-command cwd))))
+  (warashi-agentel--dedicated-directory (plist-get options :cwd))
+  (append (if-let* ((handoff (plist-get options :handoff)))
+              ;; chelly の入口が --handoff を run の前で受け取る。
+              (append (list (car warashi-agentel-dedicated-command-prefix)
+                            "--handoff" handoff)
+                      (cdr warashi-agentel-dedicated-command-prefix))
+            warashi-agentel-dedicated-command-prefix)
+          (warashi-agentel--session-name-command options)))
 
 ;;;; 起動コマンド
 
@@ -102,9 +102,9 @@
     (setq warashi-agentel-variants
           (append warashi-agentel-variants (list (cons name command))))))
 
-(defun warashi-agentel--start (agent model effort)
+(defun warashi-agentel--start (agent model effort &rest options)
   "AGENT の session を MODEL と EFFORT を指定して起動する。表示はしない。
-AGENT は `agentel-agents' の名前。"
+AGENT は `agentel-agents' の名前。OPTIONS は `agentel-start' に足す option。"
   ;; agentel は agent をローカルで動かし、cwd もそのまま渡すので、TRAMP 先の
   ;; path では agent が作業場所を見失う。
   (when (file-remote-p default-directory)
@@ -114,11 +114,13 @@ AGENT は `agentel-agents' の名前。"
   ;; 専用領域の判定を起動前に済ませるのは、`agentel-command-prefix' で拒否
   ;; すると作りかけの session buffer が残るため。実体のパスを渡すのは、専用
   ;; runner が作業領域を実体のパスで mount するため。
-  (agentel-start :cwd (warashi-agentel--dedicated-directory default-directory)
-                 :agent agent
-                 :display nil
-                 :model model
-                 :effort effort))
+  (apply #'agentel-start
+         :cwd (warashi-agentel--dedicated-directory default-directory)
+         :agent agent
+         :display nil
+         :model model
+         :effort effort
+         options))
 
 (defun warashi-agentel--variant-forms (agent variants)
   "AGENT の VARIANTS から起動コマンドを定義する form の列を返す。
@@ -129,10 +131,11 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。"
             (fn (intern (format "warashi-agentel-%s" label)))
             (eshell-fn (intern (format "eshell/%s" label))))
        (list
-        `(defun ,fn ()
-           ,(format "%s を model %s / effort %s で起動する。" agent model effort)
+        `(defun ,fn (&rest options)
+           ,(format "%s を model %s / effort %s で起動する。
+OPTIONS は `agentel-start' に足す option。" agent model effort)
            (interactive)
-           (warashi-agentel--start ',agent ,model ,effort))
+           (apply #'warashi-agentel--start ',agent ,model ,effort options))
         `(defun ,eshell-fn (&rest _args)
            ,(format "eshell から `%s' を起動し、起動した buffer を示す。" fn)
            ;; session をそのまま返すと、eshell が struct を丸ごと出力する。
@@ -223,14 +226,13 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
 (defun warashi-agentel-handoff (name command)
   "brainium の clone で起動コマンド COMMAND を、handoff NAME の clone を集めて動かす。
 各 repo で同じ NAME を指定して作った clone が、本人と同じ ghq の path に
-mount される。"
+mount される。session は \"NAME (handoff)\" の名前で見分ける。"
   (interactive (list (warashi-agentel--read-handoff)
                      (warashi-agentel--read-variant)))
   (when (string-empty-p name)
     (user-error "handoff name is required"))
-  (let ((default-directory (file-name-as-directory warashi-agentel-handoff-directory))
-        (warashi-agentel--handoff name))
-    (funcall command)))
+  (let ((default-directory (file-name-as-directory warashi-agentel-handoff-directory)))
+    (funcall command :handoff name :project (format "%s (handoff)" name))))
 
 (provide 'warashi-agentel)
 ;;; warashi-agentel.el ends here

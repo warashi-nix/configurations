@@ -38,6 +38,31 @@
       (when session
         (kill-buffer (agentel-session-buffer session))))))
 
+(ert-deftest warashi-agentel-contract-test-clear-keeps-start-options ()
+  "`agentel-start' に渡した独自の option と :project は、/clear の後も
+`agentel-command-prefix' の関数に渡り、session の名前に残る。"
+  (let* ((received nil)
+         (agentel-command-prefix
+          (lambda (options)
+            (push options received)
+            '("sh" "-c" "exec cat >/dev/null" "sh")))
+         (cwd (file-name-as-directory temporary-file-directory))
+         (session nil)
+         (cleared nil))
+    (unwind-protect
+        (progn
+          (setq session (agentel-start :cwd cwd :display nil
+                                       :handoff "fix" :project "fix (handoff)"))
+          (setq cleared (agentel-clear session ""))
+          (should (= 2 (length received)))
+          (dolist (options received)
+            (should (equal "fix" (plist-get options :handoff)))
+            (should (equal "fix (handoff)" (plist-get options :project))))
+          (should (equal "fix (handoff)" (agentel-session-project-name cleared))))
+      (dolist (s (list session cleared))
+        (when (and s (buffer-live-p (agentel-session-buffer s)))
+          (kill-buffer (agentel-session-buffer s)))))))
+
 (ert-deftest warashi-agentel-contract-test-copilot-runs-acp ()
   "`copilot' の agent は Copilot CLI を ACP で動かす。
 専用 runner の中でも同じコマンドを動かすため。"

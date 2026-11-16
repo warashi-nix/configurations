@@ -595,7 +595,8 @@ path では起動しない。
 =M-x warashi-agentel-handoff= で handoff 名と variant を選ぶ。名前は集められる clone
 がある名前から選び、参加する repo が注釈に並ぶ。どの buffer から呼んでも brainium の
 clone で起動し、同じ名前の clone が本人と同じ =~/ghq/...= の path に見える。 =main=
-と =master= は集めない。 =/resume= で開き直した session には clone が mount されない。
+と =master= は集めない。session は =NAME (handoff)= の名前で一覧に並び、 =/clear= と
+=/resume= の後も同じ名前で同じ clone を集める。
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
