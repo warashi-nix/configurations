@@ -17,6 +17,8 @@
   additionalMounts ? [ ],
   # 設定で常に mount する clone。同じ destination に二重に mount しないよう集めない。
   fixedSources ? [ ],
+  # --handoff のときに起動する clone。計画を立てる brainium の clone を指す。
+  sessionDirectory,
 }:
 let
   chellyHandoff = callPackage ../../git/handoff/package.nix { inherit workspaces; };
@@ -63,7 +65,8 @@ stdenvNoCC.mkDerivation {
       --set HANDOFF_SESSION_WORKSPACES ${lib.escapeShellArg workspaces} \
       --set HANDOFF_SESSION_MOUNTS ${lib.escapeShellArg (lib.concatStringsSep "," additionalMounts)} \
       --set HANDOFF_SESSION_FIXED ${lib.escapeShellArg (lib.concatStringsSep "\n" fixedSources)} \
-      --set HANDOFF_SESSION_CHELLY ${lib.getExe' chelly "chelly"}
+      --set HANDOFF_SESSION_CHELLY ${lib.getExe' chelly "chelly"} \
+      --set HANDOFF_SESSION_DIRECTORY ${lib.escapeShellArg sessionDirectory}
     runHook postInstall
   '';
 

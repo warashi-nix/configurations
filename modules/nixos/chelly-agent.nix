@@ -58,6 +58,7 @@ let
   handoffSession = pkgs.callPackage ../../applications/chelly/handoff-session/package.nix {
     inherit chelly workspaces additionalMounts;
     fixedSources = lib.attrValues handoffSources;
+    sessionDirectory = handoffSources.${homeConfig.warashi.chelly.handoffSessionRepo};
   };
   configFile = tomlFormat.generate "chelly-agent.toml" {
     container_cmd = lib.getExe pkgs.podman;
@@ -170,6 +171,9 @@ let
     # runner は作業領域の外での起動を拒むので、通すと領域外では補完が効かない。
     case "''${1:-}" in
       __complete | __completeNoDesc) exec ${lib.getExe' chelly "chelly"} "$@" ;;
+      # 横断セッションは handoff-session が brainium に移って起動する。本人の home などから
+      # 打っても runner の cwd の判定を通るよう、先に領域に入る。
+      --handoff) cd -- ${workspaces} ;;
     esac
     exec ${config.security.wrapperDir}/sudo -n -H -u ${username} -- ${lib.getExe runner} "$@"
   '';

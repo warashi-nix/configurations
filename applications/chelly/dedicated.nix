@@ -44,6 +44,7 @@ let
     chelly = cfg.package;
     additionalMounts = cfg.settings.additional_mounts;
     fixedSources = attrValues handoffSources;
+    sessionDirectory = handoffSources.${cfg.handoffSessionRepo};
   };
   # handoff clone の mount 元は NixOS の runner と同じく起動のたびに用意する。podman は
   # bind mount の元を作らず、chelly-handoff remove が clone とその親を消すため。

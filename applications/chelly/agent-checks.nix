@@ -211,6 +211,9 @@ runCommand "chelly-agent-config-check"
     test -f ${launcher}/share/fish/vendor_completions.d/chelly.fish
     test -f ${launcher}/share/bash-completion/completions/chelly.bash
     ${launcher}/bin/chelly __complete "" | grep -q '^build'
+    # 横断セッションは handoff-session が brainium に移って起動する。runner は領域の外の cwd を
+    # 拒むので、本人の home などから打っても通るよう、入口で領域に入ってから runner を呼ぶ。
+    grep -Fxq '  --handoff) cd -- /srv/chelly-workspaces ;;' ${launcher}/bin/chelly
     if ${runnerCommand} run >stdout 2>stderr; then
       echo "agent runner accepted a different account" >&2
       exit 1

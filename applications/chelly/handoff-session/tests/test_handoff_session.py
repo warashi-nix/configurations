@@ -12,7 +12,7 @@ HANDOFF = Path(os.environ.get(
 
 # 本体の chelly の代わりに、受け取った引数と mount の指定を記録する。
 FAKE_CHELLY = """#!/bin/sh
-python3 -c 'import json, os, sys; json.dump({"args": sys.argv[1:], "mounts": os.environ.get("CHELLY_ADDITIONAL_MOUNTS"), "leaked": sorted(k for k in os.environ if k.startswith("HANDOFF_SESSION_"))}, open(os.environ["CHELLY_LOG"], "w"))' "$@"
+python3 -c 'import json, os, sys; json.dump({"args": sys.argv[1:], "cwd": os.getcwd(), "mounts": os.environ.get("CHELLY_ADDITIONAL_MOUNTS"), "leaked": sorted(k for k in os.environ if k.startswith("HANDOFF_SESSION_"))}, open(os.environ["CHELLY_LOG"], "w"))' "$@"
 """
 
 # 動いているコンテナの mount 元を、テストが書いたファイルから返す。
@@ -56,6 +56,7 @@ class HandoffSessionTest(unittest.TestCase):
             "HANDOFF_SESSION_WORKSPACES": str(self.workspaces),
             "HANDOFF_SESSION_MOUNTS": BASE,
             "HANDOFF_SESSION_FIXED": str(self.fixed),
+            "HANDOFF_SESSION_DIRECTORY": str(self.fixed),
             "HANDOFF_SESSION_CHELLY": str(self.bin / "chelly"),
             "CHELLY_LOG": str(self.log),
             "PODMAN_CONTAINERS": str(self.containers),
@@ -88,9 +89,23 @@ class HandoffSessionTest(unittest.TestCase):
 
     def test_other_commands_and_single_runs_go_straight_to_chelly(self):
         self.session("__complete", "run", "")
-        self.assertEqual(self.launched(), {"args": ["__complete", "run", ""], "mounts": None, "leaked": []})
+        self.assertEqual(self.launched(), {"args": ["__complete", "run", ""], "cwd": str(self.root),
+                                           "mounts": None, "leaked": []})
         self.session("run", "--", "claude")
-        self.assertEqual(self.launched(), {"args": ["run", "--", "claude"], "mounts": None, "leaked": []})
+        self.assertEqual(self.launched(), {"args": ["run", "--", "claude"], "cwd": str(self.root),
+                                           "mounts": None, "leaked": []})
+
+    def test_handoff_starts_in_the_session_directory_from_anywhere(self):
+        # 計画は brainium の task で立てるので、横断セッションは cwd に関わらず brainium で動かす。
+        lib = self.clone("github.com/acme/lib/fix")
+        app = self.clone("github.com/Warashi/app/fix")
+        for cwd in (self.root, lib, app):
+            self.session("--handoff", "fix", "run", cwd=cwd)
+            self.assertEqual(self.launched()["cwd"], str(self.fixed), cwd)
+            self.assertEqual(len(self.mounts()), 2, cwd)
+        # 既定 branch の名前で単独起動に落ちても、起動場所は同じにする。
+        self.session("--handoff", "main", "run", cwd=lib)
+        self.assertEqual(self.launched()["cwd"], str(self.fixed))
 
     def test_handoff_mounts_every_clone_of_the_name_at_its_ghq_path(self):
         lib = self.clone("github.com/acme/lib/fix")

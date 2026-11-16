@@ -16,6 +16,15 @@ with lib;
     '';
   };
 
+  options.warashi.chelly.handoffSessionRepo = mkOption {
+    type = types.str;
+    description = ''
+      `chelly --handoff NAME run` を cwd に関わらず起動する clone の、handoffRepos のキー。
+    '';
+  };
+
   # 本人の CLAUDE.md が指す path で、brainium の handoff clone を使う。
   config.warashi.chelly.handoffRepos."github.com/Warashi/brainium" = "brainium";
+  # 横断作業の計画は brainium の task で立てる。
+  config.warashi.chelly.handoffSessionRepo = "github.com/Warashi/brainium";
 }

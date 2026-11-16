@@ -5,6 +5,7 @@
 #   HANDOFF_SESSION_MOUNTS      chelly の設定にある additional_mounts (カンマ区切り)
 #   HANDOFF_SESSION_FIXED       設定で常に mount する clone (改行区切り)
 #   HANDOFF_SESSION_CHELLY      本体の chelly
+#   HANDOFF_SESSION_DIRECTORY   --handoff のときに起動する clone
 set -euo pipefail
 
 usage() {
@@ -21,7 +22,9 @@ workspaces=$HANDOFF_SESSION_WORKSPACES
 base_mounts=$HANDOFF_SESSION_MOUNTS
 fixed_list=$HANDOFF_SESSION_FIXED
 chelly=$HANDOFF_SESSION_CHELLY
-unset HANDOFF_SESSION_WORKSPACES HANDOFF_SESSION_MOUNTS HANDOFF_SESSION_FIXED HANDOFF_SESSION_CHELLY
+session_directory=$HANDOFF_SESSION_DIRECTORY
+unset HANDOFF_SESSION_WORKSPACES HANDOFF_SESSION_MOUNTS HANDOFF_SESSION_FIXED HANDOFF_SESSION_CHELLY \
+  HANDOFF_SESSION_DIRECTORY
 
 # default branch の名前は参加 repo を表さないので集めない。
 excluded_names=(main master)
@@ -31,6 +34,8 @@ if [[ ${1:-} == --handoff ]]; then
   [[ $# -ge 3 && -n $2 && $3 == run ]] || usage
   name=$2
   shift 2
+  # 計画は brainium の task で立てるので、横断セッションは cwd に関わらずそこで動かす。
+  cd -- "$session_directory" || fail "cannot enter $session_directory"
 fi
 [[ ${1:-} == run ]] || exec "$chelly" "$@"
 

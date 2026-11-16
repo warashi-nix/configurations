@@ -203,6 +203,7 @@
                 chelly-handoff-session = pkgs.callPackage ./applications/chelly/handoff-session/package.nix {
                   chelly = inputs.chelly.packages.${system}.chelly;
                   workspaces = "/srv/chelly-workspaces";
+                  sessionDirectory = "/srv/chelly-workspaces/github.com/Warashi/brainium/brainium";
                 };
                 chelly-go-proxy-config = pkgs.callPackage ./applications/chelly/go-proxy/checks.nix {
                   athenaPkgs = self.darwinConfigurations.athena.pkgs;
