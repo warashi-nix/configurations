@@ -59,6 +59,7 @@
             "warashi-agentel"
             "warashi-attach-layout"
             "warashi-chelly-handoff"
+            "warashi-chelly-handoff-session"
             "warashi-chelly-pr-review"
             "warashi-chelly-workspace"
             "warashi-fish-completion"
@@ -79,6 +80,9 @@
             };
             warashi-chelly-handoff = _: _: {
               src = ./packages/warashi-chelly-handoff;
+            };
+            warashi-chelly-handoff-session = _: _: {
+              src = ./packages/warashi-chelly-handoff-session;
             };
             warashi-chelly-pr-review = _: _: {
               src = ./packages/warashi-chelly-pr-review;

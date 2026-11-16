@@ -1,0 +1,2 @@
+(warashi-chelly-handoff-session :fetcher github
+                                :repo "Warashi/configurations")

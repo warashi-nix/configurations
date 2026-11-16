@@ -594,12 +594,19 @@ model と effort を固定した起動コマンドを用意する。eshell か�
 の中でだけ専用の =chelly= で動かす。領域の外や、専用領域に見えて実体が外にある
 path では起動しない。
 
-複数 repo を横断する作業は、各 repo で同じ handoff 名の専用 clone を作ってから
+複数 repo を横断する作業は、 =M-x warashi-chelly-handoff-session= で handoff 名を打ち、
+ghq の一覧から参加 repo を選び、git-wit の worktree を作るかと variant を選ぶ。各 repo
+の HEAD (worktree を作るならその worktree) から同じ名前の専用 clone を作って起動する。
+その名前の clone がある repo では作らない。作り済みの clone で起動し直すときは
 =M-x warashi-agentel-handoff= で handoff 名と variant を選ぶ。名前は集められる clone
 がある名前から選び、参加する repo が注釈に並ぶ。どの buffer から呼んでも brainium の
 clone で起動し、同じ名前の clone が本人と同じ =~/ghq/...= の path に見える。 =main=
 と =master= は集めない。session は =NAME (handoff)= の名前で一覧に並び、 =/clear= と
 =/resume= の後も同じ名前で同じ clone を集める。
+
+#+begin_src emacs-lisp
+(setup (:package warashi-chelly-handoff-session))
+#+end_src
 
 専用 clone は =C-x p p= の作業場所の選択 ([[*consult][consult]]) から作れる。成果の
 受け取り・追従・片付けは Magit の =@= ([[*専用 clone との受け渡し][専用 clone との受け渡し]]) から行い、差分の
