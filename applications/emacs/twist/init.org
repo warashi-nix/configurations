@@ -540,10 +540,13 @@ Copilot CLI は custom agent の grilling で始める。grilling は subagent �
 よう指示ファイルではなく custom agent に置いてあり (=applications/copilot=)、
 起動時に選ばないと効かない。
 
+Claude は ACP v2 でつなぐ。workflow の進捗は v2 でしか届かない。
+
 #+begin_src emacs-lisp
 (setup (:package agentel)
   (:global-keymap "C-c a" #'agentel-list)
-  (:opt agentel-command-prefix #'warashi-agentel-command-prefix)
+  (:opt agentel-command-prefix #'warashi-agentel-command-prefix
+        agentel-acp-v2-agents '(claude))
   (:when-loaded
     (setf (alist-get 'copilot agentel-agents)
           '("copilot" "--acp" "--agent" "grilling")))
