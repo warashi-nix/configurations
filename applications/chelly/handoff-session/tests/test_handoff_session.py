@@ -139,6 +139,8 @@ class HandoffSessionTest(unittest.TestCase):
     def test_handoff_completes_run_after_the_name_and_chelly_after_run(self):
         self.assertEqual(self.complete("--handoff", "fix", ""), ["run"])
         self.assertEqual(self.complete("--handoff", "fix", "b"), [])
+        self.clone("github.com/acme/lib/fix")
+        self.assertEqual(self.complete("--handoff", "fix", "build", ""), [])
         self.session("__complete", "--handoff", "fix", "run", "--", "")
         self.assertEqual(self.launched()["args"], ["__complete", "run", "--", ""])
         self.session("__completeNoDesc", "--handoff", "fix", "run", "")

@@ -56,8 +56,8 @@ fi
 [[ -n $completing || ${1:-} == run ]] || exec "$chelly" "$@"
 
 # 4 は ShellCompDirectiveNoFileComp。
-if [[ -n $completing && $# -eq 2 ]]; then
-  [[ run == "$2"* ]] && echo run
+if [[ -n $completing && $# -ge 2 ]]; then
+  [[ $# -eq 2 && run == "$2"* ]] && echo run
   echo :4
   exit 0
 fi
