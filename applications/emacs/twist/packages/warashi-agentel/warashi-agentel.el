@@ -159,7 +159,7 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
 
 ;;;; project-switch からの起動
 
-(defun warashi-agentel--read-variant ()
+(defun warashi-agentel-read-variant ()
   "起動する variant のコマンドを選ばせて返す。"
   (let ((name (completing-read "Agent: "
                                (mapcar #'car warashi-agentel-variants)
@@ -169,7 +169,7 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
 (defun warashi-agentel-project-switch ()
   "variant を選んで起動し、`project-switch-project' のメニューに戻る。"
   (interactive)
-  (when-let* ((command (warashi-agentel--read-variant)))
+  (when-let* ((command (warashi-agentel-read-variant)))
     ;; `project-switch-project' は選んだ project を override に入れるだけで、
     ;; `default-directory' は呼び出し元の buffer のまま残す。
     (let ((default-directory (or project-current-directory-override
@@ -192,7 +192,7 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
   :type 'directory
   :group 'warashi-chelly-workspace)
 
-(defun warashi-agentel--handoff-candidates ()
+(defun warashi-agentel-handoff-candidates ()
   "起動時に集められる handoff 名を (NAME . 参加 repo の一覧) で返す。"
   ;; 集める clone の判定を Emacs に複製しないため、chelly が shell に返す補完を読む。
   ;; stderr には cobra の終わりの報告が出るので混ぜない。TRAMP の buffer から呼んでも
@@ -210,7 +210,7 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
 
 (defun warashi-agentel--read-handoff ()
   "集められる handoff 名から一つ選ばせる。候補が無ければ `user-error'。"
-  (let ((candidates (or (warashi-agentel--handoff-candidates)
+  (let ((candidates (or (warashi-agentel-handoff-candidates)
                         (user-error "No handoff clone to collect; create one first"))))
     (completing-read
      "Handoff: "
@@ -228,7 +228,7 @@ VARIANTS の各要素は (NAME MODEL EFFORT)。NAME ごとに
 各 repo で同じ NAME を指定して作った clone が、本人と同じ ghq の path に
 mount される。session は \"NAME (handoff)\" の名前で見分ける。"
   (interactive (list (warashi-agentel--read-handoff)
-                     (warashi-agentel--read-variant)))
+                     (warashi-agentel-read-variant)))
   (when (string-empty-p name)
     (user-error "handoff name is required"))
   (let ((default-directory (file-name-as-directory warashi-agentel-handoff-directory)))

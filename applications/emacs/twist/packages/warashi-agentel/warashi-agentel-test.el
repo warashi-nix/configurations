@@ -274,9 +274,9 @@ cobra と同じく、終わりの報告は stderr に出す。"
       "fix\tgithub.com/Warashi/app, github.com/acme/lib\nログイン\tgithub.com/acme/lib\n:4\n"
     (should (equal '(("fix" . "github.com/Warashi/app, github.com/acme/lib")
                      ("ログイン" . "github.com/acme/lib"))
-                   (warashi-agentel--handoff-candidates))))
+                   (warashi-agentel-handoff-candidates))))
   (warashi-agentel-test--with-chelly ":4\n"
-    (should-not (warashi-agentel--handoff-candidates))))
+    (should-not (warashi-agentel-handoff-candidates))))
 
 (ert-deftest warashi-agentel-test-handoff-starts-variant-from-brainium ()
   "候補の handoff 名から選ばせ、brainium の clone で variant を起動する。
@@ -289,7 +289,7 @@ handoff 名と、それを表す session 名を起動 option で渡す。"
            (offered nil)
            (started nil))
       (make-directory brainium t)
-      (cl-letf (((symbol-function 'warashi-agentel--handoff-candidates)
+      (cl-letf (((symbol-function 'warashi-agentel-handoff-candidates)
                  (lambda () '(("fix" . "github.com/acme/lib"))))
                 ((symbol-function 'completing-read)
                  (lambda (prompt collection _predicate require-match &rest _)
@@ -310,7 +310,7 @@ handoff 名と、それを表す session 名を起動 option で渡す。"
 (ert-deftest warashi-agentel-test-handoff-without-clones-does-not-ask ()
   "集める clone が無ければ、名前も variant も聞かずに止める。"
   (let ((asked nil))
-    (cl-letf (((symbol-function 'warashi-agentel--handoff-candidates) #'ignore)
+    (cl-letf (((symbol-function 'warashi-agentel-handoff-candidates) #'ignore)
               ((symbol-function 'completing-read)
                (lambda (&rest _) (setq asked t) "")))
       (should-error (call-interactively #'warashi-agentel-handoff) :type 'user-error))
