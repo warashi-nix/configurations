@@ -49,6 +49,15 @@ is_fixed() {
   return 1
 }
 
+# 設定で常に mount する project は、別の clone を集めると同じ destination に重なる。
+is_fixed_project() {
+  local path
+  for path in "${fixed[@]}"; do
+    [[ $path == "$root/$1"/* ]] && return 0
+  done
+  return 1
+}
+
 # clone は .git を持つ最初のディレクトリで、その中には下りない。find は symlink を辿らず、
 # -type d は symlink に一致しないので、専用領域の外にある clone は集まらない。
 list_clones() {
@@ -123,9 +132,14 @@ if [[ -n $name ]]; then
   id=$(chelly-handoff id "$name") || fail "invalid handoff name '$name'"
   while IFS= read -r -d '' clone; do
     [[ ${clone##*/} == "$id" ]] || continue
-    is_fixed "$clone" && continue
     project=${clone#"$root"/}
     project=${project%/*}
+    # ghq の path は host/path の 2 段以上。1 段のものは <repo 名>/<ID> の旧配置で、mount 先が無い。
+    [[ $project == */* ]] || continue
+    if is_fixed_project "$project"; then
+      echo "chelly: $clone is not mounted; $project is always mounted from its own clone" >&2
+      continue
+    fi
     mounts+=("$clone:/home/warashi/ghq/$project")
     add_target "$clone"
   done < <(list_clones)

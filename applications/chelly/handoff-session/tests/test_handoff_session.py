@@ -123,9 +123,17 @@ class HandoffSessionTest(unittest.TestCase):
             self.assertEqual(self.launched()["mounts"], None, name)
             self.assertIn(name.encode(), result.stderr)
 
-    def test_fixed_clones_are_not_mounted_twice(self):
-        brainium = self.clone("github.com/Warashi/brainium/fix")
-        self.env["HANDOFF_SESSION_FIXED"] = f"{self.fixed}\n{brainium}"
+    def test_projects_mounted_by_the_settings_are_not_mounted_twice(self):
+        # brainium は設定で常に ~/ghq/github.com/Warashi/brainium に mount する。
+        # 同じ handoff 名の brainium の clone を集めると destination が重なる。
+        self.clone("github.com/Warashi/brainium/fix")
+        lib = self.clone("github.com/acme/lib/fix")
+        self.session("--handoff", "fix", "run")
+        self.assertEqual(self.mounts(), [f"{lib}:/home/warashi/ghq/github.com/acme/lib"])
+
+    def test_clones_in_the_former_layout_are_not_collected(self):
+        # 以前は <repo 名>/<ID> に置いていた。ghq の path ではないので mount 先が無い。
+        self.clone("configurations/fix")
         lib = self.clone("github.com/acme/lib/fix")
         self.session("--handoff", "fix", "run")
         self.assertEqual(self.mounts(), [f"{lib}:/home/warashi/ghq/github.com/acme/lib"])
