@@ -83,10 +83,12 @@ chelly-handoff remove [fix-issue-123] [--force]
 `create` bundles the current `HEAD` and lets `chelly` clone it into
 `/srv/chelly-workspaces/PROJECT/ID` on a branch with the owner's current
 branch name, without `origin`, hooks, or the owner's Git configuration.
-`PROJECT` is the name of the owner's repository, taken from its shared Git
-directory rather than the checkout, so a linked worktree such as a git-wit
-worktree uses the repository name, and the same `NAME` can be in use for
-different projects at once. `NAME` defaults to the current
+`PROJECT` is the owner's repository path relative to a `ghq.root` (`~/ghq`
+when unset), such as `github.com/Warashi/configurations`, taken from its shared
+Git directory rather than the checkout, so a linked worktree such as a git-wit
+worktree uses the repository path, and the same `NAME` can be in use for
+different projects at once. A repository outside every `ghq.root` is rejected.
+`remove` also deletes the parent directories it leaves empty. `NAME` defaults to the current
 branch name; pass it explicitly to run several workspaces from one branch. It
 may be any text without control characters, such as a git-wit memo in Japanese
 with spaces. The workspace directory, remote, and bundle use `ID` instead:

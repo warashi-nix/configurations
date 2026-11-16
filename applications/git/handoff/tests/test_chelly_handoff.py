@@ -47,8 +47,8 @@ class HandoffTest(unittest.TestCase):
         checker = self.bin / "git-check-new-ignored"
         checker.write_text(f"#!/bin/sh\nexec {sys.executable} {CHECKER} \"$@\"\n")
         checker.chmod(0o755)
-        # 裏で走る repack が tearDown の削除と競合するので、本人側の git でも起こさない。
-        (self.home / "gitconfig").write_text("[maintenance]\n\tauto = false\n")
+        self.ghq = self.root / "ghq"
+        self.write_gitconfig(f"[ghq]\n\troot = {self.ghq}\n")
         self.env = {
             **os.environ,
             "HOME": str(self.home),
@@ -65,17 +65,22 @@ class HandoffTest(unittest.TestCase):
             # テスト用の root より上にある repo を git が見つけないようにする。
             "GIT_CEILING_DIRECTORIES": str(self.root),
         }
-        self.repo = self.root / "source"
+        self.project = Path("example.com", "owner", "source")
+        self.repo = self.ghq / self.project
         self.git("init", "-q", "-b", "main", self.repo)
         self.git("-C", self.repo, "config", "commit.gpgsign", "false")
         self.write(self.repo, ".gitignore", "*.secret\n")
         self.write(self.repo, "tracked", "base\n")
         self.commit(self.repo, "base")
         self.base = self.rev(self.repo)
-        self.workspace = self.agent_root / "source" / "fix"
+        self.workspace = self.agent_root / self.project / "fix"
 
     def tearDown(self):
         self.temporary.cleanup()
+
+    def write_gitconfig(self, extra=""):
+        # 裏で走る repack が tearDown の削除と競合するので、本人側の git でも起こさない。
+        (self.home / "gitconfig").write_text("[maintenance]\n\tauto = false\n" + extra)
 
     def git(self, *args, check=True):
         return subprocess.run(
@@ -195,25 +200,56 @@ class HandoffTest(unittest.TestCase):
 
     def test_create_defaults_name_to_branch_and_scopes_by_project(self):
         result = self.handoff("create")
-        self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / "source" / "main"))
-        self.assertEqual(self.rev(self.agent_root / "source" / "main"), self.base)
+        self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / self.project / "main"))
+        self.assertEqual(self.rev(self.agent_root / self.project / "main"), self.base)
         self.assertTrue(self.git("-C", self.repo, "config", "remote.handoff-main.url").stdout)
         # 別 project では同じ名前をそのまま使える。
-        other = self.root / "other"
+        other = self.ghq / "example.com" / "owner" / "other"
         self.git("clone", "-q", self.repo, other)
         result = subprocess.run(
             ["bash", str(HANDOFF), "create"], cwd=other, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, check=True,
         )
-        self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / "other" / "main"))
-        self.assertTrue((self.agent_root / "source" / "main").is_dir())
+        self.assertEqual(result.stdout.decode().strip(), str(self.agent_root / "example.com" / "owner" / "other" / "main"))
+        self.assertTrue((self.agent_root / self.project / "main").is_dir())
         # '/' を含む branch 名も、path に使える ID に置き換えて名前にする。
         self.git("-C", self.repo, "switch", "-q", "-c", "feature/x")
         result = self.handoff("create")
         self.assertEqual(
             result.stdout.decode().strip(),
-            str(self.agent_root / "source" / ("x-" + b"feature/x".hex())),
+            str(self.agent_root / self.project / ("x-" + b"feature/x".hex())),
         )
+
+    def test_create_places_clone_under_the_ghq_path_of_the_repository(self):
+        # ghq.root は複数書け、~ は git が展開する。未設定なら ~/ghq。
+        second = self.home / "ghq"
+        self.write_gitconfig(f"[ghq]\n\troot = {self.ghq}\n\troot = ~/ghq\n")
+        repo = second / "example.org" / "group" / "sub" / "deep"
+        self.git("clone", "-q", self.repo, repo)
+        result = self.handoff("create", "fix", cwd=repo)
+        expected = self.agent_root / "example.org" / "group" / "sub" / "deep" / "fix"
+        self.assertEqual(result.stdout.decode().strip(), str(expected))
+        self.write_gitconfig()
+        self.handoff("remove", "fix", cwd=repo)
+        result = self.handoff("create", "fix", cwd=repo)
+        self.assertEqual(result.stdout.decode().strip(), str(expected))
+
+    def test_create_rejects_a_repository_outside_ghq_root(self):
+        loose = self.root / "loose"
+        self.git("clone", "-q", self.repo, loose)
+        result = self.handoff("create", "fix", check=False, cwd=loose)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"ghq", result.stderr)
+        self.assertEqual(list(self.agent_root.iterdir()), [])
+        self.assertEqual(self.git("-C", loose, "remote").stdout, b"origin\n")
+
+    def test_remove_cleans_empty_parents_up_to_the_workspace_root(self):
+        self.handoff("create", "fix")
+        self.handoff("create", "other")
+        self.handoff("remove", "fix")
+        self.assertTrue((self.agent_root / self.project / "other").is_dir())
+        self.handoff("remove", "other")
+        self.assertEqual(list(self.agent_root.iterdir()), [])
 
     def test_create_from_linked_worktree_scopes_by_repository_name(self):
         # git-wit などの worktree はディレクトリ名が repo 名と無関係な ID になる。
@@ -225,7 +261,7 @@ class HandoffTest(unittest.TestCase):
 
     def test_name_outside_the_ascii_rule_is_handed_off_under_a_hex_id(self):
         name = "ログイン 修正"
-        workspace = self.agent_root / "source" / ("x-" + name.encode().hex())
+        workspace = self.agent_root / self.project / ("x-" + name.encode().hex())
         result = self.handoff("create", name)
         self.assertEqual(result.stdout.decode().strip(), str(workspace))
         remote = "handoff-x-" + name.encode().hex()
@@ -248,7 +284,7 @@ class HandoffTest(unittest.TestCase):
             result = self.handoff("create", name)
             self.assertEqual(
                 result.stdout.decode().strip(),
-                str(self.agent_root / "source" / ("x-" + name.encode().hex())),
+                str(self.agent_root / self.project / ("x-" + name.encode().hex())),
                 name,
             )
 

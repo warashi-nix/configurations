@@ -13,7 +13,7 @@ usage: chelly-handoff create [NAME]
        chelly-handoff update [NAME]
        chelly-handoff remove [NAME] [--force]
 
-create  現在の HEAD から専用領域の <repo 名>/ID に clone を作り、remote handoff-ID を追加する
+create  現在の HEAD から専用領域の <ghq path>/ID に clone を作り、remote handoff-ID を追加する
 fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り込み、新規追跡ファイルを検査する
 update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
         agent が切った branch は消し、create 時の branch に戻す
@@ -176,7 +176,10 @@ parent=$1 workspace=$2
 case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
 case "$workspace" in *..*) exit 90 ;; esac
 rm -rf -- "$workspace"
-rmdir -- "${workspace%/*}" 2>/dev/null || true
+dir=${workspace%/*}
+while [ "$dir" != "$parent" ] && rmdir -- "$dir" 2>/dev/null; do
+  dir=${dir%/*}
+done
 '
 
 name_pattern='^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
@@ -250,21 +253,42 @@ send_submodule() {
   git -C "$repo" update-ref -d refs/chelly-handoff/transfer
 }
 
+# 専用領域では本人と同じ ghq の path に clone を置き、コンテナ内でも同じ path に見せる。
+# worktree の toplevel は repo と無関係な場所になり得るので、共有の git dir から引く。
+# 通常は <repo>/.git、bare なら <repo>.git の形をしている。
+ghq_path() {
+  local repo root resolved component
+  local -a roots components
+  repo=${gitdir%/}
+  if [[ ${repo##*/} == .git ]]; then
+    repo=${repo%/.git}
+  fi
+  repo=$(cd -P -- "$repo" && pwd -P)
+  mapfile -t roots < <(git config --path --get-all ghq.root)
+  ((${#roots[@]})) || roots=("$HOME/ghq")
+  project=
+  for root in "${roots[@]}"; do
+    resolved=$(cd -P -- "$root" 2>/dev/null && pwd -P) || continue
+    if [[ $repo == "$resolved"/?* ]]; then
+      project=${repo#"$resolved"/}
+      break
+    fi
+  done
+  [[ -n $project ]] || fail "repository $repo is not under ghq root (${roots[*]})"
+  project=${project%.git}
+  IFS=/ read -r -a components <<<"$project"
+  for component in "${components[@]}"; do
+    [[ $component =~ $name_pattern ]] || fail "ghq path '$project' is not usable under $workspaces"
+  done
+}
+
 create() {
   resolve_name "$1"
   repo_paths
   ! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
   branch=$(git symbolic-ref --quiet --short HEAD) || branch=
   base=$(git rev-parse --verify 'HEAD^{commit}')
-  # worktree の toplevel は repo と無関係な名前になり得るので、共有の git dir から引く。
-  # 通常は <repo>/.git、bare なら <repo>.git の形をしている。
-  project=${gitdir%/}
-  if [[ ${project##*/} == .git ]]; then
-    project=${project%/.git}
-  fi
-  project=${project##*/}
-  project=${project%.git}
-  [[ $project =~ $name_pattern ]] || fail "repository directory name '$project' is not usable under $workspaces"
+  ghq_path
   workspace="$workspaces/$project/$id"
   collect_submodules "$base"
   git bundle create --quiet - HEAD |
