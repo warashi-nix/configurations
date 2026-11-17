@@ -151,8 +151,9 @@ ghq の path の導出は chelly-handoff だけが持つので、where に聞く
               ((file-name-absolute-p line)))
     (file-name-as-directory line)))
 
-(defun warashi-chelly-workspace-create (repository name)
+(defun warashi-chelly-workspace-create (repository name &optional commit)
   "本人の REPOSITORY の HEAD から handoff NAME の専用 clone を作る。
+COMMIT が非 nil なら、HEAD を動かさずにその commit から作る。
 作られた clone のディレクトリを返す。失敗したら出力を buffer に出して
 `user-error' を出す。"
   (when (file-remote-p repository)
@@ -165,8 +166,8 @@ ghq の path の導出は chelly-handoff だけが持つので、where に聞く
       (let ((inhibit-read-only t))
         (erase-buffer)))
     (let* ((default-directory (file-name-as-directory repository))
-           (status (call-process warashi-chelly-workspace-handoff-program
-                                 nil buffer nil "create" name)))
+           (status (apply #'call-process warashi-chelly-workspace-handoff-program
+                          nil buffer nil "create" name (and commit (list commit)))))
       (unless (eql status 0)
         (display-buffer buffer)
         (user-error "%s create %s failed (%s)"

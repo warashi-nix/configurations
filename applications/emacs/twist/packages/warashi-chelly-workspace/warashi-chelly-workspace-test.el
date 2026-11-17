@@ -263,6 +263,17 @@ chelly-handoff は `warashi-chelly-workspace-test--output' を出力する。"
                         "chelly-handoff" "create" "ログイン 修正"))
                      warashi-chelly-workspace-test--calls)))))
 
+(ert-deftest warashi-chelly-workspace-test-create-from-commit ()
+  "COMMIT を渡すと、HEAD ではなくその commit から作らせる。"
+  (let ((warashi-chelly-workspace-test--output
+         "/srv/chelly-workspaces/github.com/Warashi/configurations/pr-12\n"))
+    (warashi-chelly-workspace-test--with-handoff 0
+      (warashi-chelly-workspace-create
+       "/home/me/ghq/github.com/Warashi/configurations" "pr-12" "0123abcd")
+      (should (equal '(("/home/me/ghq/github.com/Warashi/configurations/"
+                        "chelly-handoff" "create" "pr-12" "0123abcd"))
+                     warashi-chelly-workspace-test--calls)))))
+
 (ert-deftest warashi-chelly-workspace-test-create-signals-on-failure ()
   "create が失敗したら出力の buffer を見せて user-error を出す。"
   (warashi-chelly-workspace-test--with-handoff 1
