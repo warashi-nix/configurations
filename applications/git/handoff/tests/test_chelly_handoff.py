@@ -376,6 +376,22 @@ class HandoffTest(unittest.TestCase):
         self.handoff("remove", "fix")
         self.assertFalse(self.workspace.exists())
 
+    def test_create_from_a_commit_sends_no_submodules(self):
+        # COMMIT は本人の checkout と無関係なので、その gitlink の commit が本人の
+        # submodule に無いこともあり、あっても送る相手として扱わない。
+        self.add_submodule("sub")
+        missing = "0" * 39 + "1"
+        self.git("-C", self.repo, "update-index", "--cacheinfo", f"160000,{missing},sub")
+        tree = self.git("-C", self.repo, "write-tree").stdout.decode().strip()
+        self.git("-C", self.repo, "reset", "-q")
+        commit = self.git(
+            "-C", self.repo, "commit-tree", "-p", self.rev(self.repo), "-m", "bump sub", tree,
+        ).stdout.decode().strip()
+        self.handoff("create", "fix", commit)
+        self.assertEqual(self.rev(self.workspace), commit)
+        self.assertEqual(list((self.workspace / "sub").iterdir()), [])
+        self.assertEqual(self.git("-C", self.workspace, "status", "--porcelain").stdout, b"")
+
     def test_create_rejects_an_unknown_commit(self):
         result = self.handoff("create", "fix", "0" * 40, check=False)
         self.assertEqual(result.returncode, 1)

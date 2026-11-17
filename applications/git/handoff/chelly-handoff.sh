@@ -297,16 +297,19 @@ create() {
   resolve_name "$1"
   repo_paths
   ! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
+  ghq_path
+  workspace="$workspaces/$project/$id"
   if [[ -n $2 ]]; then
     branch=
     base=$(git rev-parse --verify --quiet "$2^{commit}") || fail "commit $2 does not exist here"
+    # 本人の checkout と無関係な commit なので、その gitlink に本人の submodule の中身を送らない。
+    sub_paths=()
+    sub_commits=()
   else
     branch=$(git symbolic-ref --quiet --short HEAD) || branch=
     base=$(git rev-parse --verify 'HEAD^{commit}')
+    collect_submodules "$base"
   fi
-  ghq_path
-  workspace="$workspaces/$project/$id"
-  collect_submodules "$base"
   if [[ -n $2 ]]; then
     # bundle は ref が無いと作れないので、本人の HEAD を動かさずに一時 ref を置いて送り、すぐ消す。
     local transfer="refs/chelly-handoff/$id"

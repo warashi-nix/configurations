@@ -132,7 +132,9 @@ follows the detached `HEAD` instead of a branch: run `fetch`, integration, and
 `create NAME COMMIT` starts the workspace from `COMMIT` in the same way as a
 detached `HEAD`, without moving the owner's `HEAD`, for example from a fetched
 pull request head that no checkout needs. While the bundle is created, the
-owner's repository briefly holds the ref `refs/chelly-handoff/ID`.
+owner's repository briefly holds the ref `refs/chelly-handoff/ID`. Submodules
+are not sent, because `COMMIT` is unrelated to the owner's checkout, and stay
+empty.
 
 `fetch` requires the agent workspace to be clean and ahead of the base. It
 follows the agent's `HEAD` rather than a fixed branch, because agent harnesses
