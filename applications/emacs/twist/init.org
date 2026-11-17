@@ -670,9 +670,9 @@ branch 名が既定になり、日本語や空白も使える。create は作る
 #+end_src
 
 *** PR をレビューする専用 clone
-=@ p= で =gh pr list= から PR を選ぶと、=pr-番号= の git-wit worktree で
-=gh pr checkout --detach= してから同じ名前の専用 clone を作り、そこへ移る。PR の
-コードは専用環境の agent に build・test させ、本人は worktree で同じコードを読む。
+=@ p= で =gh pr list= から PR を選ぶと、PR の head を fetch し、本人の checkout
+を動かさずにその commit から =pr-番号= の専用 clone を作って、そこへ移る。PR の
+コードは専用環境の agent に build・test させる。
 
 #+begin_src emacs-lisp
 (setup (:package warashi-chelly-pr-review)
