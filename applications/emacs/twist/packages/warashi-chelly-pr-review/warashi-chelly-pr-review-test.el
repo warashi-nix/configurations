@@ -53,10 +53,10 @@
        ,@body)))
 
 (defun warashi-chelly-pr-review-test--gh-view (&rest args)
-  "`gh repo view' と `gh pr view' の出力を返す。"
+  "`gh pr view' の出力を返す。"
   (pcase args
-    (`("repo" "view" . ,_) "https://github.com/o/r\n")
-    (`("pr" "view" . ,_) "0123abcd\n")
+    (`("pr" "view" . ,_)
+     "{\"headRefOid\":\"0123abcd\",\"url\":\"https://github.com/o/r/pull/12\"}\n")
     (_ (ert-fail (format "unexpected gh %S" args)))))
 
 (ert-deftest warashi-chelly-pr-review-test-candidates ()
@@ -79,9 +79,7 @@
   (warashi-chelly-pr-review-test--with-sources #'warashi-chelly-pr-review-test--gh-view
     (should (equal "/srv/chelly-workspaces/github.com/o/r/pr-12/"
                    (warashi-chelly-pr-review-create "/home/me/repo/" 12)))
-    (should (equal '((gh "/home/me/repo/" ("repo" "view" "--json" "url" "--jq" ".url"))
-                     (gh "/home/me/repo/" ("pr" "view" "12" "--json" "headRefOid"
-                                           "--jq" ".headRefOid"))
+    (should (equal '((gh "/home/me/repo/" ("pr" "view" "12" "--json" "headRefOid,url"))
                      (git "/home/me/repo/" ("fetch" "--quiet" "--no-tags"
                                             "https://github.com/o/r" "refs/pull/12/head"))
                      (chelly-create "/home/me/repo/" "pr-12" "0123abcd"))

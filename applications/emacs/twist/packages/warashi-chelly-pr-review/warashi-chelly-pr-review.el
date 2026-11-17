@@ -104,23 +104,25 @@
   "REPOSITORY の PR NUMBER の head からレビュー用の専用 clone を作る。
 clone のディレクトリを返す。"
   (let ((name (format "pr-%d" number))
-        url commit)
+        pr url)
     (unless (warashi-chelly-workspace-available-p)
       (user-error "chelly workspaces are not available on this host"))
     (when (assoc name (warashi-chelly-workspace-list repository))
       (user-error "Handoff %s already exists" name))
     ;; fork の PR でも head は base の repository の refs/pull/番号/head にある。
-    ;; PR 一覧と同じ repository から取るよう、remote ではなく gh の既定 repo の URL から引く。
-    (setq url (string-trim
-               (warashi-chelly-pr-review--gh repository "repo" "view" "--json" "url"
-                                             "--jq" ".url"))
-          commit (string-trim
-                  (warashi-chelly-pr-review--gh repository "pr" "view"
-                                                (number-to-string number)
-                                                "--json" "headRefOid" "--jq" ".headRefOid")))
+    ;; remote の名前に頼らず、PR 自身の URL から base の repository を引く。
+    (setq pr (json-parse-string
+              (warashi-chelly-pr-review--gh repository "pr" "view"
+                                            (number-to-string number)
+                                            "--json" "headRefOid,url")
+              :object-type 'alist)
+          url (let-alist pr
+                (if (string-match (format "\\`\\(.+\\)/pull/%d\\'" number) .url)
+                    (match-string 1 .url)
+                  (user-error "Unexpected pull request URL: %s" .url))))
     (warashi-chelly-pr-review--git repository "fetch" "--quiet" "--no-tags" url
                                    (format "refs/pull/%d/head" number))
-    (warashi-chelly-workspace-create repository name commit)))
+    (warashi-chelly-workspace-create repository name (alist-get 'headRefOid pr))))
 
 ;;;###autoload
 (defun warashi-chelly-pr-review (repository)
