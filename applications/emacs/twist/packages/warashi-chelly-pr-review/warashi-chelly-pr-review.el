@@ -4,15 +4,15 @@
 
 ;; Author: Shinnosuke Sawada-Dazai <shin@warashi.dev>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (transient "0.5") (warashi-git-wit "0.1.0") (warashi-chelly-workspace "0.1.0") (warashi-chelly-handoff "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (transient "0.5") (warashi-chelly-workspace "0.1.0") (warashi-chelly-handoff "0.1.0"))
 ;; Keywords: convenience, vc
 
 ;;; Commentary:
 
-;; `gh pr list' から PR を選び、pr-番号 の git-wit worktree で
-;; `gh pr checkout --detach' してから、同じ名前で chelly-handoff の専用
-;; clone を作り、その clone へ project を切り替える。PR のコードは専用
-;; 環境の agent に build・test させ、本人は worktree で同じコードを読む。
+;; `gh pr list' から PR を選び、PR の head を本人の repository に fetch
+;; して、checkout せずにその commit から pr-番号 の chelly-handoff の専用
+;; clone を作り、その clone へ project を切り替える。PR のコードは専用環境
+;; の agent に build・test させる。
 ;;
 ;; 名前を番号から作るのは、PR の title や branch 名が他人の書いた文字列で、
 ;; 表示以外に使いたくないため。
@@ -24,7 +24,6 @@
 (require 'json)
 (require 'project)
 (require 'subr-x)
-(require 'warashi-git-wit)
 (require 'warashi-chelly-workspace)
 
 (defgroup warashi-chelly-pr-review nil
@@ -40,8 +39,8 @@
   "一覧に出す PR の最大件数。"
   :type 'integer)
 
-(defun warashi-chelly-pr-review--gh (directory &rest args)
-  "DIRECTORY で gh を ARGS で走らせ、標準出力を返す。
+(defun warashi-chelly-pr-review--run (program directory args)
+  "DIRECTORY で PROGRAM を ARGS で走らせ、標準出力を返す。
 失敗したら stderr と標準出力を添えて `user-error' を出す。"
   (let ((stderr (make-temp-file "warashi-chelly-pr-review")))
     (unwind-protect
@@ -49,13 +48,11 @@
           (let* ((default-directory (file-name-as-directory directory))
                  ;; 既定 repo の選択などで端末の入力を待たず、失敗として返させる。
                  (process-environment (cons "GH_PROMPT_DISABLED=1" process-environment))
-                 (status (apply #'process-file warashi-chelly-pr-review-gh-program
-                                nil (list t stderr) nil args))
+                 (status (apply #'process-file program nil (list t stderr) nil args))
                  (output (buffer-string)))
             (unless (eql status 0)
               (user-error "%s %s failed (%s): %s"
-                          warashi-chelly-pr-review-gh-program
-                          (string-join args " ") status
+                          program (string-join args " ") status
                           (string-trim
                            (concat (with-temp-buffer
                                      (insert-file-contents stderr)
@@ -63,6 +60,14 @@
                                    output))))
             output))
       (delete-file stderr))))
+
+(defun warashi-chelly-pr-review--gh (directory &rest args)
+  "DIRECTORY で gh を ARGS で走らせ、標準出力を返す。"
+  (warashi-chelly-pr-review--run warashi-chelly-pr-review-gh-program directory args))
+
+(defun warashi-chelly-pr-review--git (directory &rest args)
+  "DIRECTORY で git を ARGS で走らせ、標準出力を返す。"
+  (warashi-chelly-pr-review--run "git" directory args))
 
 (defun warashi-chelly-pr-review--candidates (repository)
   "REPOSITORY の open な PR を (LABEL . (:number N :annotation A)) で返す。"
@@ -96,21 +101,26 @@
     (plist-get (cdr (assoc selected candidates)) :number)))
 
 (defun warashi-chelly-pr-review-create (repository number)
-  "REPOSITORY の PR NUMBER のレビュー用 worktree と専用 clone を作る。
+  "REPOSITORY の PR NUMBER の head からレビュー用の専用 clone を作る。
 clone のディレクトリを返す。"
   (let ((name (format "pr-%d" number))
-        worktree)
-    ;; 作れないと分かっている clone のために worktree を残さない。
+        url commit)
     (unless (warashi-chelly-workspace-available-p)
       (user-error "chelly workspaces are not available on this host"))
     (when (assoc name (warashi-chelly-workspace-list repository))
       (user-error "Handoff %s already exists" name))
-    (setq worktree (file-name-as-directory (warashi-git-wit-add repository name)))
-    ;; checkout や clone の作成に失敗しても worktree は消さない。そこから
-    ;; checkout し直して @ c で作り直せる。
-    (warashi-chelly-pr-review--gh worktree "pr" "checkout" "--detach"
-                                  (number-to-string number))
-    (warashi-chelly-workspace-create worktree name)))
+    ;; fork の PR でも head は base の repository の refs/pull/番号/head にある。
+    ;; PR 一覧と同じ repository から取るよう、remote ではなく gh の既定 repo の URL から引く。
+    (setq url (string-trim
+               (warashi-chelly-pr-review--gh repository "repo" "view" "--json" "url"
+                                             "--jq" ".url"))
+          commit (string-trim
+                  (warashi-chelly-pr-review--gh repository "pr" "view"
+                                                (number-to-string number)
+                                                "--json" "headRefOid" "--jq" ".headRefOid")))
+    (warashi-chelly-pr-review--git repository "fetch" "--quiet" "--no-tags" url
+                                   (format "refs/pull/%d/head" number))
+    (warashi-chelly-workspace-create repository name commit)))
 
 ;;;###autoload
 (defun warashi-chelly-pr-review (repository)

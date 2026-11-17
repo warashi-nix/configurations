@@ -6,8 +6,8 @@
 ;;   emacs -Q --batch -L . -l warashi-chelly-pr-review-test.el \
 ;;     -f ert-run-tests-batch-and-exit
 ;;
-;; gh は `warashi-chelly-pr-review--gh'、git-wit と chelly-handoff はそれぞれ
-;; の単位の公開関数で差し替える。
+;; gh と git は `warashi-chelly-pr-review--gh' と `warashi-chelly-pr-review--git'、
+;; chelly-handoff は単位の公開関数で差し替える。
 
 ;;; Code:
 
@@ -30,26 +30,34 @@
   "`warashi-chelly-workspace-list' が返す一覧。")
 
 (defmacro warashi-chelly-pr-review-test--with-sources (gh &rest body)
-  "gh を GH (引数を受けて出力を返す関数) に差し替え、git-wit と chelly を固定して BODY を実行する。"
+  "gh を GH (引数を受けて出力を返す関数) に差し替え、git と chelly を固定して BODY を実行する。"
   (declare (indent 1))
   `(let ((warashi-chelly-pr-review-test--calls nil))
      (cl-letf (((symbol-function 'warashi-chelly-pr-review--gh)
                 (lambda (directory &rest args)
                   (push (list 'gh directory args) warashi-chelly-pr-review-test--calls)
                   (apply ,gh args)))
+               ((symbol-function 'warashi-chelly-pr-review--git)
+                (lambda (directory &rest args)
+                  (push (list 'git directory args) warashi-chelly-pr-review-test--calls)
+                  ""))
                ((symbol-function 'warashi-chelly-workspace-available-p)
                 (lambda () warashi-chelly-pr-review-test--available))
                ((symbol-function 'warashi-chelly-workspace-list)
                 (lambda (_repository) warashi-chelly-pr-review-test--clones))
-               ((symbol-function 'warashi-git-wit-add)
-                (lambda (repository memo)
-                  (push (list 'git-wit-add repository memo) warashi-chelly-pr-review-test--calls)
-                  "/home/me/wt/new-id"))
                ((symbol-function 'warashi-chelly-workspace-create)
-                (lambda (repository name)
-                  (push (list 'chelly-create repository name) warashi-chelly-pr-review-test--calls)
+                (lambda (repository name &optional commit)
+                  (push (list 'chelly-create repository name commit)
+                        warashi-chelly-pr-review-test--calls)
                   (format "/srv/chelly-workspaces/github.com/o/r/%s/" name))))
        ,@body)))
+
+(defun warashi-chelly-pr-review-test--gh-view (&rest args)
+  "`gh repo view' と `gh pr view' の出力を返す。"
+  (pcase args
+    (`("repo" "view" . ,_) "https://github.com/o/r\n")
+    (`("pr" "view" . ,_) "0123abcd\n")
+    (_ (ert-fail (format "unexpected gh %S" args)))))
 
 (ert-deftest warashi-chelly-pr-review-test-candidates ()
   "PR を番号と title で並べ、author と branch、draft かどうかを補足に出す。"
@@ -67,30 +75,33 @@
                      (nth 1 (car warashi-chelly-pr-review-test--calls)))))))
 
 (ert-deftest warashi-chelly-pr-review-test-create ()
-  "pr-番号 の worktree を作って PR を detached で checkout し、そこから同名の clone を作る。"
-  (warashi-chelly-pr-review-test--with-sources (lambda (&rest _) "")
+  "PR の head を本人の repository に fetch し、checkout せずにその commit から pr-番号 の clone を作る。"
+  (warashi-chelly-pr-review-test--with-sources #'warashi-chelly-pr-review-test--gh-view
     (should (equal "/srv/chelly-workspaces/github.com/o/r/pr-12/"
                    (warashi-chelly-pr-review-create "/home/me/repo/" 12)))
-    (should (equal '((git-wit-add "/home/me/repo/" "pr-12")
-                     (gh "/home/me/wt/new-id/" ("pr" "checkout" "--detach" "12"))
-                     (chelly-create "/home/me/wt/new-id/" "pr-12"))
+    (should (equal '((gh "/home/me/repo/" ("repo" "view" "--json" "url" "--jq" ".url"))
+                     (gh "/home/me/repo/" ("pr" "view" "12" "--json" "headRefOid"
+                                           "--jq" ".headRefOid"))
+                     (git "/home/me/repo/" ("fetch" "--quiet" "--no-tags"
+                                            "https://github.com/o/r" "refs/pull/12/head"))
+                     (chelly-create "/home/me/repo/" "pr-12" "0123abcd"))
                    (reverse warashi-chelly-pr-review-test--calls)))))
 
-(ert-deftest warashi-chelly-pr-review-test-checkout-failure-keeps-worktree ()
-  "checkout に失敗したら clone は作らない。worktree は残し、そこからやり直せる。"
+(ert-deftest warashi-chelly-pr-review-test-gh-failure-creates-nothing ()
+  "PR の head を引けなければ clone は作らない。"
   (warashi-chelly-pr-review-test--with-sources
       (lambda (&rest _) (user-error "gh failed"))
     (should-error (warashi-chelly-pr-review-create "/home/me/repo/" 12)
                   :type 'user-error)
     (should-not (assq 'chelly-create warashi-chelly-pr-review-test--calls))))
 
-(ert-deftest warashi-chelly-pr-review-test-refuses-before-worktree ()
-  "専用 clone を作れないときは、worktree を作る前に止める。"
+(ert-deftest warashi-chelly-pr-review-test-refuses-before-fetch ()
+  "専用 clone を作れないときは、PR を fetch する前に止める。"
   (dolist (case '((nil . nil)
                   (t . (("pr-12" . "/srv/chelly-workspaces/github.com/o/r/pr-12/")))))
     (let ((warashi-chelly-pr-review-test--available (car case))
           (warashi-chelly-pr-review-test--clones (cdr case)))
-      (warashi-chelly-pr-review-test--with-sources (lambda (&rest _) "")
+      (warashi-chelly-pr-review-test--with-sources #'warashi-chelly-pr-review-test--gh-view
         (should-error (warashi-chelly-pr-review-create "/home/me/repo/" 12)
                       :type 'user-error)
         (should-not warashi-chelly-pr-review-test--calls)))))
