@@ -8,7 +8,7 @@ workspaces="${CHELLY_HANDOFF_WORKSPACES:-/srv/chelly-workspaces}"
 
 usage() {
   cat >&2 <<'EOF'
-usage: chelly-handoff create [NAME]
+usage: chelly-handoff create [NAME [COMMIT]]
        chelly-handoff fetch [NAME]
        chelly-handoff update [NAME]
        chelly-handoff remove [NAME] [--force]
@@ -17,6 +17,7 @@ usage: chelly-handoff create [NAME]
        chelly-handoff name ID
 
 create  現在の HEAD から専用領域の <ghq path>/ID に clone を作り、remote handoff-ID を追加する
+        COMMIT を渡すと、HEAD を動かさずにその commit から detached HEAD と同じ形で作る
 fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り込み、新規追跡ファイルを検査する
 update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
         agent が切った branch は消し、create 時の branch に戻す
@@ -72,7 +73,11 @@ bundle="${dest}.bundle.$$"
 trap "rm -f -- \"$bundle\"" EXIT
 cat >"$bundle"
 mkdir -p -- "$dest"
-git -c init.defaultBranch="$branch" clone --quiet --no-checkout --template= "$bundle" "$dest"
+# commit を指定した create は bundle の ref が refs/heads の外にあり、clone の既定の
+# refspec では object が取り込まれないので、その ref も取り込む。
+git -c init.defaultBranch="$branch" clone --quiet --no-checkout --template= \
+  -c "remote.origin.fetch=+refs/chelly-handoff/*:refs/remotes/origin/chelly-handoff/*" \
+  "$bundle" "$dest"
 cd "$dest"
 git remote remove origin
 git -c core.hooksPath=/dev/null switch --quiet -c "$branch" "$base"
@@ -292,13 +297,30 @@ create() {
   resolve_name "$1"
   repo_paths
   ! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
-  branch=$(git symbolic-ref --quiet --short HEAD) || branch=
-  base=$(git rev-parse --verify 'HEAD^{commit}')
+  if [[ -n $2 ]]; then
+    branch=
+    base=$(git rev-parse --verify --quiet "$2^{commit}") || fail "commit $2 does not exist here"
+  else
+    branch=$(git symbolic-ref --quiet --short HEAD) || branch=
+    base=$(git rev-parse --verify 'HEAD^{commit}')
+  fi
   ghq_path
   workspace="$workspaces/$project/$id"
   collect_submodules "$base"
-  git bundle create --quiet - HEAD |
-    agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$id}"
+  if [[ -n $2 ]]; then
+    # bundle は ref が無いと作れないので、本人の HEAD を動かさずに一時 ref を置いて送り、すぐ消す。
+    local transfer="refs/chelly-handoff/$id"
+    git update-ref "$transfer" "$base"
+    if ! git bundle create --quiet - "$transfer" |
+      agent "$create_script" "$workspaces" "$workspace" "$base" "$id"; then
+      git update-ref -d "$transfer"
+      fail "cannot create $workspace"
+    fi
+    git update-ref -d "$transfer"
+  else
+    git bundle create --quiet - HEAD |
+      agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$id}"
+  fi
   mkdir -p "$gitdir/chelly-handoff"
   git remote add "$remote" "$bundle"
   git config "remote.$remote.chelly-base" "$base"
@@ -445,8 +467,8 @@ where() {
 [[ $# -ge 1 ]] || usage
 case "$1" in
 create)
-  [[ $# -le 2 ]] || usage
-  create "${2:-}"
+  [[ $# -le 2 || ($# -eq 3 && -n $2 && -n $3) ]] || usage
+  create "${2:-}" "${3:-}"
   ;;
 fetch)
   [[ $# -le 2 ]] || usage

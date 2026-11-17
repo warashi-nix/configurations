@@ -341,6 +341,47 @@ class HandoffTest(unittest.TestCase):
         self.assertIn(b"NAME", result.stderr)
         self.assertFalse(self.workspace.exists())
 
+    def test_create_from_a_commit_leaves_the_owner_checkout_alone(self):
+        # PR の head のように、どの ref からも届かない commit から作る。
+        tree = self.rev(self.repo, "HEAD^{tree}")
+        commit = self.git(
+            "-C", self.repo, "commit-tree", "-p", self.base, "-m", "pull request", tree,
+        ).stdout.decode().strip()
+        result = self.handoff("create", "fix", commit)
+        self.assertEqual(result.stdout.decode().strip(), str(self.workspace))
+        self.assertEqual(self.rev(self.workspace), commit)
+        self.assertEqual(
+            self.git("-C", self.workspace, "symbolic-ref", "--short", "HEAD").stdout.decode().strip(),
+            "fix",
+        )
+        self.assertEqual(self.git("-C", self.workspace, "status", "--porcelain").stdout, b"")
+        self.assertEqual(self.rev(self.repo), self.base)
+        self.assertEqual(
+            self.git("-C", self.repo, "symbolic-ref", "--short", "HEAD").stdout.decode().strip(),
+            "main",
+        )
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-base").stdout.decode().strip(),
+            commit,
+        )
+        self.assertEqual(
+            self.git("-C", self.repo, "config", "remote.handoff-fix.chelly-branch", check=False).returncode,
+            1,
+        )
+        self.assertEqual(self.git("-C", self.repo, "for-each-ref", "refs/chelly-handoff/").stdout, b"")
+        self.assertEqual(
+            self.git("-C", self.workspace, "for-each-ref", "--format=%(refname)").stdout.decode().split(),
+            ["refs/heads/fix"],
+        )
+        self.handoff("remove", "fix")
+        self.assertFalse(self.workspace.exists())
+
+    def test_create_rejects_an_unknown_commit(self):
+        result = self.handoff("create", "fix", "0" * 40, check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertFalse(self.workspace.exists())
+        self.assertEqual(self.git("-C", self.repo, "remote").stdout, b"")
+
     def test_create_delivers_initialized_submodules_without_their_remotes(self):
         self.add_submodule("deps/sub")
         self.handoff("create", "fix")

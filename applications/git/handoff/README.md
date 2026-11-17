@@ -74,7 +74,7 @@ the owner's repository is the only record.
 
 ```console
 cd /absolute/project            # on the branch the agent should start from
-chelly-handoff create [fix-issue-123]
+chelly-handoff create [fix-issue-123 [COMMIT]]
 chelly-handoff fetch [fix-issue-123]
 chelly-handoff update [fix-issue-123]
 chelly-handoff remove [fix-issue-123] [--force]
@@ -128,6 +128,11 @@ then required, the agent workspace starts on a branch named `ID`, and no
 branch is recorded in `remote.handoff-ID.chelly-branch`. Such a handoff
 follows the detached `HEAD` instead of a branch: run `fetch`, integration, and
 `update` from the same worktree.
+
+`create NAME COMMIT` starts the workspace from `COMMIT` in the same way as a
+detached `HEAD`, without moving the owner's `HEAD`, for example from a fetched
+pull request head that no checkout needs. While the bundle is created, the
+owner's repository briefly holds the ref `refs/chelly-handoff/ID`.
 
 `fetch` requires the agent workspace to be clean and ahead of the base. It
 follows the agent's `HEAD` rather than a fixed branch, because agent harnesses
