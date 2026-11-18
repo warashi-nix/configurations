@@ -11,7 +11,7 @@ checks=$(nix eval ".#checks.${TARGET_SYSTEM}" --apply builtins.attrNames --json 
 
 targets=()
 while IFS= read -r check; do
-  targets+=(".#checks.${TARGET_SYSTEM}.${check}")
+	targets+=(".#checks.${TARGET_SYSTEM}.${check}")
 done <<<"${checks}"
 
 nix build --accept-flake-config --keep-going --no-link --show-trace --eval-system "${TARGET_SYSTEM}" --print-out-paths "${targets[@]}"

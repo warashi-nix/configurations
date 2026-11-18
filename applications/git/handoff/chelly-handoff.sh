@@ -7,7 +7,7 @@ set -euo pipefail
 workspaces="${CHELLY_HANDOFF_WORKSPACES:-/srv/chelly-workspaces}"
 
 usage() {
-  cat >&2 <<'EOF'
+	cat >&2 <<'EOF'
 usage: chelly-handoff create [NAME [COMMIT]]
        chelly-handoff fetch [NAME]
        chelly-handoff update [NAME]
@@ -30,12 +30,12 @@ name    ID の NAME を表示する (id が作らない形の ID は失敗する
 NAME を省略すると現在の branch 名を使う。detached HEAD では NAME が要る。
 ID は NAME が英数字と '.' '_' '-' だけならそのもの、それ以外は x- に UTF-8 の 16 進を続けたもの。
 EOF
-  exit 2
+	exit 2
 }
 
 fail() {
-  echo "chelly-handoff: $*" >&2
-  exit 1
+	echo "chelly-handoff: $*" >&2
+	exit 1
 }
 
 # 専用ユーザー側で動かすスクリプトは引数だけを受け取り、本人の環境変数を継承しない。
@@ -45,14 +45,14 @@ fail() {
 # GIT_CONFIG_COUNT で設定を強制する。裏の maintenance は remove の削除と競合し、
 # untracked cache はコンテナのファイルシステムでは使えない。
 agent() {
-  local script=$1
-  shift
-  (
-    cd "$workspaces" &&
-      env -u SSH_AUTH_SOCK -u SSH_AGENT_PID \
-        -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL \
-        chelly run -- bash -euc "$script" bash "$@"
-  )
+	local script=$1
+	shift
+	(
+		cd "$workspaces" &&
+			env -u SSH_AUTH_SOCK -u SSH_AGENT_PID \
+				-u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL \
+				chelly run -- bash -euc "$script" bash "$@"
+	)
 }
 
 create_script='
@@ -204,193 +204,193 @@ id_max_bytes=200
 # 判定も C locale で行う。UTF-8 locale の [A-Za-z] が非 ASCII の文字に一致するかは
 # libc によって違い、一致すると非 ASCII のまま path に入る。
 resolve_name() {
-  local LC_ALL=C hex='' i
-  if [[ -n $1 ]]; then
-    name=$1
-  else
-    name=$(git symbolic-ref --quiet --short HEAD) || fail "check out a named branch first or pass NAME"
-  fi
-  [[ $name != *[[:cntrl:]]* ]] || fail "NAME must not contain control characters"
-  if [[ $name =~ $name_pattern && $name != "$id_prefix"* ]] &&
-    git check-ref-format "refs/remotes/handoff-$name/HEAD"; then
-    id=$name
-    return
-  fi
-  for ((i = 0; i < ${#name}; i++)); do
-    printf -v hex '%s%02x' "$hex" "'${name:i:1}"
-  done
-  id=$id_prefix$hex
-  ((${#id} <= id_max_bytes)) || fail "NAME '$name' is too long"
+	local LC_ALL=C hex='' i
+	if [[ -n $1 ]]; then
+		name=$1
+	else
+		name=$(git symbolic-ref --quiet --short HEAD) || fail "check out a named branch first or pass NAME"
+	fi
+	[[ $name != *[[:cntrl:]]* ]] || fail "NAME must not contain control characters"
+	if [[ $name =~ $name_pattern && $name != "$id_prefix"* ]] &&
+		git check-ref-format "refs/remotes/handoff-$name/HEAD"; then
+		id=$name
+		return
+	fi
+	for ((i = 0; i < ${#name}; i++)); do
+		printf -v hex '%s%02x' "$hex" "'${name:i:1}"
+	done
+	id=$id_prefix$hex
+	((${#id} <= id_max_bytes)) || fail "NAME '$name' is too long"
 }
 
 repo_paths() {
-  toplevel=$(git rev-parse --show-toplevel) || fail "run inside the owner's repository"
-  gitdir=$(git rev-parse --path-format=absolute --git-common-dir)
-  remote="handoff-$id"
-  bundle="$gitdir/chelly-handoff/$id.bundle"
+	toplevel=$(git rev-parse --show-toplevel) || fail "run inside the owner's repository"
+	gitdir=$(git rev-parse --path-format=absolute --git-common-dir)
+	remote="handoff-$id"
+	bundle="$gitdir/chelly-handoff/$id.bundle"
 }
 
 # COMMIT の gitlink のうち、本人側で初期化済みの submodule を送る対象として集める。
 # 専用 clone を変える前に、送れない submodule が無いことをここで確かめておく。
 collect_submodules() {
-  local entry meta path commit
-  sub_paths=()
-  sub_commits=()
-  while IFS= read -r -d '' entry; do
-    meta=${entry%%$'\t'*}
-    path=${entry#*$'\t'}
-    [[ $meta == "160000 commit "* ]] || continue
-    commit=${meta##* }
-    if [[ ! -e $toplevel/$path/.git ]]; then
-      echo "chelly-handoff: submodule $path is not initialized here; not sent" >&2
-      continue
-    fi
-    git -C "$toplevel/$path" cat-file -e "$commit^{commit}" 2>/dev/null ||
-      fail "submodule $path does not have $commit; run git submodule update first"
-    sub_paths+=("$path")
-    sub_commits+=("$commit")
-  done < <(git ls-tree -r -z "$1")
+	local entry meta path commit
+	sub_paths=()
+	sub_commits=()
+	while IFS= read -r -d '' entry; do
+		meta=${entry%%$'\t'*}
+		path=${entry#*$'\t'}
+		[[ $meta == "160000 commit "* ]] || continue
+		commit=${meta##* }
+		if [[ ! -e $toplevel/$path/.git ]]; then
+			echo "chelly-handoff: submodule $path is not initialized here; not sent" >&2
+			continue
+		fi
+		git -C "$toplevel/$path" cat-file -e "$commit^{commit}" 2>/dev/null ||
+			fail "submodule $path does not have $commit; run git submodule update first"
+		sub_paths+=("$path")
+		sub_commits+=("$commit")
+	done < <(git ls-tree -r -z "$1")
 }
 
 # bundle は ref が無いと作れないので、本人側の submodule に一時 ref を置いて送り、すぐ消す。
 send_submodule() {
-  local path=$1 commit=$2 repo="$toplevel/$1"
-  git -C "$repo" update-ref refs/chelly-handoff/transfer "$commit"
-  if ! git -C "$repo" bundle create --quiet - refs/chelly-handoff/transfer |
-    agent "$submodule_script" "$workspaces" "$workspace" "$path" "$commit"; then
-    git -C "$repo" update-ref -d refs/chelly-handoff/transfer
-    fail "cannot send submodule $path to $workspace"
-  fi
-  git -C "$repo" update-ref -d refs/chelly-handoff/transfer
+	local path=$1 commit=$2 repo="$toplevel/$1"
+	git -C "$repo" update-ref refs/chelly-handoff/transfer "$commit"
+	if ! git -C "$repo" bundle create --quiet - refs/chelly-handoff/transfer |
+		agent "$submodule_script" "$workspaces" "$workspace" "$path" "$commit"; then
+		git -C "$repo" update-ref -d refs/chelly-handoff/transfer
+		fail "cannot send submodule $path to $workspace"
+	fi
+	git -C "$repo" update-ref -d refs/chelly-handoff/transfer
 }
 
 # 専用領域では本人と同じ ghq の path に clone を置き、コンテナ内でも同じ path に見せる。
 # worktree の toplevel は repo と無関係な場所になり得るので、共有の git dir から引く。
 # 通常は <repo>/.git、bare なら <repo>.git の形をしている。
 ghq_path() {
-  local repo root resolved component
-  local -a roots components
-  repo=${gitdir%/}
-  if [[ ${repo##*/} == .git ]]; then
-    repo=${repo%/.git}
-  fi
-  repo=$(cd -P -- "$repo" && pwd -P)
-  mapfile -t roots < <(git config --path --get-all ghq.root)
-  ((${#roots[@]})) || roots=("$HOME/ghq")
-  project=
-  for root in "${roots[@]}"; do
-    resolved=$(cd -P -- "$root" 2>/dev/null && pwd -P) || continue
-    if [[ $repo == "$resolved"/?* ]]; then
-      project=${repo#"$resolved"/}
-      break
-    fi
-  done
-  [[ -n $project ]] || fail "repository $repo is not under ghq root (${roots[*]})"
-  project=${project%.git}
-  IFS=/ read -r -a components <<<"$project"
-  for component in "${components[@]}"; do
-    [[ $component =~ $name_pattern ]] || fail "ghq path '$project' is not usable under $workspaces"
-  done
+	local repo root resolved component
+	local -a roots components
+	repo=${gitdir%/}
+	if [[ ${repo##*/} == .git ]]; then
+		repo=${repo%/.git}
+	fi
+	repo=$(cd -P -- "$repo" && pwd -P)
+	mapfile -t roots < <(git config --path --get-all ghq.root)
+	((${#roots[@]})) || roots=("$HOME/ghq")
+	project=
+	for root in "${roots[@]}"; do
+		resolved=$(cd -P -- "$root" 2>/dev/null && pwd -P) || continue
+		if [[ $repo == "$resolved"/?* ]]; then
+			project=${repo#"$resolved"/}
+			break
+		fi
+	done
+	[[ -n $project ]] || fail "repository $repo is not under ghq root (${roots[*]})"
+	project=${project%.git}
+	IFS=/ read -r -a components <<<"$project"
+	for component in "${components[@]}"; do
+		[[ $component =~ $name_pattern ]] || fail "ghq path '$project' is not usable under $workspaces"
+	done
 }
 
 create() {
-  resolve_name "$1"
-  repo_paths
-  ! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
-  ghq_path
-  workspace="$workspaces/$project/$id"
-  if [[ -n $2 ]]; then
-    branch=
-    base=$(git rev-parse --verify --quiet "$2^{commit}") || fail "commit $2 does not exist here"
-    # 本人の checkout と無関係な commit なので、その gitlink に本人の submodule の中身を送らない。
-    sub_paths=()
-    sub_commits=()
-  else
-    branch=$(git symbolic-ref --quiet --short HEAD) || branch=
-    base=$(git rev-parse --verify 'HEAD^{commit}')
-    collect_submodules "$base"
-  fi
-  if [[ -n $2 ]]; then
-    # bundle は ref が無いと作れないので、本人の HEAD を動かさずに一時 ref を置いて送り、すぐ消す。
-    local transfer="refs/chelly-handoff/$id"
-    git update-ref "$transfer" "$base"
-    if ! git bundle create --quiet - "$transfer" |
-      agent "$create_script" "$workspaces" "$workspace" "$base" "$id"; then
-      git update-ref -d "$transfer"
-      fail "cannot create $workspace"
-    fi
-    git update-ref -d "$transfer"
-  else
-    git bundle create --quiet - HEAD |
-      agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$id}"
-  fi
-  mkdir -p "$gitdir/chelly-handoff"
-  git remote add "$remote" "$bundle"
-  git config "remote.$remote.chelly-base" "$base"
-  if [[ -n $branch ]]; then
-    git config "remote.$remote.chelly-branch" "$branch"
-  fi
-  git config "remote.$remote.chelly-workspace" "$workspace"
-  # 途中で失敗しても remove で片付けられるよう、submodule は remote を記録してから送る。
-  for i in "${!sub_paths[@]}"; do
-    send_submodule "${sub_paths[i]}" "${sub_commits[i]}"
-  done
-  echo "$workspace"
+	resolve_name "$1"
+	repo_paths
+	! git config --get "remote.$remote.url" >/dev/null || fail "remote $remote already exists"
+	ghq_path
+	workspace="$workspaces/$project/$id"
+	if [[ -n $2 ]]; then
+		branch=
+		base=$(git rev-parse --verify --quiet "$2^{commit}") || fail "commit $2 does not exist here"
+		# 本人の checkout と無関係な commit なので、その gitlink に本人の submodule の中身を送らない。
+		sub_paths=()
+		sub_commits=()
+	else
+		branch=$(git symbolic-ref --quiet --short HEAD) || branch=
+		base=$(git rev-parse --verify 'HEAD^{commit}')
+		collect_submodules "$base"
+	fi
+	if [[ -n $2 ]]; then
+		# bundle は ref が無いと作れないので、本人の HEAD を動かさずに一時 ref を置いて送り、すぐ消す。
+		local transfer="refs/chelly-handoff/$id"
+		git update-ref "$transfer" "$base"
+		if ! git bundle create --quiet - "$transfer" |
+			agent "$create_script" "$workspaces" "$workspace" "$base" "$id"; then
+			git update-ref -d "$transfer"
+			fail "cannot create $workspace"
+		fi
+		git update-ref -d "$transfer"
+	else
+		git bundle create --quiet - HEAD |
+			agent "$create_script" "$workspaces" "$workspace" "$base" "${branch:-$id}"
+	fi
+	mkdir -p "$gitdir/chelly-handoff"
+	git remote add "$remote" "$bundle"
+	git config "remote.$remote.chelly-base" "$base"
+	if [[ -n $branch ]]; then
+		git config "remote.$remote.chelly-branch" "$branch"
+	fi
+	git config "remote.$remote.chelly-workspace" "$workspace"
+	# 途中で失敗しても remove で片付けられるよう、submodule は remote を記録してから送る。
+	for i in "${!sub_paths[@]}"; do
+		send_submodule "${sub_paths[i]}" "${sub_commits[i]}"
+	done
+	echo "$workspace"
 }
 
 # worktree から create した場合も同じ領域を指せるよう、path は remote 設定から読む。
 # detached HEAD から create したときは branch を記録せず、専用 clone の branch は ID になる。
 recorded_paths() {
-  base=$(git config --get "remote.$remote.chelly-base") || fail "remote $remote was not created by chelly-handoff"
-  branch=$(git config --get "remote.$remote.chelly-branch") || branch=
-  agent_branch=${branch:-$id}
-  workspace=$(git config --get "remote.$remote.chelly-workspace")
+	base=$(git config --get "remote.$remote.chelly-base") || fail "remote $remote was not created by chelly-handoff"
+	branch=$(git config --get "remote.$remote.chelly-branch") || branch=
+	agent_branch=${branch:-$id}
+	workspace=$(git config --get "remote.$remote.chelly-workspace")
 }
 
 fetch() {
-  resolve_name "$1"
-  repo_paths
-  recorded_paths
-  mkdir -p "$gitdir/chelly-handoff"
-  agent "$fetch_script" "$workspaces" "$workspace" "$base" </dev/null >"$bundle.tmp"
-  git bundle verify --quiet "$bundle.tmp"
-  mv -f -- "$bundle.tmp" "$bundle"
-  # bundle の head は agent の HEAD ひとつ。detached HEAD は記録 branch の名前で受ける。
-  head_ref=$(git bundle list-heads "$bundle" | {
-    read -r _ ref
-    echo "$ref"
-  })
-  case "$head_ref" in
-  refs/heads/?*) head_name=${head_ref#refs/heads/} ;;
-  HEAD) head_name=$agent_branch ;;
-  *) fail "unexpected bundle head '$head_ref'" ;;
-  esac
-  tip="refs/remotes/$remote/$head_name"
-  # agent が前回と別の branch に居たら古い名前の ref は紛らわしいだけで、
-  # feat/topic の後に feat が来ると directory と衝突して fetch できないので、先に全部消す。
-  git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
-  git fetch --quiet --no-tags "$remote" "+$head_ref:$tip"
-  echo "fetched $(git rev-parse --short "$tip") as $remote/$head_name; review with $base..$remote/$head_name"
-  git-check-new-ignored --object-repo "$gitdir" --policy-repo "$toplevel" "$base" "$tip"
+	resolve_name "$1"
+	repo_paths
+	recorded_paths
+	mkdir -p "$gitdir/chelly-handoff"
+	agent "$fetch_script" "$workspaces" "$workspace" "$base" </dev/null >"$bundle.tmp"
+	git bundle verify --quiet "$bundle.tmp"
+	mv -f -- "$bundle.tmp" "$bundle"
+	# bundle の head は agent の HEAD ひとつ。detached HEAD は記録 branch の名前で受ける。
+	head_ref=$(git bundle list-heads "$bundle" | {
+		read -r _ ref
+		echo "$ref"
+	})
+	case "$head_ref" in
+	refs/heads/?*) head_name=${head_ref#refs/heads/} ;;
+	HEAD) head_name=$agent_branch ;;
+	*) fail "unexpected bundle head '$head_ref'" ;;
+	esac
+	tip="refs/remotes/$remote/$head_name"
+	# agent が前回と別の branch に居たら古い名前の ref は紛らわしいだけで、
+	# feat/topic の後に feat が来ると directory と衝突して fetch できないので、先に全部消す。
+	git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
+	git fetch --quiet --no-tags "$remote" "+$head_ref:$tip"
+	echo "fetched $(git rev-parse --short "$tip") as $remote/$head_name; review with $base..$remote/$head_name"
+	git-check-new-ignored --object-repo "$gitdir" --policy-repo "$toplevel" "$base" "$tip"
 }
 
 # probe の出力は HEAD の commit、HEAD の branch 名 (detached なら空)、未コミット変更の行数。
 probe_agent() {
-  probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null) ||
-    fail "cannot probe agent workspace $workspace"
-  [[ $probe != missing ]] || return 1
-  mapfile -t lines <<<"$probe"
-  head=${lines[0]}
-  head_branch=${lines[1]}
-  dirty=${lines[2]}
+	probe=$(agent "$probe_script" "$workspaces" "$workspace" </dev/null) ||
+		fail "cannot probe agent workspace $workspace"
+	[[ $probe != missing ]] || return 1
+	mapfile -t lines <<<"$probe"
+	head=${lines[0]}
+	head_branch=${lines[1]}
+	dirty=${lines[2]}
 }
 
 # 専用 clone の HEAD が本人の repo にあり、未コミット変更も無いときだけ、clone を捨ててよい。
 require_agent_work_collected() {
-  probe_agent || fail "agent workspace $workspace is missing; run create"
-  git cat-file -e "$head^{commit}" 2>/dev/null ||
-    fail "agent commit $head is not in this repository; run fetch first"
-  [[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; commit and fetch, or discard them first"
+	probe_agent || fail "agent workspace $workspace is missing; run create"
+	git cat-file -e "$head^{commit}" 2>/dev/null ||
+		fail "agent commit $head is not in this repository; run fetch first"
+	[[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; commit and fetch, or discard them first"
 }
 
 # ff-only で取り込むと先端の SHA は clone と一致したまま agent の branch に居るので、
@@ -398,127 +398,127 @@ require_agent_work_collected() {
 # bundle は作れないので、その場合は空の stdin を渡す。
 # 記録 branch が無ければ、detached のまま取り込んだ実行場所の HEAD を先端とする。
 update() {
-  resolve_name "$1"
-  repo_paths
-  recorded_paths
-  if [[ -n $branch ]]; then
-    source="refs/heads/$branch"
-    tip=$(git rev-parse --verify "$source^{commit}") || fail "branch $branch does not exist here"
-  else
-    source=HEAD
-    tip=$(git rev-parse --verify 'HEAD^{commit}')
-  fi
-  require_agent_work_collected
-  if [[ $head == "$tip" && $head_branch == "$agent_branch" ]]; then
-    echo "$remote is up to date at $(git rev-parse --short "$tip")"
-    return
-  fi
-  # 専用 clone の submodule は base の gitlink に揃っているので、gitlink が変わったものだけ送る。
-  collect_submodules "$tip"
-  local changed_paths=() changed_commits=()
-  for i in "${!sub_paths[@]}"; do
-    [[ $(git rev-parse --verify --quiet "$base:${sub_paths[i]}") == "${sub_commits[i]}" ]] && continue
-    changed_paths+=("${sub_paths[i]}")
-    changed_commits+=("${sub_commits[i]}")
-  done
-  if [[ $base == "$tip" ]]; then
-    agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source" </dev/null
-  else
-    git bundle create --quiet - "^$base" "$source" |
-      agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source"
-  fi
-  for i in "${!changed_paths[@]}"; do
-    send_submodule "${changed_paths[i]}" "${changed_commits[i]}"
-  done
-  git config "remote.$remote.chelly-base" "$tip"
-  git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
-  rm -f -- "$bundle" "$bundle.tmp"
-  echo "updated $remote to $(git rev-parse --short "$tip"); previous base was $(git rev-parse --short "$base")"
+	resolve_name "$1"
+	repo_paths
+	recorded_paths
+	if [[ -n $branch ]]; then
+		source="refs/heads/$branch"
+		tip=$(git rev-parse --verify "$source^{commit}") || fail "branch $branch does not exist here"
+	else
+		source=HEAD
+		tip=$(git rev-parse --verify 'HEAD^{commit}')
+	fi
+	require_agent_work_collected
+	if [[ $head == "$tip" && $head_branch == "$agent_branch" ]]; then
+		echo "$remote is up to date at $(git rev-parse --short "$tip")"
+		return
+	fi
+	# 専用 clone の submodule は base の gitlink に揃っているので、gitlink が変わったものだけ送る。
+	collect_submodules "$tip"
+	local changed_paths=() changed_commits=()
+	for i in "${!sub_paths[@]}"; do
+		[[ $(git rev-parse --verify --quiet "$base:${sub_paths[i]}") == "${sub_commits[i]}" ]] && continue
+		changed_paths+=("${sub_paths[i]}")
+		changed_commits+=("${sub_commits[i]}")
+	done
+	if [[ $base == "$tip" ]]; then
+		agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source" </dev/null
+	else
+		git bundle create --quiet - "^$base" "$source" |
+			agent "$update_script" "$workspaces" "$workspace" "$agent_branch" "$tip" "$source"
+	fi
+	for i in "${!changed_paths[@]}"; do
+		send_submodule "${changed_paths[i]}" "${changed_commits[i]}"
+	done
+	git config "remote.$remote.chelly-base" "$tip"
+	git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
+	rm -f -- "$bundle" "$bundle.tmp"
+	echo "updated $remote to $(git rev-parse --short "$tip"); previous base was $(git rev-parse --short "$base")"
 }
 
 remove() {
-  resolve_name "$1"
-  repo_paths
-  force=false
-  [[ ${2:-} == --force ]] && force=true
-  if git config --get "remote.$remote.chelly-workspace" >/dev/null; then
-    recorded_paths
-    probe_agent || probe=missing
-  else
-    probe=missing
-  fi
-  if [[ $probe != missing ]] && ! $force; then
-    git cat-file -e "$head^{commit}" 2>/dev/null ||
-      fail "agent commit $head is not in this repository; run fetch first or pass --force"
-    [[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; pass --force to discard them"
-  fi
-  [[ $probe == missing ]] || agent "$remove_script" "$workspaces" "$workspace" </dev/null
-  if git config --get "remote.$remote.url" >/dev/null; then
-    git remote remove "$remote"
-  fi
-  rm -f -- "$bundle" "$bundle.tmp"
-  echo "removed $remote"
+	resolve_name "$1"
+	repo_paths
+	force=false
+	[[ ${2:-} == --force ]] && force=true
+	if git config --get "remote.$remote.chelly-workspace" >/dev/null; then
+		recorded_paths
+		probe_agent || probe=missing
+	else
+		probe=missing
+	fi
+	if [[ $probe != missing ]] && ! $force; then
+		git cat-file -e "$head^{commit}" 2>/dev/null ||
+			fail "agent commit $head is not in this repository; run fetch first or pass --force"
+		[[ $dirty == 0 ]] || fail "agent workspace has uncommitted changes; pass --force to discard them"
+	fi
+	[[ $probe == missing ]] || agent "$remove_script" "$workspaces" "$workspace" </dev/null
+	if git config --get "remote.$remote.url" >/dev/null; then
+		git remote remove "$remote"
+	fi
+	rm -f -- "$bundle" "$bundle.tmp"
+	echo "removed $remote"
 }
 
 # 本人側の Emacs などが clone を列挙するときに、ghq の path の導出をここだけに置く。
 where() {
-  gitdir=$(git rev-parse --path-format=absolute --git-common-dir) || fail "run inside the owner's repository"
-  ghq_path
-  echo "$workspaces/$project"
+	gitdir=$(git rev-parse --path-format=absolute --git-common-dir) || fail "run inside the owner's repository"
+	ghq_path
+	echo "$workspaces/$project"
 }
 
 [[ $# -ge 1 ]] || usage
 case "$1" in
 create)
-  [[ $# -le 2 || ($# -eq 3 && -n $2 && -n $3) ]] || usage
-  create "${2:-}" "${3:-}"
-  ;;
+	[[ $# -le 2 || ($# -eq 3 && -n $2 && -n $3) ]] || usage
+	create "${2:-}" "${3:-}"
+	;;
 fetch)
-  [[ $# -le 2 ]] || usage
-  fetch "${2:-}"
-  ;;
+	[[ $# -le 2 ]] || usage
+	fetch "${2:-}"
+	;;
 update)
-  [[ $# -le 2 ]] || usage
-  update "${2:-}"
-  ;;
+	[[ $# -le 2 ]] || usage
+	update "${2:-}"
+	;;
 remove)
-  if [[ ${2:-} == --force ]]; then
-    [[ $# -eq 2 ]] || usage
-    remove "" --force
-  else
-    [[ $# -le 3 ]] || usage
-    remove "${2:-}" "${3:-}"
-  fi
-  ;;
+	if [[ ${2:-} == --force ]]; then
+		[[ $# -eq 2 ]] || usage
+		remove "" --force
+	else
+		[[ $# -le 3 ]] || usage
+		remove "${2:-}" "${3:-}"
+	fi
+	;;
 where)
-  [[ $# -eq 1 ]] || usage
-  where
-  ;;
+	[[ $# -eq 1 ]] || usage
+	where
+	;;
 id)
-  # 横断セッションの起動で、名前から clone の場所を引くときに同じ変換を使う。
-  [[ $# -eq 2 && -n $2 ]] || usage
-  resolve_name "$2"
-  echo "$id"
-  ;;
+	# 横断セッションの起動で、名前から clone の場所を引くときに同じ変換を使う。
+	[[ $# -eq 2 && -n $2 ]] || usage
+	resolve_name "$2"
+	echo "$id"
+	;;
 name)
-  # 横断セッションの名前の補完で、専用領域のディレクトリ名から名前を引く。
-  [[ $# -eq 2 && -n $2 ]] || usage
-  given=$2
-  candidate=$given
-  if [[ $given =~ ^$id_prefix([0-9a-f][0-9a-f])+$ ]]; then
-    hex=${given#"$id_prefix"}
-    escaped=
-    for ((i = 0; i < ${#hex}; i += 2)); do
-      escaped+="\\x${hex:i:2}"
-    done
-    printf -v candidate '%b' "$escaped"
-  fi
-  # ID に戻して一致したものだけを名前とみなす。id が作らない形の ID は、どの名前の clone でもない。
-  # resolve_name は名前が不正なら exit するので subshell で呼ぶ。
-  if [[ -z $candidate ]] || ! (resolve_name "$candidate" >/dev/null 2>&1 && [[ $id == "$given" ]]); then
-    fail "'$given' is not a handoff id"
-  fi
-  printf '%s\n' "$candidate"
-  ;;
+	# 横断セッションの名前の補完で、専用領域のディレクトリ名から名前を引く。
+	[[ $# -eq 2 && -n $2 ]] || usage
+	given=$2
+	candidate=$given
+	if [[ $given =~ ^$id_prefix([0-9a-f][0-9a-f])+$ ]]; then
+		hex=${given#"$id_prefix"}
+		escaped=
+		for ((i = 0; i < ${#hex}; i += 2)); do
+			escaped+="\\x${hex:i:2}"
+		done
+		printf -v candidate '%b' "$escaped"
+	fi
+	# ID に戻して一致したものだけを名前とみなす。id が作らない形の ID は、どの名前の clone でもない。
+	# resolve_name は名前が不正なら exit するので subshell で呼ぶ。
+	if [[ -z $candidate ]] || ! (resolve_name "$candidate" >/dev/null 2>&1 && [[ $id == "$given" ]]); then
+		fail "'$given' is not a handoff id"
+	fi
+	printf '%s\n' "$candidate"
+	;;
 *) usage ;;
 esac
