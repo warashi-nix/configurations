@@ -7,7 +7,7 @@
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   boot.tmp = {
-    useTmpfs = false;
+    useTmpfs = true;
   };
 
   networking.hostName = "hestia";
