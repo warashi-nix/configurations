@@ -1405,11 +1405,11 @@
     "vertico": {
       "flake": false,
       "locked": {
-        "lastModified": 1791706977,
-        "narHash": "sha256-3m/Jc/mM8b8+3dsILzAiBm/eGqRqLUFQDfU4MEEm1a0=",
+        "lastModified": 1795721242,
+        "narHash": "sha256-n/Dy973ArdH3vesJ5oZq9QTZJVrOJIqQF641qKfuisg=",
         "owner": "minad",
         "repo": "vertico",
-        "rev": "c60d80215d19b4b36c0ba49599b6815ed35f2ac1",
+        "rev": "6976caba3c83799e54d3e2647f6dee79f18869b2",
         "type": "github"
       },
       "original": {
