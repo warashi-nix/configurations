@@ -429,8 +429,8 @@ nearest_trusted_base() {
 # 送った先端は検査の起点として信頼するので、本人の branch と remote-tracking ref だけを受け付け、
 # 未検査の agent の commit を指す handoff-* は拒否する。clone では upstream/ の下に同じ名前で置く。
 send() {
-	resolve_name "$1"
-	shift
+	resolve_name "${1:-}"
+	(($# == 0)) || shift
 	repo_paths
 	recorded_paths
 	probe_agent || fail "agent workspace $workspace is missing; run create"
@@ -448,10 +448,8 @@ send() {
 		case "$full" in
 		refs/remotes/handoff-*) fail "$ref is uncollected agent work, not an owner commit" ;;
 		refs/heads/?* | refs/remotes/?*/?*) short=${full#refs/heads/} short=${short#refs/remotes/} ;;
-		'')
-			[[ $ref == HEAD ]] || fail "$ref is not a branch or remote-tracking branch"
-			full=HEAD short=$agent_branch
-			;;
+		# 記録 branch の無い handoff の既定。detached HEAD は update と同じく handoff の branch 名で受ける。
+		HEAD) short=$agent_branch ;;
 		*) fail "$ref is not a branch or remote-tracking branch" ;;
 		esac
 		pairs+=("$short" "$commit")

@@ -866,6 +866,32 @@ class HandoffTest(unittest.TestCase):
             self.git("-C", self.workspace, "for-each-ref", "refs/remotes/upstream/").stdout, b"",
         )
 
+    def test_send_without_a_name_uses_the_branch_name(self):
+        self.git("-C", self.repo, "switch", "-q", "-c", "fix")
+        self.handoff("create")
+        self.write(self.repo, "tracked", "owner\n")
+        owner_tip = self.commit(self.repo, "owner work")
+        self.handoff("send")
+        self.assertEqual(self.rev(self.workspace, "refs/remotes/upstream/fix"), owner_tip)
+
+    def test_send_from_a_detached_worktree_delivers_its_head(self):
+        # git-wit の worktree から作った handoff には記録 branch が無く、update と同じく実行場所の HEAD を送る。
+        worktree = self.root / "wit-1234"
+        self.git("-C", self.repo, "worktree", "add", "-q", "--detach", worktree)
+        self.handoff("create", "fix", cwd=worktree)
+        self.agent_commit("tracked", "agent\n")
+        self.write(worktree, "tracked", "wit\n")
+        wit_tip = self.commit(worktree, "wit work")
+        result = self.handoff("send", "fix", cwd=worktree)
+        self.assertIn(b"upstream/fix", result.stdout)
+        self.assertEqual(self.rev(self.workspace, "refs/remotes/upstream/fix"), wit_tip)
+        self.git("-C", self.workspace, "rebase", "-q", "refs/remotes/upstream/fix", check=False)
+        self.write(self.workspace, "tracked", "wit\nagent\n")
+        self.git("-C", self.workspace, "add", "tracked")
+        self.git("-C", self.workspace, "-c", "core.editor=true", "rebase", "--continue")
+        result = self.handoff("fetch", "fix", cwd=worktree)
+        self.assertIn(f"{wit_tip}..handoff-fix/fix".encode(), result.stdout)
+
     def test_send_delivers_a_ref_the_workspace_already_has(self):
         self.handoff("create", "fix")
         self.handoff("send", "fix")
