@@ -99,6 +99,15 @@ ID は '.' を含んでよく、16 進の ID は元の名前に戻す。"
                      (,warashi-chelly-handoff-test--repository "chelly-handoff" "fetch" "ログイン 修正"))
                    warashi-chelly-handoff-test--started))))
 
+(ert-deftest warashi-chelly-handoff-test-send-runs-in-toplevel ()
+  "send は読んだ ref を名前の後に並べ、空なら ref を省いて既定の先端を送る。"
+  (warashi-chelly-handoff-test--with-repository warashi-chelly-handoff-test--config
+    (warashi-chelly-handoff-send "brainium" '("main" "origin/main"))
+    (warashi-chelly-handoff-send "v1.2" nil)
+    (should (equal `((,warashi-chelly-handoff-test--repository "chelly-handoff" "send" "v1.2")
+                     (,warashi-chelly-handoff-test--repository "chelly-handoff" "send" "brainium" "main" "origin/main"))
+                   warashi-chelly-handoff-test--started))))
+
 (ert-deftest warashi-chelly-handoff-test-fetch-opens-log-of-the-id-remote ()
   "fetch の後の log は名前ではなく ID の remote handoff-ID から引く。"
   (let (after-fetch)
@@ -203,7 +212,8 @@ ID は '.' を含んでよく、16 進の ID は元の名前に戻す。"
          (default-directory warashi-chelly-handoff-test--repository))
      (cl-letf (((symbol-function 'magit-get)
                 (lambda (&rest keys)
-                  (should (equal '("remote" "handoff-brainium" "chelly-base") keys))
+                  ;; agent が send の先端に rebase していると、範囲の起点は base ではない。
+                  (should (equal '("remote" "handoff-brainium" "chelly-fetched-base") keys))
                   "1111111"))
                ((symbol-function 'magit-git-lines)
                 (lambda (&rest args)

@@ -97,7 +97,7 @@ ref が一つでなければ範囲は決まらないので nil。"
   (when (memq status '(0 1))
     (let* ((remote (concat "handoff-" id))
            (range (warashi-chelly-handoff--log-range
-                   (magit-get "remote" remote "chelly-base")
+                   (magit-get "remote" remote "chelly-fetched-base")
                    (magit-git-lines "for-each-ref" "--format=%(refname:short)"
                                     (format "refs/remotes/%s/" remote)))))
       (when range
@@ -119,6 +119,19 @@ ref が一つでなければ範囲は決まらないので nil。"
   "専用 clone の handoff NAME を本人の branch の先端に合わせ直す。"
   (interactive (list (warashi-chelly-handoff--read-name "Update")))
   (warashi-chelly-handoff--start (list "update" name)))
+
+;;;; send
+
+(defun warashi-chelly-handoff-send (name refs)
+  "本人の REFS を handoff NAME の専用 clone に upstream/ として届ける。
+REFS が空なら update と同じ先端を送る。agent の commit は残るので、
+agent に届いた先端の上へ rebase させて衝突を解かせる。"
+  (interactive
+   (list (warashi-chelly-handoff--read-name "Send to")
+         (magit-completing-read-multiple
+          "Send refs (empty for the recorded branch): "
+          (magit-list-refnames '("refs/heads" "refs/remotes")))))
+  (warashi-chelly-handoff--start (append (list "send" name) refs)))
 
 ;;;; create と remove
 
@@ -158,6 +171,7 @@ ARGS に --force があれば、受け取っていない commit や未コミッ�
    ("c" "Create" warashi-chelly-handoff-create)
    ("f" "Fetch" warashi-chelly-handoff-fetch)
    ("u" "Update" warashi-chelly-handoff-update)
+   ("s" "Send refs" warashi-chelly-handoff-send)
    ("k" "Remove" warashi-chelly-handoff-remove)])
 
 ;;;###autoload
