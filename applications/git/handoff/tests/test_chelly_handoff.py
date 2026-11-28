@@ -760,6 +760,117 @@ class HandoffTest(unittest.TestCase):
         self.handoff("remove", "fix")
         self.assertEqual(self.git("-C", self.repo, "remote").stdout, b"")
 
+    def config(self, key):
+        return self.git("-C", self.repo, "config", "--get-all", key, check=False).stdout.decode().split()
+
+    def test_send_lets_the_agent_rebase_onto_the_owner_tip(self):
+        self.handoff("create", "fix")
+        self.agent_commit("tracked", "agent\n")
+        self.write(self.repo, "tracked", "owner\n")
+        owner_tip = self.commit(self.repo, "owner work")
+        agent_head = self.rev(self.workspace)
+        # agent が作業中でも送れて、clone の HEAD と作業ツリーには触れない。
+        self.write(self.workspace, "scratch", "x\n")
+        result = self.handoff("send", "fix")
+        self.assertIn(b"upstream/main", result.stdout)
+        self.assertEqual(self.rev(self.workspace, "refs/remotes/upstream/main"), owner_tip)
+        self.assertEqual(self.rev(self.workspace), agent_head)
+        self.assertEqual((self.workspace / "scratch").read_text(), "x\n")
+        self.assertEqual(self.config("remote.handoff-fix.chelly-sent"), [owner_tip])
+        (self.workspace / "scratch").unlink()
+
+        # rebase しないままでも従来どおり base から受け取れる。
+        self.handoff("fetch", "fix")
+        self.assertEqual(self.config("remote.handoff-fix.chelly-fetched-base"), [self.base])
+
+        rebase = self.git("-C", self.workspace, "rebase", "-q", "refs/remotes/upstream/main", check=False)
+        self.assertNotEqual(rebase.returncode, 0)
+        self.write(self.workspace, "tracked", "owner\nagent\n")
+        self.git("-C", self.workspace, "add", "tracked")
+        self.git("-C", self.workspace, "-c", "core.editor=true", "rebase", "--continue")
+        tip = self.rev(self.workspace)
+
+        result = self.handoff("fetch", "fix")
+        self.assertIn(f"{owner_tip}..handoff-fix/main".encode(), result.stdout)
+        self.assertEqual(self.config("remote.handoff-fix.chelly-fetched-base"), [owner_tip])
+        self.assertEqual(self.config("remote.handoff-fix.chelly-base"), [self.base])
+        self.assertEqual(self.rev(self.repo, "refs/remotes/handoff-fix/main"), tip)
+        self.git("-C", self.repo, "cherry-pick", f"{owner_tip}..refs/remotes/handoff-fix/main")
+        self.assertEqual((self.repo / "tracked").read_text(), "owner\nagent\n")
+        self.git("-C", self.repo, "commit", "-q", "--amend", "--no-verify", "-m", "integrated")
+        result = self.handoff("update", "fix")
+        self.assertIn(b"updated", result.stdout)
+        self.assertEqual(self.rev(self.workspace), self.rev(self.repo))
+
+    def test_send_lets_the_agent_replay_unpushed_commits_onto_origin(self):
+        self.git("-C", self.repo, "switch", "-q", "-c", "elsewhere")
+        self.write(self.repo, "tracked", "origin\n")
+        origin_tip = self.commit(self.repo, "pushed elsewhere")
+        self.git("-C", self.repo, "update-ref", "refs/remotes/origin/main", origin_tip)
+        self.git("-C", self.repo, "switch", "-q", "main")
+        self.git("-C", self.repo, "branch", "-q", "-D", "elsewhere")
+        self.write(self.repo, "tracked", "owner\n")
+        self.commit(self.repo, "unpushed")
+        self.handoff("create", "fix")
+
+        self.handoff("send", "fix", "main", "origin/main")
+        self.assertEqual(self.rev(self.workspace, "refs/remotes/upstream/origin/main"), origin_tip)
+        rebase = self.git("-C", self.workspace, "rebase", "-q", "refs/remotes/upstream/origin/main", check=False)
+        self.assertNotEqual(rebase.returncode, 0)
+        self.write(self.workspace, "tracked", "origin\nowner\n")
+        self.git("-C", self.workspace, "add", "tracked")
+        self.git("-C", self.workspace, "-c", "core.editor=true", "rebase", "--continue")
+
+        result = self.handoff("fetch", "fix")
+        self.assertIn(f"{origin_tip}..handoff-fix/main".encode(), result.stdout)
+        self.git("-C", self.repo, "reset", "-q", "--hard", "origin/main")
+        self.git("-C", self.repo, "cherry-pick", f"{origin_tip}..refs/remotes/handoff-fix/main")
+        self.assertEqual((self.repo / "tracked").read_text(), "origin\nowner\n")
+
+    def test_fetch_checks_from_the_base_when_the_agent_forges_upstream(self):
+        self.handoff("create", "fix")
+        self.write(self.repo, "tracked", "owner\n")
+        self.commit(self.repo, "owner work")
+        self.handoff("send", "fix")
+        # agent は upstream の ref を書き換えられるので、検査の起点は本人が送った記録だけから選ぶ。
+        self.agent_commit("token.secret", "x\n", "leak")
+        self.git("-C", self.workspace, "update-ref", "refs/remotes/upstream/main", "HEAD")
+        self.agent_commit("feature", "done\n")
+        result = self.handoff("fetch", "fix", check=False)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(b"token.secret", result.stdout)
+        self.assertEqual(self.config("remote.handoff-fix.chelly-fetched-base"), [self.base])
+
+    def test_fetch_requires_commits_on_top_of_what_was_sent(self):
+        self.handoff("create", "fix")
+        self.write(self.repo, "tracked", "owner\n")
+        self.commit(self.repo, "owner work")
+        self.handoff("send", "fix")
+        self.git("-C", self.workspace, "reset", "-q", "--hard", "refs/remotes/upstream/main")
+        result = self.handoff("fetch", "fix", check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b"no commits", result.stderr)
+
+    def test_send_rejects_refs_it_cannot_name_or_trust(self):
+        self.handoff("create", "fix")
+        self.agent_commit("feature", "done\n")
+        self.handoff("fetch", "fix")
+        # 受け取っただけで未検査の agent の commit を、検査の起点にさせない。
+        for ref in ("handoff-fix/main", "v1", "nonexistent"):
+            if ref == "v1":
+                self.git("-C", self.repo, "tag", "v1")
+            result = self.handoff("send", "fix", ref, check=False)
+            self.assertEqual(result.returncode, 1, ref)
+        self.assertEqual(self.config("remote.handoff-fix.chelly-sent"), [])
+        self.assertEqual(
+            self.git("-C", self.workspace, "for-each-ref", "refs/remotes/upstream/").stdout, b"",
+        )
+
+    def test_send_delivers_a_ref_the_workspace_already_has(self):
+        self.handoff("create", "fix")
+        self.handoff("send", "fix")
+        self.assertEqual(self.rev(self.workspace, "refs/remotes/upstream/main"), self.base)
+
 
 if __name__ == "__main__":
     unittest.main()

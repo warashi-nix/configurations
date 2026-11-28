@@ -11,6 +11,7 @@ usage() {
 usage: chelly-handoff create [NAME [COMMIT]]
        chelly-handoff fetch [NAME]
        chelly-handoff update [NAME]
+       chelly-handoff send [NAME [REF...]]
        chelly-handoff remove [NAME] [--force]
        chelly-handoff where
        chelly-handoff id NAME
@@ -22,6 +23,9 @@ fetch   専用 clone の HEAD までの commit を remote handoff-ID に取り�
 update  専用 clone を本人の branch の先端に合わせ直す (未取得の commit や未コミット変更があれば止まる)
         agent が切った branch は消し、create 時の branch に戻す
         detached HEAD から create したときは、update を実行した場所の HEAD に合わせる
+send    本人の REF を専用 clone の upstream/<branch> に届ける。agent の commit と作業ツリーは残す
+        agent がその上に rebase すれば、fetch は届けた先端からの範囲を検査する
+        REF は branch か remote-tracking branch。既定は update と同じ先端。submodule は送らない
 remove  remote と bundle を消し、専用 clone を削除する (未取得の commit があれば --force が要る)
 where   この repository の専用 clone を並べるディレクトリを表示する
 id      NAME の ID を表示する (repository の外でも使える)
@@ -152,6 +156,33 @@ git -c core.hooksPath=/dev/null switch --quiet --force -C "$branch" "$tip"
 if [ -n "$previous" ] && [ "$previous" != "$branch" ]; then
   git branch --quiet -D "$previous"
 fi
+'
+
+# agent が作業中や rebase の途中でも受け取れるよう、HEAD・index・作業ツリーには触れず ref だけを置く。
+# 送る ref が既に clone にあると bundle は作れないので、stdin が空なら object の存在だけ確かめる。
+send_script='
+umask 0027
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_TERMINAL_PROMPT=0
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false \
+  GIT_CONFIG_KEY_1=core.untrackedCache GIT_CONFIG_VALUE_1=false
+parent=$1 workspace=$2
+shift 2
+case "$workspace" in "$parent"/?*/?*) ;; *) exit 90 ;; esac
+case "$workspace" in *..*) exit 90 ;; esac
+cd "$workspace"
+bundle="${workspace}.bundle.$$"
+trap "rm -f -- \"$bundle\"" EXIT
+cat >"$bundle"
+if [ -s "$bundle" ]; then
+  git bundle verify --quiet "$bundle"
+  git bundle unbundle "$bundle" >/dev/null
+fi
+git for-each-ref --format="delete %(refname)" refs/remotes/upstream/ | git update-ref --stdin
+while [ $# -gt 0 ]; do
+  git cat-file -e "$2^{commit}"
+  git update-ref "refs/remotes/upstream/$1" "$2"
+  shift 2
+done
 '
 
 # submodule の URL に bundle を置くと protocol.file.allow を緩める必要があるので、
@@ -370,8 +401,74 @@ fetch() {
 	# feat/topic の後に feat が来ると directory と衝突して fetch できないので、先に全部消す。
 	git for-each-ref --format='delete %(refname)' "refs/remotes/$remote/" | git update-ref --stdin
 	git fetch --quiet --no-tags "$remote" "+$head_ref:$tip"
-	echo "fetched $(git rev-parse --short "$tip") as $remote/$head_name; review with $base..$remote/$head_name"
-	git-check-new-ignored --object-repo "$gitdir" --policy-repo "$toplevel" "$base" "$tip"
+	nearest_trusted_base "$tip"
+	git config "remote.$remote.chelly-fetched-base" "$checked_base"
+	echo "fetched $(git rev-parse --short "$tip") as $remote/$head_name; review with $checked_base..$remote/$head_name"
+	git-check-new-ignored --object-repo "$gitdir" --policy-repo "$toplevel" "$checked_base" "$tip"
+}
+
+# 検査の起点は本人側の記録 (base と send で送った先端) からだけ選ぶ。clone の upstream の ref や
+# 本人の repo に残る過去の agent の commit は agent が作れるので、起点にすると検査を素通りできる。
+# rebase した agent の commit の直接の親になるのは、祖先のうち最も近いもの。
+nearest_trusted_base() {
+	local candidate count best_count='' sent
+	mapfile -t sent < <(git config --get-all "remote.$remote.chelly-sent")
+	checked_base=
+	for candidate in "$base" "${sent[@]}"; do
+		git merge-base --is-ancestor "$candidate" "$1" 2>/dev/null || continue
+		count=$(git rev-list --count "$candidate..$1")
+		if [[ -z $best_count ]] || ((count < best_count)); then
+			checked_base=$candidate
+			best_count=$count
+		fi
+	done
+	[[ -n $checked_base ]] || fail "agent HEAD is on top of neither the base nor what was sent; run send and rebase onto upstream"
+	((best_count > 0)) || fail "agent created no commits on top of what was sent"
+}
+
+# 送った先端は検査の起点として信頼するので、本人の branch と remote-tracking ref だけを受け付け、
+# 未検査の agent の commit を指す handoff-* は拒否する。clone では upstream/ の下に同じ名前で置く。
+send() {
+	resolve_name "$1"
+	shift
+	repo_paths
+	recorded_paths
+	probe_agent || fail "agent workspace $workspace is missing; run create"
+	local ref full short commit pairs=() bundled=() sent
+	if (($# == 0)); then
+		if [[ -n $branch ]]; then
+			set -- "refs/heads/$branch"
+		else
+			set -- HEAD
+		fi
+	fi
+	for ref in "$@"; do
+		commit=$(git rev-parse --verify --quiet "$ref^{commit}") || fail "$ref does not exist here"
+		full=$(git rev-parse --symbolic-full-name "$ref")
+		case "$full" in
+		refs/remotes/handoff-*) fail "$ref is uncollected agent work, not an owner commit" ;;
+		refs/heads/?* | refs/remotes/?*/?*) short=${full#refs/heads/} short=${short#refs/remotes/} ;;
+		'')
+			[[ $ref == HEAD ]] || fail "$ref is not a branch or remote-tracking branch"
+			full=HEAD short=$agent_branch
+			;;
+		*) fail "$ref is not a branch or remote-tracking branch" ;;
+		esac
+		pairs+=("$short" "$commit")
+		git merge-base --is-ancestor "$commit" "$base" || bundled+=("$full")
+	done
+	if ((${#bundled[@]})); then
+		git bundle create --quiet - "^$base" "${bundled[@]}" |
+			agent "$send_script" "$workspaces" "$workspace" "${pairs[@]}"
+	else
+		agent "$send_script" "$workspaces" "$workspace" "${pairs[@]}" </dev/null
+	fi
+	sent=$(git config --get-all "remote.$remote.chelly-sent") || sent=
+	for ((i = 0; i < ${#pairs[@]}; i += 2)); do
+		[[ $'\n'$sent$'\n' == *$'\n'"${pairs[i + 1]}"$'\n'* ]] ||
+			git config --add "remote.$remote.chelly-sent" "${pairs[i + 1]}"
+		echo "sent $(git rev-parse --short "${pairs[i + 1]}") as upstream/${pairs[i]}"
+	done
 }
 
 # probe の出力は HEAD の commit、HEAD の branch 名 (detached なら空)、未コミット変更の行数。
@@ -480,6 +577,10 @@ fetch)
 update)
 	[[ $# -le 2 ]] || usage
 	update "${2:-}"
+	;;
+send)
+	shift
+	send "$@"
 	;;
 remove)
 	if [[ ${2:-} == --force ]]; then
